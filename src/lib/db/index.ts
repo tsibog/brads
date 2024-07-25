@@ -1,9 +1,10 @@
 import Database from 'better-sqlite3';
 import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
+import * as schema from './schema';
 
 const sqlite = new Database('sqlite.db');
-export const db = drizzle(sqlite);
+export const db = drizzle(sqlite, { schema });
 
 // Initialize the database with the schema
 export function initializeDatabase() {
@@ -40,6 +41,8 @@ export function initializeDatabase() {
 }
 
 // Run migrations
-export function runMigrations() {
+export async function runMigrations() {
 	migrate(db, { migrationsFolder: './drizzle' });
 }
+
+await runMigrations();

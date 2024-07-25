@@ -12,8 +12,6 @@
 	const { data }: PageProps = $props();
 	let game = $state(data.game);
 
-	$inspect(game);
-
 	let isDescriptionExpanded = $state(false);
 	let areCategoriesExpanded = $state(false);
 	let areMechanicsExpanded = $state(false);
@@ -38,14 +36,12 @@
 			.map((item) => item.trim().replace(/^"|"$/g, ''));
 	}
 
-	$effect(() => {
-		game = {
-			...game,
-			categories: cleanArray(game.categories),
-			mechanics: cleanArray(game.mechanics),
-			designers: cleanArray(game.designers)
-		};
-	});
+	game = {
+		...game,
+		categories: cleanArray(game.categories),
+		mechanics: cleanArray(game.mechanics),
+		designers: cleanArray(game.designers)
+	};
 </script>
 
 <svelte:head>
@@ -182,6 +178,19 @@
 						{@html game.description}
 					</div>
 				{/if}
+			</div>
+		{/if}
+
+		{#if game.isStarred}
+			<div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4" role="alert">
+				<p class="font-bold">Staff Favorite</p>
+			</div>
+		{/if}
+
+		{#if game.adminNote}
+			<div class="bg-gray-100 p-4 mb-4 rounded">
+				<h3 class="font-bold text-lg mb-2">Admin Note:</h3>
+				<p>{game.adminNote}</p>
 			</div>
 		{/if}
 	</div>

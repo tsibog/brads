@@ -16,7 +16,10 @@ CREATE TABLE `board_games` (
 	`mechanics` text,
 	`designers` text,
 	`artists` text,
-	`publishers` text
+	`publishers` text,
+	`is_starred` integer DEFAULT false,
+	`admin_note` text,
+	`test` text
 );
 --> statement-breakpoint
 CREATE TABLE `users` (

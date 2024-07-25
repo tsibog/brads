@@ -1,4 +1,5 @@
 import type { PageServerLoad } from './$types';
+import { runMigrations } from '$lib/db/index';
 
 export const load: PageServerLoad = async ({ fetch, url }) => {
 	const page = url.searchParams.get('page') || '1';

@@ -24,7 +24,9 @@ export const boardGames = sqliteTable('board_games', {
 	mechanics: text('mechanics'),
 	designers: text('designers'),
 	artists: text('artists'),
-	publishers: text('publishers')
+	publishers: text('publishers'),
+	isStarred: integer('is_starred', { mode: 'boolean' }).default(false),
+	adminNote: text('admin_note')
 });
 
 export type BoardGame = typeof boardGames.$inferSelect;

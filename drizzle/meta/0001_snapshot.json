@@ -1,8 +1,8 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "4c0f762c-1da9-416b-b911-4cef95ea4829",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "281f584f-93a2-4b54-956b-d0a14cacb0d3",
+  "prevId": "4c0f762c-1da9-416b-b911-4cef95ea4829",
   "tables": {
     "board_games": {
       "name": "board_games",
@@ -143,13 +143,6 @@
         },
         "admin_note": {
           "name": "admin_note",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "test": {
-          "name": "test",
           "type": "text",
           "primaryKey": false,
           "notNull": false,

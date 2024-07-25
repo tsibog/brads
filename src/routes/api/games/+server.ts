@@ -80,7 +80,9 @@ export const POST: RequestHandler = async ({ request }) => {
 				mechanics: JSON.stringify(gameData.mechanics),
 				designers: JSON.stringify(gameData.designers),
 				artists: JSON.stringify(gameData.artists),
-				publishers: JSON.stringify(gameData.publishers)
+				publishers: JSON.stringify(gameData.publishers),
+				isStarred: gameData.isStarred || false,
+				adminNote: gameData.adminNote || null
 			})
 			.returning();
 
@@ -117,7 +119,9 @@ export const PUT: RequestHandler = async ({ request }) => {
 				mechanics: JSON.stringify(gameData.mechanics),
 				designers: JSON.stringify(gameData.designers),
 				artists: JSON.stringify(gameData.artists),
-				publishers: JSON.stringify(gameData.publishers)
+				publishers: JSON.stringify(gameData.publishers),
+				isStarred: gameData.isStarred || false,
+				adminNote: gameData.adminNote || null
 			})
 			.where(eq(boardGames.bggId, gameData.bggId))
 			.returning();
