@@ -12,6 +12,8 @@
 		selectedGame = game;
 	}
 
+	$inspect(selectedGame);
+
 	async function addGameToDB() {
 		if (selectedGame) {
 			isAdding = true;
@@ -40,9 +42,11 @@
 	}
 </script>
 
-<div class="container mx-auto px-4 py-8">
-	<h1 class="text-3xl font-bold text-gray-800 mb-6">Admin Panel</h1>
+<head>
+	<title>Brads Admin</title>
+</head>
 
+<div class="container mx-auto px-4 py-8">
 	<BGGSearch onselect={handleGameSelect} />
 
 	{#if selectedGame}

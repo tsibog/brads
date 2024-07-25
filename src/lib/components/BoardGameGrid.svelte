@@ -2,18 +2,47 @@
 	import type { BoardGame } from '$lib/db/schema';
 
 	let { games }: { games: BoardGame[] } = $props();
+
+	console.log(games);
 </script>
+
+{#snippet gameCard(game)}
+	<a
+		class="relative block overflow-hidden rounded-lg shadow-lg aspect-[3/4] group"
+		href={`/game/${game.bggId}`}
+	>
+		<img
+			class="w-full h-full object-cover rounded-lg transition-transform duration-300 group-hover:scale-105"
+			src={game.image}
+			alt={game.name}
+		/>
+		<div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
+		{#if game.adminNote}
+			<div
+				class="absolute top-2 right-0 bg-yellow-400 text-brads-green-dark text-xs font-bold px-2 py-1 rounded-tl-lg rounded-bl-lg"
+			>
+				{game.adminNote}
+			</div>
+		{/if}
+		<div class="absolute bottom-0 left-0 p-4 text-white">
+			<h5 class="mb-1 text-xl font-bold tracking-tight">
+				{game.name}
+			</h5>
+			<p class="text-sm flex flex-col">
+				<span>
+					Players: {game.minPlayers} - {game.maxPlayers}
+				</span>
+				<span>
+					Play Time: {game.playingTime} min
+				</span>
+			</p>
+		</div>
+	</a>
+{/snippet}
 
 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-4">
 	{#each games as game}
-		<a href={`/game/${game.bggId}`} class="hover:shadow-lg">
-			<div class="bg-white p-4 rounded shadow">
-				<img src={game.image} alt={game.name} class="w-full h-48 object-contain mb-2" />
-				<h3 class="font-semibold text-sm mb-2">{game.name}</h3>
-				<p class="text-sm text-gray-600">Players: {game.minPlayers} - {game.maxPlayers}</p>
-				<p class="text-sm text-gray-600">Play Time: {game.playingTime} min</p>
-			</div>
-		</a>
+		{@render gameCard(game)}
 	{/each}
 </div>
 

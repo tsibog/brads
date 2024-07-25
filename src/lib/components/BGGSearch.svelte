@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { fade, slide } from 'svelte/transition';
-	// import { debounce } from 'lodash-es';
+	import debounce from '../../utils/debounce';
 
 	let { onselect }: { onselect: (game: any) => void } = $props();
 
@@ -8,19 +8,37 @@
 	let searchResults: any[] = $state([]);
 	let isLoading = $state(false);
 
-	const debouncedSearch = async () => {
+	const debouncedSearch = debounce(async () => {
 		if (searchQuery.length < 3) {
 			searchResults = [];
 			return;
 		}
 
 		isLoading = true;
-		const response = await fetch(`/api/bgg-search?query=${encodeURIComponent(searchQuery)}`);
-		searchResults = await response.json();
-		isLoading = false;
+		try {
+			const response = await fetch(`/api/bgg-search?query=${encodeURIComponent(searchQuery)}`);
+			if (!response.ok) {
+				throw new Error('Network response was not ok');
+			}
+			searchResults = await response.json();
+		} catch (error) {
+			console.error('Search error:', error);
+			searchResults = [];
+		} finally {
+			isLoading = false;
+		}
+	}, 300);
+
+	const onSelect = (game: any) => {
+		searchQuery = '';
+		searchResults = [];
+		onselect(game);
 	};
 
 	$effect(() => {
+		if (searchQuery.length < 3) {
+			return;
+		}
 		debouncedSearch();
 	});
 </script>
@@ -49,7 +67,7 @@
 			{#each searchResults as game}
 				<li transition:fade|local={{ duration: 200 }}>
 					<button
-						onclick={() => onselect(game)}
+						onclick={() => onSelect(game)}
 						class="w-full text-left px-4 py-3 hover:bg-gray-100 transition duration-200 flex justify-between items-center"
 					>
 						<span class="text-gray-800 font-medium">{game.name}</span>
