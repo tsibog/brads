@@ -1,9 +1,9 @@
 <script lang="ts">
+	import { flip } from 'svelte/animate';
+	import { fly } from 'svelte/transition';
 	import type { BoardGame } from '$lib/db/schema';
 
 	let { games }: { games: BoardGame[] } = $props();
-
-	console.log(games);
 </script>
 
 {#snippet gameCard(game)}
@@ -41,8 +41,10 @@
 {/snippet}
 
 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-4">
-	{#each games as game}
-		{@render gameCard(game)}
+	{#each games as game (game.bggId)}
+		<div animate:flip={{ duration: 300 }} transition:fly={{ y: 20, duration: 300 }}>
+			{@render gameCard(game)}
+		</div>
 	{/each}
 </div>
 

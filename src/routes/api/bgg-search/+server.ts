@@ -1,6 +1,6 @@
 import { json } from '@sveltejs/kit';
 import fetch from 'node-fetch';
-import { DOMParser } from 'xmldom';
+import { DOMParser } from '@xmldom/xmldom';
 
 export async function GET({ url }) {
 	const query = url.searchParams.get('query');

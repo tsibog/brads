@@ -21,6 +21,9 @@ export const GET: RequestHandler = async ({ url }) => {
 		const sortOrder = url.searchParams.get('sortOrder') || 'asc';
 		const filterName = url.searchParams.get('name');
 
+		console.log('Received sortBy:', sortBy);
+		console.log('Received sortOrder:', sortOrder);
+
 		let query = db.select().from(boardGames);
 
 		// Apply filtering
@@ -29,11 +32,25 @@ export const GET: RequestHandler = async ({ url }) => {
 		}
 
 		// Apply sorting
-		if (sortBy in boardGames) {
-			query = query.orderBy(
-				sortOrder === 'desc' ? desc(boardGames[sortBy]) : asc(boardGames[sortBy])
-			);
+		const validSortColumns = [
+			'name',
+			'yearPublished',
+			'playingTime',
+			'minPlayers',
+			'maxPlayers',
+			'bggId'
+		];
+		if (validSortColumns.includes(sortBy)) {
+			const sortColumn = boardGames[sortBy as keyof typeof boardGames];
+			if (sortColumn) {
+				query = query.orderBy(sortOrder === 'desc' ? desc(sortColumn) : asc(sortColumn));
+			}
+		} else {
+			// Default sorting if an invalid column is specified
+			query = query.orderBy(asc(boardGames.name));
 		}
+
+		console.log('Generated SQL:', query.toSQL());
 
 		// Get total count for pagination
 		const totalCountResult = await db.select({ count: sql`count(*)` }).from(boardGames);

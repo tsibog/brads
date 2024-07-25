@@ -1,5 +1,4 @@
 <script lang="ts">
-	import type { PageData } from './$types';
 	import BoardGameGrid from '$lib/components/BoardGameGrid.svelte';
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';

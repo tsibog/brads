@@ -4,8 +4,8 @@
 
 <div class="flex h-screen bg-gray-100">
 	<!-- Sidebar -->
-	<aside class="w-64 bg-brads-yellow-light shadow-md">
-		<nav class="p-4">
+	<aside class="w-64 bg-brads-yellow-light shadow-md p-4">
+		<nav class="pb-4">
 			<h2 class="text-xl font-semibold mb-4 text-gray-800">Brads Admin</h2>
 			<ul class="space-y-2">
 				<li>

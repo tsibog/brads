@@ -1,35 +1,6 @@
 import type { PageServerLoad } from './$types';
-import { runMigrations } from '$lib/db/index';
+import { redirect } from '@sveltejs/kit';
 
-export const load: PageServerLoad = async ({ fetch, url }) => {
-	const page = url.searchParams.get('page') || '1';
-	const limit = url.searchParams.get('limit') || '20';
-	const sortBy = url.searchParams.get('sortBy') || 'name';
-	const sortOrder = url.searchParams.get('sortOrder') || 'asc';
-	const filterName = url.searchParams.get('name') || '';
-
-	const apiUrl = new URL('/api/games', url.origin);
-	apiUrl.searchParams.set('page', page);
-	apiUrl.searchParams.set('limit', limit);
-	apiUrl.searchParams.set('sortBy', sortBy);
-	apiUrl.searchParams.set('sortOrder', sortOrder);
-
-	if (filterName) {
-		apiUrl.searchParams.set('name', filterName);
-	}
-
-	const response = await fetch(apiUrl);
-
-	if (!response.ok) {
-		throw new Error(`HTTP error! status: ${response.status}`);
-	}
-
-	const data = await response.json();
-
-	// console.log(data);
-
-	return {
-		games: data.data,
-		meta: data.meta
-	};
-};
+export const load = (async () => {
+	throw redirect(307, '/browse');
+}) satisfies PageServerLoad;
