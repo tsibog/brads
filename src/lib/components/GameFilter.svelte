@@ -5,12 +5,15 @@
 
 	const { allCategories }: { allCategories: string[] } = $props();
 
+	let categorySearch = $state('');
+	let showCategoryDropdown = $state(false);
+
 	let name = $state($page.url.searchParams.get('name') || '');
 	let minDuration = $state($page.url.searchParams.get('minDuration') || '');
 	let maxDuration = $state($page.url.searchParams.get('maxDuration') || '');
 	let minPlayers = $state($page.url.searchParams.get('minPlayers') || '');
 	let maxPlayers = $state($page.url.searchParams.get('maxPlayers') || '');
-	let categories = $state(
+	let selectedCategories = $state(
 		$page.url.searchParams.get('categories')?.split(',').filter(Boolean) || []
 	);
 
@@ -22,7 +25,7 @@
 		maxDuration = '';
 		minPlayers = '';
 		maxPlayers = '';
-		categories = [];
+		selectedCategories = [];
 	}
 
 	function updateFilters() {
@@ -44,19 +47,32 @@
 		if (maxPlayers) url.searchParams.set('maxPlayers', maxPlayers);
 		else url.searchParams.delete('maxPlayers');
 
-		if (categories.length) url.searchParams.set('categories', categories.join(','));
+		if (selectedCategories.length) url.searchParams.set('categories', selectedCategories.join(','));
 		else url.searchParams.delete('categories');
 
 		goto(url.toString(), { keepFocus: true });
 	}
 
-	$inspect(categories);
+	function toggleCategory(category: string) {
+		const index = selectedCategories.indexOf(category);
+		if (index === -1) {
+			selectedCategories = [...selectedCategories, category];
+		} else {
+			selectedCategories = selectedCategories.filter((c) => c !== category);
+		}
+	}
 
 	$effect(() => {
-		if (name || minDuration || maxDuration || minPlayers || maxPlayers || categories) {
+		if (name || minDuration || maxDuration || minPlayers || maxPlayers || selectedCategories) {
 			debouncedUpdateFilters();
 		}
 	});
+
+	let filteredCategories = $derived(
+		allCategories.filter((category) =>
+			category.toLowerCase().includes(categorySearch.toLowerCase())
+		)
+	);
 </script>
 
 <div class="bg-white shadow-md rounded-lg p-6">
@@ -113,21 +129,46 @@
 			</div>
 		</div>
 
-		<div>
+		<div class="relative">
 			<h3 class="text-sm font-medium text-gray-700 mb-2">Categories</h3>
-			<div class="space-y-2 max-h-40 overflow-y-auto">
-				{#each allCategories as category}
-					<label class="flex items-center">
-						<input
-							type="checkbox"
-							value={category}
-							bind:group={categories}
-							class="form-checkbox h-4 w-4 text-indigo-600"
-						/>
-						<span class="ml-2 text-sm text-gray-700">{category}</span>
-					</label>
+			<div class="flex flex-wrap gap-2 mb-2">
+				{#each selectedCategories as category}
+					<span class="bg-indigo-100 text-indigo-800 text-xs font-medium px-2.5 py-0.5 rounded">
+						{category}
+						<button
+							class="ml-1 text-indigo-600 hover:text-indigo-800"
+							onclick={() => toggleCategory(category)}>×</button
+						>
+					</span>
 				{/each}
 			</div>
+			<input
+				type="text"
+				bind:value={categorySearch}
+				placeholder="Search categories..."
+				class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+				onfocus={() => (showCategoryDropdown = true)}
+				onblur={() => setTimeout(() => (showCategoryDropdown = false), 200)}
+			/>
+			{#if showCategoryDropdown && filteredCategories.length > 0}
+				<div
+					class="absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm"
+				>
+					{#each filteredCategories as category}
+						<button
+							class="cursor-pointer select-none relative py-2 pl-3 pr-9 hover:bg-indigo-50"
+							onclick={() => toggleCategory(category)}
+						>
+							<span class:font-semibold={selectedCategories.includes(category)}>{category}</span>
+							{#if selectedCategories.includes(category)}
+								<span class="absolute inset-y-0 right-0 flex items-center pr-4 text-indigo-600">
+									✓
+								</span>
+							{/if}
+						</button>
+					{/each}
+				</div>
+			{/if}
 		</div>
 
 		<div>

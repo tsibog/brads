@@ -37,6 +37,8 @@ export const load: PageServerLoad = async ({ fetch, url }) => {
 	const categoriesResponse = await fetch('/api/categories');
 	const allCategories = await categoriesResponse.json();
 
+	console.log(allCategories);
+
 	return {
 		games: data.data,
 		meta: data.meta,
