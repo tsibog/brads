@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { fade, slide } from 'svelte/transition';
-	import debounce from '../../utils/debounce';
+	import debounce from '$lib/utils/debounce';
 
 	let { onselect }: { onselect: (game: any) => void } = $props();
 

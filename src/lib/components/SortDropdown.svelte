@@ -15,7 +15,8 @@
 		{ value: 'name', label: 'Name' },
 		{ value: 'yearPublished', label: 'Year' },
 		{ value: 'playingTime', label: 'Play Time' },
-		{ value: 'minPlayers', label: 'Min Players' }
+		{ value: 'minPlayers', label: 'Min Players' },
+		{ value: 'adminNote', label: 'Admin Note' }
 	];
 
 	function toggleDropdown() {
