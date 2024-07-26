@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
-	import debounce from '../../utils/debounce';
+	import debounce from '$lib/utils/debounce';
 
 	const { allCategories }: { allCategories: string[] } = $props();
 

@@ -5,7 +5,7 @@ export const load: PageServerLoad = async ({ fetch, url }) => {
 	const limit = url.searchParams.get('limit') || '20';
 	const sortBy = url.searchParams.get('sortBy') || 'name';
 	const sortOrder = url.searchParams.get('sortOrder') || 'asc';
-	const filterName = url.searchParams.get('name') || '';
+	const searchQuery = url.searchParams.get('search') || '';
 
 	const apiUrl = new URL('/api/games', url.origin);
 	apiUrl.searchParams.set('page', page);
@@ -13,8 +13,8 @@ export const load: PageServerLoad = async ({ fetch, url }) => {
 	apiUrl.searchParams.set('sortBy', sortBy);
 	apiUrl.searchParams.set('sortOrder', sortOrder);
 
-	if (filterName) {
-		apiUrl.searchParams.set('name', filterName);
+	if (searchQuery) {
+		apiUrl.searchParams.set('name', searchQuery);
 	}
 
 	const response = await fetch(apiUrl);
@@ -27,6 +27,7 @@ export const load: PageServerLoad = async ({ fetch, url }) => {
 
 	return {
 		games: data.data,
-		meta: data.meta
+		meta: data.meta,
+		searchQuery
 	};
 };
