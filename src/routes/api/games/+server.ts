@@ -182,35 +182,21 @@ export const PUT: RequestHandler = async ({ request }) => {
 
 export const DELETE: RequestHandler = async ({ url }) => {
 	const id = url.searchParams.get('id');
-	const deleteAll = url.searchParams.get('deleteAll');
 
-	if (deleteAll === 'true') {
-		// Delete all games
-		try {
-			await db.delete(boardGames);
-			return json({ message: 'All games have been deleted' });
-		} catch (error) {
-			console.error('Error deleting all games:', error);
-			return json({ error: 'Failed to delete all games' }, { status: 500 });
+	if (!id) {
+		return json({ error: 'ID is required for deleting a game' }, { status: 400 });
+	}
+
+	try {
+		const deletedGame = await db.delete(boardGames).where(eq(boardGames.bggId, id)).returning();
+
+		if (deletedGame.length === 0) {
+			return json({ error: 'Game not found' }, { status: 404 });
 		}
-	} else if (id) {
-		// Delete a specific game by BGG ID
-		try {
-			const deletedGame = await db.delete(boardGames).where(eq(boardGames.bggId, id)).returning();
 
-			if (deletedGame.length === 0) {
-				return json({ error: 'Game not found' }, { status: 404 });
-			}
-
-			return json({ message: 'Game deleted successfully', deletedGame: deletedGame[0] });
-		} catch (error) {
-			console.error('Error deleting game:', error);
-			return json({ error: 'Failed to delete game' }, { status: 500 });
-		}
-	} else {
-		return json(
-			{ error: 'Invalid delete request. Provide an id or set deleteAll=true' },
-			{ status: 400 }
-		);
+		return json({ message: 'Game deleted successfully', deletedGame: deletedGame[0] });
+	} catch (error) {
+		console.error('Error deleting game:', error);
+		return json({ error: 'Failed to delete game' }, { status: 500 });
 	}
 };

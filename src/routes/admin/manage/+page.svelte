@@ -1,11 +1,11 @@
 <script lang="ts">
-	import BoardGameGrid from '$lib/components/BoardGameGrid.svelte';
 	import BoardGameTable from '$lib/components/BoardGameTable.svelte';
 	import SortDropdown from '$lib/components/SortDropdown.svelte';
 	import type { BoardGame } from '$lib/db/schema';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import debounce from '$lib/utils/debounce';
+	import AdminBoardGameGrid from '$lib/components/AdminBoardGameGrid.svelte';
 
 	const {
 		data
@@ -107,7 +107,7 @@
 </div>
 
 {#if isGridView}
-	<BoardGameGrid games={data.games} />
+	<AdminBoardGameGrid games={data.games} />
 {:else}
 	<BoardGameTable games={data.games} {currentSort} {currentOrder} onSort={handleSort} />
 {/if}
