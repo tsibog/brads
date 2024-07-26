@@ -6,6 +6,11 @@ export const load: PageServerLoad = async ({ fetch, url }) => {
 	const sortBy = url.searchParams.get('sortBy') || 'name';
 	const sortOrder = url.searchParams.get('sortOrder') || 'asc';
 	const filterName = url.searchParams.get('name') || '';
+	const minDuration = url.searchParams.get('minDuration') || '';
+	const maxDuration = url.searchParams.get('maxDuration') || '';
+	const minPlayers = url.searchParams.get('minPlayers') || '';
+	const maxPlayers = url.searchParams.get('maxPlayers') || '';
+	const categories = url.searchParams.get('categories') || '';
 
 	const apiUrl = new URL('/api/games', url.origin);
 	apiUrl.searchParams.set('page', page);
@@ -13,9 +18,12 @@ export const load: PageServerLoad = async ({ fetch, url }) => {
 	apiUrl.searchParams.set('sortBy', sortBy);
 	apiUrl.searchParams.set('sortOrder', sortOrder);
 
-	if (filterName) {
-		apiUrl.searchParams.set('name', filterName);
-	}
+	if (filterName) apiUrl.searchParams.set('name', filterName);
+	if (minDuration) apiUrl.searchParams.set('minDuration', minDuration);
+	if (maxDuration) apiUrl.searchParams.set('maxDuration', maxDuration);
+	if (minPlayers) apiUrl.searchParams.set('minPlayers', minPlayers);
+	if (maxPlayers) apiUrl.searchParams.set('maxPlayers', maxPlayers);
+	if (categories) apiUrl.searchParams.set('categories', categories);
 
 	const response = await fetch(apiUrl);
 
@@ -25,8 +33,13 @@ export const load: PageServerLoad = async ({ fetch, url }) => {
 
 	const data = await response.json();
 
+	// Fetch all categories
+	const categoriesResponse = await fetch('/api/categories');
+	const allCategories = await categoriesResponse.json();
+
 	return {
 		games: data.data,
-		meta: data.meta
+		meta: data.meta,
+		allCategories
 	};
 };

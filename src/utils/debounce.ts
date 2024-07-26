@@ -1,4 +1,4 @@
-function debounce<T extends (...args: unknown[]) => Promise<void>>(
+function debounce<T extends (...args: unknown[]) => void>(
 	func: T,
 	wait: number = 500
 ): (...args: Parameters<T>) => void {

@@ -1,5 +1,5 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
-import { eq, asc, desc, sql } from 'drizzle-orm';
+import { eq, asc, desc, sql, SQL, and, or, like } from 'drizzle-orm';
 import { db } from '$lib/db';
 import { boardGames } from '$lib/db/schema';
 
@@ -7,7 +7,7 @@ export const GET: RequestHandler = async ({ url }) => {
 	const id = url.searchParams.get('id');
 
 	if (id) {
-		// Get a specific game by ID
+		// Get a specific game by ID (unchanged)
 		const game = await db.select().from(boardGames).where(eq(boardGames.bggId, id));
 		if (game.length === 0) {
 			return json({ error: 'Game not found' }, { status: 404 });
@@ -20,57 +20,83 @@ export const GET: RequestHandler = async ({ url }) => {
 		const sortBy = url.searchParams.get('sortBy') || 'name';
 		const sortOrder = url.searchParams.get('sortOrder') || 'asc';
 		const filterName = url.searchParams.get('name');
-
-		console.log('Received sortBy:', sortBy);
-		console.log('Received sortOrder:', sortOrder);
+		const minDuration = url.searchParams.get('minDuration');
+		const maxDuration = url.searchParams.get('maxDuration');
+		const minPlayers = url.searchParams.get('minPlayers');
+		const maxPlayers = url.searchParams.get('maxPlayers');
+		const categories = url.searchParams.get('categories');
 
 		let query = db.select().from(boardGames);
+		const whereConditions = [];
 
 		// Apply filtering
 		if (filterName) {
-			query = query.where(sql`${boardGames.name} LIKE ${`%${filterName}%`}`);
+			whereConditions.push(like(boardGames.name, `%${filterName}%`));
+		}
+		if (minDuration) {
+			whereConditions.push(sql`${boardGames.playingTime} >= ${parseInt(minDuration)}`);
+		}
+		if (maxDuration) {
+			whereConditions.push(sql`${boardGames.playingTime} <= ${parseInt(maxDuration)}`);
+		}
+		if (minPlayers) {
+			whereConditions.push(sql`${boardGames.minPlayers} >= ${parseInt(minPlayers)}`);
+		}
+		if (maxPlayers) {
+			whereConditions.push(sql`${boardGames.maxPlayers} <= ${parseInt(maxPlayers)}`);
+		}
+		if (categories) {
+			const categoryList = categories.split(',');
+			const categoryConditions = categoryList.map(
+				(cat) => sql`${boardGames.categories} LIKE ${'%' + cat + '%'}`
+			);
+			whereConditions.push(or(...categoryConditions));
+		}
+
+		if (whereConditions.length > 0) {
+			query = query.where(and(...whereConditions));
 		}
 
 		// Apply sorting
-		const validSortColumns = [
-			'name',
-			'yearPublished',
-			'playingTime',
-			'minPlayers',
-			'maxPlayers',
-			'bggId'
-		];
-		if (validSortColumns.includes(sortBy)) {
-			const sortColumn = boardGames[sortBy as keyof typeof boardGames];
-			if (sortColumn) {
-				query = query.orderBy(sortOrder === 'desc' ? desc(sortColumn) : asc(sortColumn));
-			}
-		} else {
-			// Default sorting if an invalid column is specified
-			query = query.orderBy(asc(boardGames.name));
+		if (sortBy in boardGames) {
+			query = query.orderBy(
+				sortOrder === 'desc'
+					? desc(boardGames[sortBy as keyof typeof boardGames])
+					: asc(boardGames[sortBy as keyof typeof boardGames])
+			);
 		}
-
-		console.log('Generated SQL:', query.toSQL());
-
-		// Get total count for pagination
-		const totalCountResult = await db.select({ count: sql`count(*)` }).from(boardGames);
-		const totalCount = Number(totalCountResult[0].count);
 
 		// Apply pagination
 		const offset = (page - 1) * limit;
 		query = query.limit(limit).offset(offset);
 
-		const games = await query;
+		try {
+			console.log('Executing query:', query.toSQL()); // Log the SQL query
+			const games = await query;
 
-		return json({
-			data: games,
-			meta: {
-				totalCount,
-				page,
-				limit,
-				totalPages: Math.ceil(totalCount / limit)
-			}
-		});
+			// Get total count for pagination
+			const countQuery = db
+				.select({ count: sql`count(*)` })
+				.from(boardGames)
+				.where(and(...whereConditions));
+
+			console.log('Executing count query:', countQuery.toSQL()); // Log the count SQL query
+			const totalCountResult = await countQuery;
+			const totalCount = Number(totalCountResult[0].count);
+
+			return json({
+				data: games,
+				meta: {
+					totalCount,
+					page,
+					limit,
+					totalPages: Math.ceil(totalCount / limit)
+				}
+			});
+		} catch (error) {
+			console.error('Error executing query:', error);
+			return json({ error: 'An error occurred while fetching games' }, { status: 500 });
+		}
 	}
 };
 
