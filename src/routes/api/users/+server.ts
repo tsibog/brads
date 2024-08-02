@@ -6,7 +6,13 @@ import { generateId } from 'lucia';
 import { eq } from 'drizzle-orm';
 
 export const GET: RequestHandler = async () => {
-	const allUsers = await db.select().from(users);
+	const allUsers = await db
+		.select({
+			id: users.id,
+			email: users.email
+		})
+		.from(users);
+
 	return json(allUsers);
 };
 
