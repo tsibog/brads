@@ -1,5 +1,5 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
-import { eq, asc, desc, sql, SQL, and, or, like } from 'drizzle-orm';
+import { eq, asc, desc, sql, and, or, like } from 'drizzle-orm';
 import { db } from '$lib/db';
 import { boardGames } from '$lib/db/schema';
 
@@ -12,7 +12,22 @@ export const GET: RequestHandler = async ({ url }) => {
 		if (game.length === 0) {
 			return json({ error: 'Game not found' }, { status: 404 });
 		}
-		return json(game[0]);
+
+		// Parse the categories of the current game
+		const gameCategories = JSON.parse(game[0].categories || '[]');
+		// Construct the LIKE conditions for each category
+		const categoryConditions = gameCategories.map(
+			(category: string) => sql`${boardGames.categories} LIKE ${`%${category}%`}`
+		);
+
+		// Fetch similar games
+		const similarGames = await db
+			.select()
+			.from(boardGames)
+			.where(and(or(...categoryConditions), sql`${boardGames.bggId} != ${id}`))
+			.limit(4);
+
+		return json({ game: game[0], similarGames });
 	} else {
 		// Get all games with pagination, sorting, and filtering
 		const page = parseInt(url.searchParams.get('page') || '1');
@@ -71,7 +86,6 @@ export const GET: RequestHandler = async ({ url }) => {
 		query = query.limit(limit).offset(offset);
 
 		try {
-			console.log('Executing query:', query.toSQL()); // Log the SQL query
 			const games = await query;
 
 			// Get total count for pagination
@@ -80,7 +94,6 @@ export const GET: RequestHandler = async ({ url }) => {
 				.from(boardGames)
 				.where(and(...whereConditions));
 
-			console.log('Executing count query:', countQuery.toSQL()); // Log the count SQL query
 			const totalCountResult = await countQuery;
 			const totalCount = Number(totalCountResult[0].count);
 
@@ -103,6 +116,8 @@ export const GET: RequestHandler = async ({ url }) => {
 export const POST: RequestHandler = async ({ request }) => {
 	const gameData = await request.json();
 
+	console.log('gameData:', gameData);
+
 	try {
 		const newGame = await db
 			.insert(boardGames)
@@ -124,7 +139,7 @@ export const POST: RequestHandler = async ({ request }) => {
 				designers: JSON.stringify(gameData.designers),
 				artists: JSON.stringify(gameData.artists),
 				publishers: JSON.stringify(gameData.publishers),
-				isStarred: gameData.isStarred || false,
+				isStarred: gameData.starred || false,
 				adminNote: gameData.adminNote || null
 			})
 			.returning();
@@ -163,7 +178,7 @@ export const PUT: RequestHandler = async ({ request }) => {
 				designers: JSON.stringify(gameData.designers),
 				artists: JSON.stringify(gameData.artists),
 				publishers: JSON.stringify(gameData.publishers),
-				isStarred: gameData.isStarred || false,
+				isStarred: gameData.starred || false,
 				adminNote: gameData.adminNote || null
 			})
 			.where(eq(boardGames.bggId, gameData.bggId))

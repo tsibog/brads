@@ -8,7 +8,7 @@ export const load: PageServerLoad = async ({ params, fetch }) => {
 		throw error(response.status, 'Failed to load game data');
 	}
 
-	const game = await response.json();
+	const { game, similarGames } = await response.json();
 
-	return { game };
+	return { game, similarGames };
 };

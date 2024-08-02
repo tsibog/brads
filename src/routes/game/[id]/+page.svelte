@@ -6,15 +6,26 @@
 	type PageProps = {
 		data: {
 			game: BoardGame;
+			similarGames: BoardGame[];
 		};
 	};
 
 	const { data }: PageProps = $props();
-	let game = $state(data.game);
 
+	let game = $derived(data.game);
 	let isDescriptionExpanded = $state(false);
 	let areCategoriesExpanded = $state(false);
 	let areMechanicsExpanded = $state(false);
+
+	const categories = $derived.by(() => {
+		return cleanArray(game.categories);
+	});
+	const mechanics = $derived.by(() => {
+		return cleanArray(game.mechanics);
+	});
+	const designers = $derived.by(() => {
+		return cleanArray(game.designers);
+	});
 
 	function toggleDescription() {
 		isDescriptionExpanded = !isDescriptionExpanded;
@@ -35,13 +46,6 @@
 			.split(',')
 			.map((item) => item.trim().replace(/^"|"$/g, ''));
 	}
-
-	game = {
-		...game,
-		categories: cleanArray(game.categories),
-		mechanics: cleanArray(game.mechanics),
-		designers: cleanArray(game.designers)
-	};
 </script>
 
 <svelte:head>
@@ -89,7 +93,7 @@
 			</div>
 
 			<div class="space-y-6">
-				{#if game.categories && game.categories.length > 0}
+				{#if categories && categories.length > 0}
 					<div>
 						<button onclick={toggleCategories} class="text-xl font-semibold mb-2 flex items-center">
 							Categories
@@ -109,20 +113,20 @@
 							</svg>
 						</button>
 						<div class="flex flex-wrap gap-2">
-							{#each game.categories.slice(0, areCategoriesExpanded ? undefined : 3) as category}
+							{#each categories.slice(0, areCategoriesExpanded ? undefined : 3) as category}
 								<span class="bg-teal-700 px-3 py-1 rounded-full text-sm">{category}</span>
 							{/each}
-							{#if !areCategoriesExpanded && game.categories.length > 3}
+							{#if !areCategoriesExpanded && categories.length > 3}
 								<button
 									class="bg-teal-700 px-3 py-1 rounded-full text-sm cursor-pointer"
-									onclick={toggleCategories}>+{game.categories.length - 3} more</button
+									onclick={toggleCategories}>+{categories.length - 3} more</button
 								>
 							{/if}
 						</div>
 					</div>
 				{/if}
 
-				{#if game.mechanics && game.mechanics.length > 0}
+				{#if mechanics && mechanics.length > 0}
 					<div>
 						<button onclick={toggleMechanics} class="text-xl font-semibold mb-2 flex items-center">
 							Mechanics
@@ -142,23 +146,23 @@
 							</svg>
 						</button>
 						<div class="flex flex-wrap gap-2">
-							{#each game.mechanics.slice(0, areMechanicsExpanded ? undefined : 3) as mechanic}
+							{#each mechanics.slice(0, areMechanicsExpanded ? undefined : 3) as mechanic}
 								<span class="bg-blue-700 px-3 py-1 rounded-full text-sm">{mechanic}</span>
 							{/each}
-							{#if !areMechanicsExpanded && game.mechanics.length > 3}
+							{#if !areMechanicsExpanded && mechanics.length > 3}
 								<button
 									class="bg-blue-700 px-3 py-1 rounded-full text-sm cursor-pointer"
-									onclick={toggleMechanics}>+{game.mechanics.length - 3} more</button
+									onclick={toggleMechanics}>+{mechanics.length - 3} more</button
 								>
 							{/if}
 						</div>
 					</div>
 				{/if}
 
-				{#if game.designers && game.designers.length > 0}
+				{#if designers && designers.length > 0}
 					<div>
 						<h2 class="text-xl font-semibold mb-2">Designers</h2>
-						<div>{game.designers}</div>
+						<div>{designers}</div>
 					</div>
 				{/if}
 			</div>
@@ -174,7 +178,7 @@
 				</button>
 
 				{#if isDescriptionExpanded}
-					<div transition:slide={{ duration: 300 }} class="mt-4 text-white/90 leading-relaxed">
+					<div transition:slide={{ duration: 300 }} class="mt-4 text-black/90 leading-relaxed">
 						{@html game.description}
 					</div>
 				{/if}
@@ -194,6 +198,32 @@
 			</div>
 		{/if}
 	</div>
+
+	{#if data.similarGames.length > 0}
+		<div class="mt-8">
+			<h2 class="text-2xl font-bold mb-4">Similar Games</h2>
+			<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+				{#each data.similarGames as similarGame}
+					<a href={`/game/${similarGame.bggId}`} class="block">
+						<div class="bg-white rounded-lg shadow-md overflow-hidden">
+							<img
+								src={similarGame.thumbnail}
+								alt={similarGame.name}
+								class="w-full h-48 object-cover"
+							/>
+							<div class="p-4">
+								<h3 class="font-bold text-lg mb-2">{similarGame.name}</h3>
+								<p class="text-sm text-gray-600">
+									{similarGame.minPlayers}-{similarGame.maxPlayers} players
+								</p>
+								<p class="text-sm text-gray-600">{similarGame.playingTime} min</p>
+							</div>
+						</div>
+					</a>
+				{/each}
+			</div>
+		</div>
+	{/if}
 </main>
 
 <style>

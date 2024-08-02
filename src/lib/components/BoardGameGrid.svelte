@@ -6,7 +6,7 @@
 	let { games }: { games: BoardGame[] } = $props();
 </script>
 
-{#snippet gameCard(game)}
+{#snippet gameCard(game: BoardGame)}
 	<a
 		class="relative block overflow-hidden rounded-lg shadow-lg aspect-[3/4] group"
 		href={`/game/${game.bggId}`}
@@ -19,9 +19,18 @@
 		<div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
 		{#if game.adminNote}
 			<div
-				class="absolute top-2 right-0 bg-yellow-400 text-brads-green-dark text-xs font-bold px-2 py-1 rounded-tl-lg rounded-bl-lg"
+				class="absolute {game.adminNote
+					? 'top-2'
+					: 'top-10'} right-0 bg-yellow-400 text-brads-green-dark text-xs font-bold px-2 py-1 rounded-tl-lg rounded-bl-lg"
 			>
 				{game.adminNote}
+			</div>
+		{/if}
+		{#if game.isStarred}
+			<div
+				class="absolute top-2 right-0 bg-brads-green text-white text-xs font-bold px-2 py-1 rounded-tl-lg rounded-bl-lg border-l border-t border-b border-black"
+			>
+				⭐ Staff Pick!
 			</div>
 		{/if}
 		<div class="absolute bottom-0 left-0 p-4 text-white">
