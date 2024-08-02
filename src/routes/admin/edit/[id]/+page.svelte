@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import type { BoardGame } from '$lib/db/schema';
+	import type { BoardGame } from '$lib/server/db/schema';
 	import ConfirmationModal from '$lib/components/ConfirmationModal.svelte';
 
 	const {

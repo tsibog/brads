@@ -14,10 +14,11 @@
 		"studio": "drizzle-kit studio",
 		"db:generate": "drizzle-kit generate --config drizzle.config.ts",
 		"db:push": "drizzle-kit push --config drizzle.config.ts",
-		"db:migrate": "tsx ./src/lib/db/migrate.ts"
+		"db:migrate": "tsx ./src/lib/server/db/migrate.ts"
 	},
 	"devDependencies": {
 		"@sveltejs/adapter-auto": "^3.2.2",
+		"@sveltejs/adapter-vercel": "^5.4.1",
 		"@sveltejs/kit": "^2.5.18",
 		"@sveltejs/vite-plugin-svelte": "^3.1.1",
 		"@types/better-sqlite3": "^7.6.11",
@@ -45,9 +46,12 @@
 	},
 	"type": "module",
 	"dependencies": {
+		"@lucia-auth/adapter-drizzle": "^1.0.7",
 		"@xmldom/xmldom": "^0.8.10",
 		"better-sqlite3": "^11.1.2",
 		"drizzle-orm": "^0.32.1",
-		"node-fetch": "^3.3.2"
+		"lucia": "^3.2.0",
+		"node-fetch": "^3.3.2",
+		"oslo": "^1.2.1"
 	}
 }

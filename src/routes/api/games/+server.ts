@@ -1,7 +1,7 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
 import { eq, asc, desc, sql, and, or, like } from 'drizzle-orm';
-import { db } from '$lib/db';
-import { boardGames } from '$lib/db/schema';
+import { db } from '$lib/server/db';
+import { boardGames } from '$lib/server/db/schema';
 
 export const GET: RequestHandler = async ({ url }) => {
 	const id = url.searchParams.get('id');

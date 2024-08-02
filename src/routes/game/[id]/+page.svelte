@@ -1,6 +1,6 @@
 <!-- src/routes/game/[id]/+page.svelte -->
 <script lang="ts">
-	import type { BoardGame } from '$lib/db/schema';
+	import type { BoardGame } from '$lib/server/db/schema';
 	import { slide } from 'svelte/transition';
 
 	type PageProps = {

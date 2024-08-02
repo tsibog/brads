@@ -1,4 +1,4 @@
-import { initializeDatabase, runMigrations } from '$lib/db';
+import { initializeDatabase, runMigrations } from '$lib/server/db';
 
 // Initialize the database when the server starts
 initializeDatabase();

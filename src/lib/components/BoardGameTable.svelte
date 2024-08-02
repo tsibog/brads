@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { BoardGame } from '$lib/db/schema';
+	import type { BoardGame } from '$lib/server/db/schema';
 
 	let {
 		games,
@@ -43,7 +43,7 @@
 					<th
 						scope="col"
 						class="px-6 py-3 cursor-pointer hover:bg-brads-yellow-light/80"
-						on:click={() => handleSort(column.key)}
+						onclick={() => handleSort(column.key)}
 					>
 						<div class="flex items-center justify-between">
 							<span>{column.label}</span>

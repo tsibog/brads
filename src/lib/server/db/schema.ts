@@ -1,9 +1,21 @@
 import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
 
 export const users = sqliteTable('users', {
-	id: integer('id').primaryKey(),
-	name: text('name'),
-	email: text('email').unique()
+	id: text('id').primaryKey(),
+	username: text('username').notNull().unique(),
+	password_hash: text('password_hash').notNull(),
+	email: text('email').unique(),
+	is_admin: integer('is_admin', { mode: 'boolean' }).notNull().default(false),
+	created_at: integer('created_at', { mode: 'timestamp' }).notNull().defaultNow(),
+	updated_at: integer('updated_at', { mode: 'timestamp' }).notNull().defaultNow()
+});
+
+export const sessions = sqliteTable('session', {
+	id: text('id').notNull().primaryKey(),
+	userId: text('user_id')
+		.notNull()
+		.references(() => users.id),
+	expiresAt: integer('expires_at').notNull()
 });
 
 export const boardGames = sqliteTable('board_games', {
@@ -30,3 +42,8 @@ export const boardGames = sqliteTable('board_games', {
 });
 
 export type BoardGame = typeof boardGames.$inferSelect;
+export type NewBoardGame = typeof boardGames.$inferInsert;
+export type User = typeof users.$inferSelect;
+export type NewUser = typeof users.$inferInsert;
+export type Session = typeof sessions.$inferSelect;
+export type NewSession = typeof sessions.$inferInsert;

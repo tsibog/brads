@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { flip } from 'svelte/animate';
 	import { fly } from 'svelte/transition';
-	import type { BoardGame } from '$lib/db/schema';
+	import type { BoardGame } from '$lib/server/db/schema';
 
 	let { games }: { games: BoardGame[] } = $props();
 </script>

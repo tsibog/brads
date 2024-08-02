@@ -2,7 +2,7 @@
 	import BoardGameGrid from '$lib/components/BoardGameGrid.svelte';
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
-	import type { BoardGame } from '$lib/db/schema';
+	import type { BoardGame } from '$lib/server/db/schema';
 	import GameFilter from '$lib/components/GameFilter.svelte';
 
 	const {
@@ -21,29 +21,11 @@
 	} = $props();
 
 	let currentPage = $state(parseInt($page.url.searchParams.get('page') || '1'));
-	let gamesPerPage = $state(parseInt($page.url.searchParams.get('limit') || '20'));
-	let minDuration = $state(parseInt($page.url.searchParams.get('minDuration') || '0'));
-	let maxDuration = $state(parseInt($page.url.searchParams.get('maxDuration') || '0'));
-	let minPlayers = $state(parseInt($page.url.searchParams.get('minPlayers') || '0'));
-	let maxPlayers = $state(parseInt($page.url.searchParams.get('maxPlayers') || '0'));
-	let selectedCategories = $state<string[]>(
-		($page.url.searchParams.get('categories') || '').split(',')
-	);
-
-	let allCategories = $state<string[]>([]);
-	let searchQuery = $state('');
 
 	async function changePage(newPage: number) {
 		const url = new URL($page.url);
 		url.searchParams.set('page', newPage.toString());
 		await goto(url.toString(), { keepFocus: true });
-	}
-
-	async function handleSearch() {
-		const url = new URL($page.url);
-		url.searchParams.set('name', searchQuery);
-		url.searchParams.set('page', '1');
-		await goto(url.toString());
 	}
 </script>
 

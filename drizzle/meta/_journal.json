@@ -15,6 +15,13 @@
       "when": 1721897895475,
       "tag": "0001_easy_riptide",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1722592023592,
+      "tag": "0002_pink_betty_brant",
+      "breakpoints": true
     }
   ]
 }
