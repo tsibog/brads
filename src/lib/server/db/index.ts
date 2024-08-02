@@ -1,48 +1,48 @@
-import Database from 'better-sqlite3';
-import { drizzle } from 'drizzle-orm/better-sqlite3';
-import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
+import { drizzle } from 'drizzle-orm/libsql';
+import { createClient } from '@libsql/client';
 import * as schema from './schema';
+import { TURSO_DB_URL, TURSO_AUTH_TOKEN } from '$env/static/private';
+import fs from 'fs';
 
-const sqlite = new Database('sqlite.db');
-export const db = drizzle(sqlite, { schema });
+const turso = createClient({
+	url: TURSO_DB_URL!,
+	authToken: TURSO_AUTH_TOKEN
+});
+export const db = drizzle(turso, { schema });
 
-// Initialize the database with the schema
-export function initializeDatabase() {
-	sqlite.exec(`
-    CREATE TABLE IF NOT EXISTS users (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT,
-      email TEXT UNIQUE
-    )
-  `);
+async function importData() {
+	const tables = ['board_games', 'users'];
 
-	sqlite.exec(`
-    CREATE TABLE IF NOT EXISTS board_games (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      bgg_id TEXT NOT NULL UNIQUE,
-      name TEXT NOT NULL,
-      year_published INTEGER,
-      min_players INTEGER,
-      max_players INTEGER,
-      playing_time INTEGER,
-      min_play_time INTEGER,
-      max_play_time INTEGER,
-      age INTEGER,
-      description TEXT,
-      thumbnail TEXT,
-      image TEXT,
-      categories TEXT,
-      mechanics TEXT,
-      designers TEXT,
-      artists TEXT,
-      publishers TEXT
-    )
-  `);
+	for (const table of tables) {
+		const data = JSON.parse(fs.readFileSync(`${table}.json`, 'utf-8'));
+
+		for (const row of data) {
+			const columns = Object.keys(row).filter((key) => row[key] !== null);
+			const placeholders = columns.map((_, index) => `$${index + 1}`).join(', ');
+			const values = columns.map((key) => row[key]);
+
+			const query = `INSERT INTO ${table} (${columns.join(', ')}) VALUES (${placeholders})`;
+
+			console.log('Query:', query);
+			console.log('Values:', values);
+
+			try {
+				await turso.execute({
+					sql: query,
+					args: values
+				});
+			} catch (error) {
+				console.error(`Error inserting into ${table}:`, error);
+				console.error('Problematic row:', row);
+			}
+		}
+
+		console.log(`Imported data for ${table}`);
+	}
 }
 
-// Run migrations
-export async function runMigrations() {
-	migrate(db, { migrationsFolder: './drizzle' });
-}
+console.log(TURSO_DB_URL, TURSO_AUTH_TOKEN);
 
-await runMigrations();
+// importData()
+// 	.then(() => console.log('Import completed'))
+// 	.catch(console.error);
