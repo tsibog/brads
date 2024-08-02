@@ -116,8 +116,6 @@ export const GET: RequestHandler = async ({ url }) => {
 export const POST: RequestHandler = async ({ request }) => {
 	const gameData = await request.json();
 
-	console.log('gameData:', gameData);
-
 	try {
 		const newGame = await db
 			.insert(boardGames)

@@ -11,6 +11,8 @@
 		};
 	} = $props();
 
+	$inspect(data);
+
 	let game = $state(data.game);
 	let isStarred = $state(game.isStarred);
 	let adminNote = $state(game.adminNote || '');
@@ -46,7 +48,7 @@
 	}
 
 	async function confirmDelete() {
-		const response = await fetch(`/api/games?id=${game.bggId}`, {
+		const response = await fetch(`/api/games?id=${data.game.game.bggId}`, {
 			method: 'DELETE'
 		});
 

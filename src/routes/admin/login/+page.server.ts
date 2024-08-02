@@ -1,10 +1,8 @@
-// src/routes/admin/login/+page.server.ts
 import { lucia } from '$lib/server/auth';
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { Argon2id } from 'oslo/password';
 import { db } from '$lib/server/db';
-import { users } from '$lib/server/db/schema';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	if (locals.user) {
@@ -17,8 +15,6 @@ export const actions: Actions = {
 		const formData = await request.formData();
 		const username = formData.get('username');
 		const password = formData.get('password');
-
-		console.log('username:', username);
 
 		// basic check
 		if (
