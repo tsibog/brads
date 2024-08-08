@@ -38,6 +38,8 @@
 		) {
 			debouncedUpdateFilters();
 		}
+
+		console.log(maxPlayers);
 	});
 
 	function resetFilters() {

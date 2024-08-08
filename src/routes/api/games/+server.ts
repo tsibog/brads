@@ -55,10 +55,10 @@ export const GET: RequestHandler = async ({ url }) => {
 			whereConditions.push(sql`${boardGames.playingTime} <= ${parseInt(maxDuration)}`);
 		}
 		if (minPlayers) {
-			whereConditions.push(sql`${boardGames.minPlayers} >= ${parseInt(minPlayers)}`);
+			whereConditions.push(sql`${boardGames.minPlayers} <= ${parseInt(minPlayers)}`);
 		}
 		if (maxPlayers) {
-			whereConditions.push(sql`${boardGames.maxPlayers} <= ${parseInt(maxPlayers)}`);
+			whereConditions.push(sql`${boardGames.maxPlayers} >= ${parseInt(maxPlayers)}`);
 		}
 		if (categories) {
 			const categoryList = categories.split(',');
