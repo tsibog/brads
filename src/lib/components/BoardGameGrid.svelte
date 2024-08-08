@@ -3,7 +3,7 @@
 	import { fly } from 'svelte/transition';
 	import type { BoardGame } from '$lib/server/db/schema';
 
-	let { games }: { games: BoardGame[] } = $props();
+	const { games }: { games: BoardGame[] } = $props();
 </script>
 
 {#snippet gameCard(game: BoardGame)}
@@ -19,9 +19,7 @@
 		<div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
 		{#if game.adminNote}
 			<div
-				class="absolute {game.adminNote
-					? 'top-2'
-					: 'top-10'} right-0 bg-yellow-400 text-brads-green-dark text-xs font-bold px-2 py-1 rounded-tl-lg rounded-bl-lg"
+				class="absolute top-2 right-0 bg-yellow-400 text-brads-green-dark text-xs font-bold px-2 py-1 rounded-tl-lg rounded-bl-lg"
 			>
 				{game.adminNote}
 			</div>
@@ -34,10 +32,10 @@
 			</div>
 		{/if}
 		<div class="absolute bottom-0 left-0 p-4 text-white">
-			<h5 class="mb-1 text-xl font-bold tracking-tight">
+			<h5 class="mb-1 text-base sm:text-lg md:text-xl font-bold tracking-tight line-clamp-2">
 				{game.name}
 			</h5>
-			<p class="text-sm flex flex-col">
+			<p class="text-xs sm:text-sm flex flex-col">
 				<span>
 					Players: {game.minPlayers} - {game.maxPlayers}
 				</span>
@@ -49,7 +47,7 @@
 	</a>
 {/snippet}
 
-<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-4">
+<div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4 mb-4">
 	{#each games as game (game.bggId)}
 		<div animate:flip={{ duration: 300 }} transition:fly={{ y: 20, duration: 300 }}>
 			{@render gameCard(game)}
