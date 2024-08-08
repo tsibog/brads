@@ -9,12 +9,11 @@
 	let categorySearch = $state('');
 	let showCategoryDropdown = $state(false);
 	let isFilterExpanded = $state(false);
+	let isMobile = $state(false);
 
 	let name = $state($page.url.searchParams.get('name') || '');
-	let minDuration = $state($page.url.searchParams.get('minDuration') || '');
-	let maxDuration = $state($page.url.searchParams.get('maxDuration') || '');
-	let minPlayers = $state($page.url.searchParams.get('minPlayers') || '');
-	let maxPlayers = $state($page.url.searchParams.get('maxPlayers') || '');
+	let duration = $state($page.url.searchParams.get('duration') || '');
+	let players = $state($page.url.searchParams.get('players') || '');
 	let selectedCategories = $state(
 		$page.url.searchParams.get('categories')?.split(',').filter(Boolean) || []
 	);
@@ -28,26 +27,28 @@
 	const debouncedUpdateFilters = debounce(updateFilters, 300);
 
 	$effect(() => {
-		if (
-			name ||
-			minDuration ||
-			maxDuration ||
-			minPlayers ||
-			maxPlayers ||
-			selectedCategories.length
-		) {
-			debouncedUpdateFilters();
-		}
+		console.log(name, duration, players, selectedCategories);
+		debouncedUpdateFilters();
+	});
 
-		console.log(maxPlayers);
+	$effect(() => {
+		const checkMobile = () => {
+			isMobile = window.innerWidth < 768; // Assuming 768px as the breakpoint
+			isFilterExpanded = !isMobile;
+		};
+
+		checkMobile();
+		window.addEventListener('resize', checkMobile);
+
+		return () => {
+			window.removeEventListener('resize', checkMobile);
+		};
 	});
 
 	function resetFilters() {
 		name = '';
-		minDuration = '';
-		maxDuration = '';
-		minPlayers = '';
-		maxPlayers = '';
+		duration = '';
+		players = '';
 		selectedCategories = [];
 	}
 
@@ -58,17 +59,11 @@
 		if (name) url.searchParams.set('name', name);
 		else url.searchParams.delete('name');
 
-		if (minDuration) url.searchParams.set('minDuration', minDuration);
-		else url.searchParams.delete('minDuration');
+		if (duration) url.searchParams.set('duration', duration);
+		else url.searchParams.delete('duration');
 
-		if (maxDuration) url.searchParams.set('maxDuration', maxDuration);
-		else url.searchParams.delete('maxDuration');
-
-		if (minPlayers) url.searchParams.set('minPlayers', minPlayers);
-		else url.searchParams.delete('minPlayers');
-
-		if (maxPlayers) url.searchParams.set('maxPlayers', maxPlayers);
-		else url.searchParams.delete('maxPlayers');
+		if (players) url.searchParams.set('players', players);
+		else url.searchParams.delete('players');
 
 		if (selectedCategories.length) url.searchParams.set('categories', selectedCategories.join(','));
 		else url.searchParams.delete('categories');
@@ -130,39 +125,23 @@
 				<div class="flex space-x-2">
 					<input
 						type="number"
-						id="minDuration"
-						bind:value={minDuration}
-						placeholder="Min"
-						class="w-1/2 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-					/>
-					<input
-						type="number"
-						id="maxDuration"
-						bind:value={maxDuration}
-						placeholder="Max"
-						class="w-1/2 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+						id="duration"
+						bind:value={duration}
+						placeholder="Minutes"
+						class="px-3 py-2 border border-gray-300 rounded-md w-full shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
 					/>
 				</div>
 			</div>
 
 			<div>
 				<h3 class="text-sm font-medium text-gray-700 mb-2">Number of Players</h3>
-				<div class="flex space-x-2">
-					<input
-						type="number"
-						id="minPlayers"
-						bind:value={minPlayers}
-						placeholder="Min"
-						class="w-1/2 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-					/>
-					<input
-						type="number"
-						id="maxPlayers"
-						bind:value={maxPlayers}
-						placeholder="Max"
-						class="w-1/2 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-					/>
-				</div>
+				<input
+					type="number"
+					id="players"
+					bind:value={players}
+					placeholder="Party size"
+					class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+				/>
 			</div>
 
 			<div class="relative">

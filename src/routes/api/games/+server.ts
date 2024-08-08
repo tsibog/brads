@@ -35,10 +35,8 @@ export const GET: RequestHandler = async ({ url }) => {
 		const sortBy = url.searchParams.get('sortBy') || 'name';
 		const sortOrder = url.searchParams.get('sortOrder') || 'asc';
 		const filterName = url.searchParams.get('name');
-		const minDuration = url.searchParams.get('minDuration');
-		const maxDuration = url.searchParams.get('maxDuration');
-		const minPlayers = url.searchParams.get('minPlayers');
-		const maxPlayers = url.searchParams.get('maxPlayers');
+		const duration = url.searchParams.get('duration');
+		const players = url.searchParams.get('players');
 		const categories = url.searchParams.get('categories');
 
 		let query = db.select().from(boardGames);
@@ -48,17 +46,14 @@ export const GET: RequestHandler = async ({ url }) => {
 		if (filterName) {
 			whereConditions.push(like(boardGames.name, `%${filterName}%`));
 		}
-		if (minDuration) {
-			whereConditions.push(sql`${boardGames.playingTime} >= ${parseInt(minDuration)}`);
+		if (duration) {
+			whereConditions.push(sql`${boardGames.playingTime} <= ${parseInt(duration)}`);
 		}
-		if (maxDuration) {
-			whereConditions.push(sql`${boardGames.playingTime} <= ${parseInt(maxDuration)}`);
-		}
-		if (minPlayers) {
-			whereConditions.push(sql`${boardGames.minPlayers} <= ${parseInt(minPlayers)}`);
-		}
-		if (maxPlayers) {
-			whereConditions.push(sql`${boardGames.maxPlayers} >= ${parseInt(maxPlayers)}`);
+		if (players) {
+			const playersNum = parseInt(players);
+			whereConditions.push(
+				sql`${boardGames.minPlayers} <= ${playersNum} AND ${boardGames.maxPlayers} >= ${playersNum}`
+			);
 		}
 		if (categories) {
 			const categoryList = categories.split(',');

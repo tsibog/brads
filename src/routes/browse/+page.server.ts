@@ -6,10 +6,8 @@ export const load: PageServerLoad = async ({ fetch, url }) => {
 	const sortBy = url.searchParams.get('sortBy') || 'name';
 	const sortOrder = url.searchParams.get('sortOrder') || 'asc';
 	const filterName = url.searchParams.get('name') || '';
-	const minDuration = url.searchParams.get('minDuration') || '';
-	const maxDuration = url.searchParams.get('maxDuration') || '';
-	const minPlayers = url.searchParams.get('minPlayers') || '';
-	const maxPlayers = url.searchParams.get('maxPlayers') || '';
+	const duration = url.searchParams.get('duration') || '';
+	const players = url.searchParams.get('players') || '';
 	const categories = url.searchParams.get('categories') || '';
 
 	const apiUrl = new URL('/api/games', url.origin);
@@ -19,10 +17,8 @@ export const load: PageServerLoad = async ({ fetch, url }) => {
 	apiUrl.searchParams.set('sortOrder', sortOrder);
 
 	if (filterName) apiUrl.searchParams.set('name', filterName);
-	if (minDuration) apiUrl.searchParams.set('minDuration', minDuration);
-	if (maxDuration) apiUrl.searchParams.set('maxDuration', maxDuration);
-	if (minPlayers) apiUrl.searchParams.set('minPlayers', minPlayers);
-	if (maxPlayers) apiUrl.searchParams.set('maxPlayers', maxPlayers);
+	if (duration) apiUrl.searchParams.set('duration', duration);
+	if (players) apiUrl.searchParams.set('players', players);
 	if (categories) apiUrl.searchParams.set('categories', categories);
 
 	const response = await fetch(apiUrl);
