@@ -47,7 +47,7 @@
 	</a>
 {/snippet}
 
-<div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4 mb-4">
+<div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 sm:gap-2 gap-3 mb-4">
 	{#each games as game (game.bggId)}
 		<div animate:flip={{ duration: 300 }} transition:fly={{ y: 20, duration: 300 }}>
 			{@render gameCard(game)}

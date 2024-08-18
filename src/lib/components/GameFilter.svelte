@@ -127,6 +127,7 @@
 						type="number"
 						id="duration"
 						bind:value={duration}
+						step="5"
 						placeholder="Minutes"
 						class="px-3 py-2 border border-gray-300 rounded-md w-full shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
 					/>
