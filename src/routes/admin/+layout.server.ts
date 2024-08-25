@@ -1,8 +1,7 @@
-// src/routes/admin/+layout.server.ts
 import { redirect } from '@sveltejs/kit';
 import type { LayoutServerLoad } from './$types';
 
-export const load: LayoutServerLoad = async ({ locals, url }) => {
+export const load: LayoutServerLoad = async ({ locals, url, fetch }) => {
 	// Allow access to the login page
 	if (url.pathname === '/admin/login') {
 		return {};
@@ -14,8 +13,12 @@ export const load: LayoutServerLoad = async ({ locals, url }) => {
 		throw redirect(302, '/admin/login');
 	}
 
-	// If authenticated and admin, allow access
+	const response = await fetch('/api/comments?approvedOnly=false');
+	const pendingComments = await response.json();
+	const pendingCommentsCount = pendingComments.length;
+
 	return {
-		user: locals.user
+		user: locals.user,
+		pendingCommentsCount
 	};
 };

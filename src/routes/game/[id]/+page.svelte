@@ -1,12 +1,12 @@
-<!-- src/routes/game/[id]/+page.svelte -->
 <script lang="ts">
-	import type { BoardGame } from '$lib/server/db/schema';
+	import type { BoardGame, Comment } from '$lib/server/db/schema';
 	import { slide } from 'svelte/transition';
 
 	type PageProps = {
 		data: {
 			game: BoardGame;
 			similarGames: BoardGame[];
+			comments: Comment[];
 		};
 	};
 
@@ -16,6 +16,9 @@
 	let isDescriptionExpanded = $state(false);
 	let areCategoriesExpanded = $state(false);
 	let areMechanicsExpanded = $state(false);
+	let comments = $derived(data.comments || []);
+	let newComment = $state({ authorName: '', content: '' });
+	let isSubmitting = $state(false);
 
 	const categories = $derived.by(() => {
 		return cleanArray(game.categories);
@@ -46,6 +49,33 @@
 			.split(',')
 			.map((item) => item.trim().replace(/^"|"$/g, ''));
 	}
+
+	async function submitComment(e: SubmitEvent) {
+		isSubmitting = true;
+		try {
+			const response = await fetch('/api/comments', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					gameId: game.bggId,
+					authorName: newComment.authorName,
+					content: newComment.content
+				})
+			});
+
+			if (response.ok) {
+				alert('Comment submitted for approval!');
+				newComment.authorName = '';
+				newComment.content = '';
+			} else {
+				throw new Error('Failed to submit comment');
+			}
+		} catch (error) {
+			alert('Error submitting comment. Please try again.');
+		} finally {
+			isSubmitting = false;
+		}
+	}
 </script>
 
 <svelte:head>
@@ -73,7 +103,8 @@
 
 		<div class="p-8">
 			<h2 class="text-4xl font-extrabold leading-tight mb-2">{game.name}</h2>
-			<p class="text-xl mb-6">{game.yearPublished ?? 'Year unknown'}</p>
+
+			<p class="text-xl">{game.yearPublished ?? 'Year unknown'}</p>
 
 			<div class="grid grid-cols-2 sm:grid-cols-3 gap-6 text-lg mb-8">
 				<div class="bg-white/20 p-4 rounded-xl">
@@ -166,6 +197,12 @@
 					</div>
 				{/if}
 			</div>
+			<a
+				class="text-xl text-brads-green-dark font-bold hover:text-brads-green transition-colors duration-200 float-right"
+				href={`https://boardgamegeek.com/boardgame/${game.id}`}
+			>
+				BoardGameGeek Page
+			</a>
 		</div>
 
 		{#if game.description}
@@ -187,16 +224,79 @@
 
 		{#if game.isStarred}
 			<div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4" role="alert">
-				<p class="font-bold">Staff Favorite</p>
+				<p class="font-bold">🌟 Staff Favorite</p>
 			</div>
 		{/if}
 
 		{#if game.adminNote}
 			<div class="bg-gray-100 p-4 mb-4 rounded">
-				<h3 class="font-bold text-lg mb-2">Admin Note:</h3>
+				<h3 class="font-bold text-lg mb-2">Staff Note:</h3>
 				<p>{game.adminNote}</p>
 			</div>
 		{/if}
+	</div>
+
+	<div class="mt-12 bg-white rounded-lg shadow-lg p-6">
+		<h2 class="text-3xl font-bold mb-6 text-brads-green-dark">Comments</h2>
+		{#if comments.length > 0}
+			<ul class="space-y-6">
+				{#each comments as comment}
+					<li
+						class="bg-brads-yellow-light/20 p-6 rounded-lg shadow-md border border-brads-green/20"
+					>
+						<div class="flex items-start">
+							<div
+								class="bg-brads-green-dark text-white rounded-full w-12 h-12 flex items-center justify-center text-xl font-bold"
+							>
+								{comment.authorName[0].toUpperCase()}
+							</div>
+							<div class="ml-4 flex-grow">
+								<p class="font-semibold text-lg text-brads-green-dark">{comment.authorName}</p>
+								<p class="text-gray-600 text-sm">{new Date(comment.createdAt).toLocaleString()}</p>
+							</div>
+						</div>
+						<p class="mt-4 text-gray-800 leading-relaxed">{comment.content}</p>
+					</li>
+				{/each}
+			</ul>
+		{:else}
+			<div class="bg-brads-yellow-light/20 p-6 rounded-lg text-center">
+				<p class="text-lg text-brads-green-dark">No comments yet. Be the first to comment!</p>
+			</div>
+		{/if}
+	</div>
+
+	<div class="mt-1 bg-white rounded-lg shadow-lg p-6">
+		<h3 class="text-2xl font-bold mb-6 text-brads-green-dark">Add a Comment</h3>
+		<form onsubmit={(e) => submitComment(e)} class="space-y-6">
+			<div>
+				<label for="authorName" class="block mb-2 text-brads-green-dark font-semibold">Name:</label>
+				<input
+					type="text"
+					id="authorName"
+					bind:value={newComment.authorName}
+					required
+					class="w-full p-3 border border-brads-green/20 rounded-lg focus:ring-2 focus:ring-brads-green focus:border-transparent"
+				/>
+			</div>
+			<div>
+				<label for="content" class="block mb-2 text-brads-green-dark font-semibold">Comment:</label>
+				<textarea
+					id="content"
+					bind:value={newComment.content}
+					required
+					class="w-full p-3 border border-brads-green/20 rounded-lg focus:ring-2 focus:ring-brads-green focus:border-transparent"
+					rows="4"
+				></textarea>
+			</div>
+			<button
+				type="submit"
+				disabled={isSubmitting}
+				class="bg-brads-green-dark text-white px-6 py-3 rounded-lg hover:bg-brads-green transition duration-300 disabled:bg-gray-400 disabled:cursor-not-allowed"
+			>
+				{isSubmitting ? 'Submitting...' : 'Submit Comment'}
+			</button>
+		</form>
 	</div>
 
 	{#if data.similarGames.length > 0}

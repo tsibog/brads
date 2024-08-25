@@ -1,3 +1,4 @@
+import { sql } from 'drizzle-orm';
 import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
 
 export const users = sqliteTable('users', {
@@ -41,9 +42,24 @@ export const boardGames = sqliteTable('board_games', {
 	adminNote: text('admin_note')
 });
 
+export const gameComments = sqliteTable('gameComments', {
+	id: integer('id').primaryKey(),
+	gameId: text('game_id')
+		.notNull()
+		.references(() => boardGames.bggId),
+	authorName: text('author_name').notNull(),
+	content: text('content').notNull(),
+	createdAt: integer('created_at', { mode: 'timestamp' })
+		.notNull()
+		.default(sql`(unixepoch())`),
+	isApproved: integer('is_approved', { mode: 'boolean' }).notNull().default(false)
+});
+
 export type BoardGame = typeof boardGames.$inferSelect;
 export type NewBoardGame = typeof boardGames.$inferInsert;
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type Session = typeof sessions.$inferSelect;
 export type NewSession = typeof sessions.$inferInsert;
+export type Comment = typeof gameComments.$inferSelect;
+export type NewComment = typeof gameComments.$inferInsert;

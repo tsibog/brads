@@ -1,13 +1,17 @@
 import type { PageLoad } from './$types';
 
 export const load: PageLoad = async ({ fetch, params }) => {
-	const response = await fetch(`/api/games?id=${params.id}`);
+	const [gameResponse, commentsResponse] = await Promise.all([
+		fetch(`/api/games?id=${params.id}`),
+		fetch(`/api/comments?gameId=${params.id}&approvedOnly=true`)
+	]);
 
-	if (!response.ok) {
-		throw new Error('Failed to load game data');
+	if (!gameResponse.ok || !commentsResponse.ok) {
+		throw new Error('Failed to load data');
 	}
 
-	const { game, similarGames } = await response.json();
+	const { game, similarGames } = await gameResponse.json();
+	const comments = await commentsResponse.json();
 
-	return { game, similarGames };
+	return { game, similarGames, comments };
 };

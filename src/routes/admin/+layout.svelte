@@ -2,9 +2,11 @@
 	import { page } from '$app/stores';
 	import { enhance } from '$app/forms';
 
-	let { children } = $props();
-
+	let { children, data } = $props();
 	let isLoggingOut = $state(false);
+	const pendingCommentsCount = $derived.by(() => {
+		return data.pendingCommentsCount;
+	});
 
 	function handleLogout() {
 		isLoggingOut = true;
@@ -44,6 +46,25 @@
 								: ''}"
 						>
 							Add New Game
+						</a>
+					</li>
+					<li>
+						<a
+							href="/admin/comments"
+							class="block p-2 rounded hover:bg-brads-green-light {$page.url.pathname.includes(
+								'/comments'
+							)
+								? 'bg-brads-green font-bold'
+								: ''}"
+						>
+							Moderate Comments
+							{#if pendingCommentsCount > 0}
+								<span
+									class="inline-block ml-2 px-2 py-1 text-xs font-bold leading-none text-red-100 bg-red-600 rounded-full"
+								>
+									{pendingCommentsCount}
+								</span>
+							{/if}
 						</a>
 					</li>
 				</ul>
