@@ -199,7 +199,7 @@
 			</div>
 			<a
 				class="text-xl text-brads-green-dark font-bold hover:text-brads-green transition-colors duration-200 float-right"
-				href={`https://boardgamegeek.com/boardgame/${game.id}`}
+				href={`https://boardgamegeek.com/boardgame/${game.bggId}`}
 			>
 				BoardGameGeek Page
 			</a>
