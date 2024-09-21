@@ -20,12 +20,30 @@
 		};
 	} = $props();
 
-	let currentPage = $state(parseInt($page.url.searchParams.get('page') || '1'));
+	const currentPage = $derived.by(() => {
+		return data.meta.page;
+	});
 
 	async function changePage(newPage: number) {
 		const url = new URL($page.url);
 		url.searchParams.set('page', newPage.toString());
-		await goto(url.toString(), { keepFocus: true });
+		await goto(url.toString(), { replaceState: true, keepFocus: true });
+	}
+
+	const pageNumbers = $derived.by(() => generatePageNumbers(currentPage, data.meta.totalPages));
+
+	function generatePageNumbers(current: number, total: number): (number | string)[] {
+		const pages = new Set([1, 2, current - 1, current, current + 1, total - 1, total]);
+		return Array.from(pages)
+			.filter((page) => page > 0 && page <= total)
+			.sort((a, b) => a - b)
+			.reduce<(number | string)[]>((acc, page, index, array) => {
+				if (index > 0 && page - array[index - 1] > 1) {
+					acc.push('...');
+				}
+				acc.push(page);
+				return acc;
+			}, []);
 	}
 </script>
 
@@ -52,20 +70,22 @@
 				>
 					Previous
 				</button>
-				{#each Array(Math.min(5, data.meta.totalPages)) as _, i}
-					{#if i + 1 <= 2 || i + 1 > data.meta.totalPages - 2 || i + 1 === currentPage}
+
+				{#each pageNumbers as pageNum}
+					{#if pageNum === '...'}
+						<span class="px-2">...</span>
+					{:else}
 						<button
-							onclick={() => changePage(i + 1)}
-							class="px-4 py-2 rounded {currentPage === i + 1
+							onclick={() => changePage(Number.parseInt(pageNum))}
+							class="px-4 py-2 rounded {currentPage === pageNum
 								? 'bg-blue-500 text-white'
 								: 'bg-gray-200'}"
 						>
-							{i + 1}
+							{pageNum}
 						</button>
-					{:else if i === 2}
-						<span class="px-2">...</span>
 					{/if}
 				{/each}
+
 				<button
 					onclick={() => changePage(currentPage + 1)}
 					class="px-4 py-2 bg-blue-500 text-white rounded disabled:bg-gray-300"

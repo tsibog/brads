@@ -33,7 +33,10 @@ export const load: PageServerLoad = async ({ fetch, url }) => {
 
 	return {
 		games: data.data,
-		meta: data.meta,
+		meta: {
+			...data.meta,
+			page: parseInt(page)
+		},
 		allCategories
 	};
 };

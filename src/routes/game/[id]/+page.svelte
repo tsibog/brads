@@ -201,7 +201,7 @@
 				class="text-xl text-brads-green-dark font-bold hover:text-brads-green transition-colors duration-200 float-right"
 				href={`https://boardgamegeek.com/boardgame/${game.bggId}`}
 			>
-				BoardGameGeek Page
+				🔗 BoardGameGeek Page
 			</a>
 		</div>
 
@@ -223,15 +223,16 @@
 		{/if}
 
 		{#if game.isStarred}
-			<div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4" role="alert">
-				<p class="font-bold">🌟 Staff Favorite</p>
-			</div>
-		{/if}
-
-		{#if game.adminNote}
-			<div class="bg-gray-100 p-4 mb-4 rounded">
-				<h3 class="font-bold text-lg mb-2">Staff Note:</h3>
-				<p>{game.adminNote}</p>
+			<div
+				class="bg-brads-yellow-light border-l-4 border-yellow-500 text-yellow-700 p-4"
+				role="alert"
+			>
+				<p class="font-bold">🌟 Staff favorite!</p>
+				{#if game.adminNote}
+					<div class="bg-brads-yellow-light text-brads-green-dark">
+						🗣️ <span class="italic">{game.adminNote}</span>
+					</div>
+				{/if}
 			</div>
 		{/if}
 	</div>
