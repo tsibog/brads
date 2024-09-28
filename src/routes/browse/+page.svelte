@@ -4,6 +4,7 @@
 	import { goto } from '$app/navigation';
 	import type { BoardGame } from '$lib/server/db/schema';
 	import GameFilter from '$lib/components/GameFilter.svelte';
+	import { browser } from '$app/environment';
 
 	const {
 		data
@@ -24,26 +25,48 @@
 		return data.meta.page;
 	});
 
+	const isMobile = $derived.by(() => {
+		if (browser) {
+			return window.innerWidth < 640;
+		}
+
+		return false;
+	});
+
+	const pageNumbers = $derived.by(() => {
+		return generatePageNumbers(currentPage, data.meta.totalPages, isMobile);
+	});
+
 	async function changePage(newPage: number) {
 		const url = new URL($page.url);
 		url.searchParams.set('page', newPage.toString());
 		await goto(url.toString(), { replaceState: true, keepFocus: true });
 	}
 
-	const pageNumbers = $derived.by(() => generatePageNumbers(currentPage, data.meta.totalPages));
+	function generatePageNumbers(
+		current: number,
+		total: number,
+		isMobile: boolean
+	): (number | string)[] {
+		const delta = isMobile ? 1 : 2;
+		const range = [];
+		for (let i = Math.max(2, current - delta); i <= Math.min(total - 1, current + delta); i++) {
+			range.push(i);
+		}
 
-	function generatePageNumbers(current: number, total: number): (number | string)[] {
-		const pages = new Set([1, 2, current - 1, current, current + 1, total - 1, total]);
-		return Array.from(pages)
-			.filter((page) => page > 0 && page <= total)
-			.sort((a, b) => a - b)
-			.reduce<(number | string)[]>((acc, page, index, array) => {
-				if (index > 0 && page - array[index - 1] > 1) {
-					acc.push('...');
-				}
-				acc.push(page);
-				return acc;
-			}, []);
+		if (current - delta > 2) {
+			range.unshift('...');
+		}
+		if (current + delta < total - 1) {
+			range.push('...');
+		}
+
+		range.unshift(1);
+		if (total > 1) {
+			range.push(total);
+		}
+
+		return range;
 	}
 </script>
 
@@ -51,7 +74,26 @@
 	<title>Brads Spelcafé</title>
 </svelte:head>
 
-<main class="container mx-auto px-4 py-8">
+{#snippet pageButton(
+	onClick: () => Promise<void>,
+	disabled: boolean,
+	label: string | number,
+	current: boolean = false
+)}
+	<button
+		onclick={onClick}
+		class="w-12 h-12 aspect-square text-sm rounded {current
+			? 'bg-blue-500 text-white'
+			: disabled
+				? 'bg-gray-300 text-gray-500'
+				: 'bg-gray-200 text-gray-700 hover:bg-gray-300'}"
+		{disabled}
+	>
+		{label}
+	</button>
+{/snippet}
+
+<main class="container mx-auto px-2 sm:px-4 py-8">
 	<h1 class="text-3xl font-londrina text-brads-green-dark mb-6">Brads Spelcafé Game Catalogue</h1>
 
 	<div class="flex flex-col md:flex-row gap-8">
@@ -62,38 +104,23 @@
 		<div class="w-full md:w-3/4">
 			<BoardGameGrid games={data.games} />
 
-			<div class="flex justify-center items-center space-x-2 mt-8">
-				<button
-					onclick={() => changePage(currentPage - 1)}
-					class="px-4 py-2 bg-blue-500 text-white rounded disabled:bg-gray-300"
-					disabled={currentPage === 1}
-				>
-					Previous
-				</button>
-
+			<nav
+				class="flex justify-center items-center flex-wrap gap-1 mt-8 font-londrina"
+				aria-label="Pagination"
+			>
 				{#each pageNumbers as pageNum}
 					{#if pageNum === '...'}
-						<span class="px-2">...</span>
+						<span class="w-12 h-12 aspect-square flex items-center justify-center">...</span>
 					{:else}
-						<button
-							onclick={() => changePage(Number.parseInt(pageNum))}
-							class="px-4 py-2 rounded {currentPage === pageNum
-								? 'bg-blue-500 text-white'
-								: 'bg-gray-200'}"
-						>
-							{pageNum}
-						</button>
+						{@render pageButton(
+							() => changePage(Number(pageNum)),
+							false,
+							pageNum,
+							currentPage === pageNum
+						)}
 					{/if}
 				{/each}
-
-				<button
-					onclick={() => changePage(currentPage + 1)}
-					class="px-4 py-2 bg-blue-500 text-white rounded disabled:bg-gray-300"
-					disabled={currentPage === data.meta.totalPages}
-				>
-					Next
-				</button>
-			</div>
+			</nav>
 		</div>
 	</div>
 </main>
