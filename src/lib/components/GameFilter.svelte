@@ -93,6 +93,7 @@
 			class="text-brads-green-dark focus:outline-none"
 			aria-expanded={isFilterExpanded}
 			aria-controls="filter-content"
+			aria-label={isFilterExpanded ? "Collapse filters" : "Expand filters"}
 		>
 			<svg
 				xmlns="http://www.w3.org/2000/svg"

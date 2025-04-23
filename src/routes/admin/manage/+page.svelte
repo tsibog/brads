@@ -86,7 +86,7 @@
 			>
 				Grid
 				{#if isGridView}
-					<span class="absolute inset-0 bg-brads-green-dark rounded-full -z-10" />
+					<span class="absolute inset-0 bg-brads-green-dark rounded-full -z-10"></span>
 				{/if}
 			</button>
 			<button
@@ -99,7 +99,7 @@
 			>
 				Table
 				{#if !isGridView}
-					<span class="absolute inset-0 bg-brads-green-dark rounded-full -z-10" />
+					<span class="absolute inset-0 bg-brads-green-dark rounded-full -z-10"></span>
 				{/if}
 			</button>
 		</div>

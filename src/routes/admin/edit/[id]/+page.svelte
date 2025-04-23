@@ -67,7 +67,7 @@
 <div class="max-w-2xl mx-auto mt-8 p-6 bg-white rounded-lg shadow-md">
 	<h1 class="text-2xl font-bold mb-6">Edit Game: {game.name}</h1>
 
-	<form on:submit|preventDefault={handleSubmit} class="space-y-4">
+	<form onsubmit={(e) => { e.preventDefault(); handleSubmit(); }} class="space-y-4">
 		<div>
 			<label class="block mb-2 font-bold" for="isStarred">
 				<input type="checkbox" id="isStarred" bind:checked={isStarred} class="mr-2" />
@@ -90,7 +90,7 @@
 			</button>
 			<button
 				type="button"
-				on:click={openDeleteModal}
+				onclick={openDeleteModal}
 				class="bg-white text-red-500 border border-red-500 px-4 py-2 rounded hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-300"
 			>
 				Delete Game
