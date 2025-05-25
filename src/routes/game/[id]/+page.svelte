@@ -44,10 +44,29 @@
 
 	function cleanArray(str: string | null): string[] {
 		if (typeof str !== 'string') return [];
-		return str
-			.replace(/^\[|\]$/g, '')
-			.split(',')
-			.map((item) => item.trim().replace(/^"|"$/g, ''));
+		try {
+			// Check for redundant wrapping quotes and remove them
+			if (str.startsWith('"') && str.endsWith('"')) {
+				str = str.slice(1, -1);
+			}
+			// Attempt to parse as JSON
+			const parsed = JSON.parse(str);
+			if (Array.isArray(parsed)) {
+				return parsed.map((item) => cleanValue(item.trim()));
+			}
+		} catch (e) {
+			// Fallback to splitting by commas if JSON parsing fails
+			return str
+				.replace(/^[\[\]]/g, '') // Remove surrounding brackets
+				.split(',')
+				.map((item) => cleanValue(item.trim().replace(/^"|"$/g, ''))); // Remove quotes
+		}
+		return [];
+	}
+
+	function cleanValue(value: string): string {
+		// Remove any non-letter characters
+		return value.replace(/[^a-zA-Z\s]/g, '');
 	}
 
 	async function submitComment(e: SubmitEvent) {
@@ -88,7 +107,7 @@
 	>
 
 	<div
-		class="bg-gradient-to-br from-brads-green-dark to-brads-yellow-light shadow-2xl rounded-3xl overflow-hidden text-white"
+		class="bg-gradient-to-br from-brads-green-dark to-brads-yellow-light shadow-2xl rounded-3xl overflow-hidden text-black"
 	>
 		<div class="relative h-96">
 			{#if game.image}
@@ -145,11 +164,12 @@
 						</button>
 						<div class="flex flex-wrap gap-2">
 							{#each categories.slice(0, areCategoriesExpanded ? undefined : 3) as category}
-								<span class="bg-teal-700 px-3 py-1 rounded-full text-sm">{category}</span>
+								<span class="bg-teal-700 px-3 py-1 rounded-full text-sm text-white">{category}</span
+								>
 							{/each}
 							{#if !areCategoriesExpanded && categories.length > 3}
 								<button
-									class="bg-teal-700 px-3 py-1 rounded-full text-sm cursor-pointer"
+									class="bg-teal-700 px-3 py-1 rounded-full text-sm cursor-pointer text-white"
 									onclick={toggleCategories}>+{categories.length - 3} more</button
 								>
 							{/if}
@@ -176,7 +196,7 @@
 								></path>
 							</svg>
 						</button>
-						<div class="flex flex-wrap gap-2">
+						<div class="flex flex-wrap gap-2 text-white">
 							{#each mechanics.slice(0, areMechanicsExpanded ? undefined : 3) as mechanic}
 								<span class="bg-blue-700 px-3 py-1 rounded-full text-sm">{mechanic}</span>
 							{/each}

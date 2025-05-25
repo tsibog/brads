@@ -50,6 +50,7 @@
 	"dependencies": {
 		"@libsql/client": "^0.15.4",
 		"@lucia-auth/adapter-drizzle": "^1.1.0",
+		"@tailwindcss/vite": "^4.1.4",
 		"@xmldom/xmldom": "^0.9.8",
 		"better-sqlite3": "^11.9.1",
 		"dotenv": "^16.5.0",

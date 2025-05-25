@@ -14,5 +14,16 @@ export default {
 			}
 		}
 	},
+	// Add Tailwind CSS v4 specific configuration
+	future: {
+		respectDefaultRingColorOpacity: true,
+	},
+	// Enable v3-like behavior for styling defaults
+	cssVariables: {
+		// Make sure CSS variables get properly processed
+		extend: {
+			// Add any variables you need to extend
+		}
+	},
 	plugins: []
 };

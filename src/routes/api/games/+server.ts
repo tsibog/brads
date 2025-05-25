@@ -1,43 +1,59 @@
-import { json, type RequestHandler } from '@sveltejs/kit';
-import { eq, asc, desc, sql, and, or, like } from 'drizzle-orm';
-import { db } from '$lib/server/db';
-import { boardGames } from '$lib/server/db/schema';
+import { json, type RequestHandler } from "@sveltejs/kit";
+import { and, asc, desc, eq, like, or, sql } from "drizzle-orm";
+import { db } from "$lib/server/db";
+import { boardGames } from "$lib/server/db/schema";
 
 export const GET: RequestHandler = async ({ url }) => {
-	const id = url.searchParams.get('id');
+	const id = url.searchParams.get("id");
 
 	if (id) {
 		// Get a specific game by ID (unchanged)
-		const game = await db.select().from(boardGames).where(eq(boardGames.bggId, id));
+		const game = await db.select().from(boardGames).where(
+			eq(boardGames.bggId, id),
+		);
 		if (game.length === 0) {
-			return json({ error: 'Game not found' }, { status: 404 });
+			return json({ error: "Game not found" }, { status: 404 });
 		}
 
 		// Parse the categories of the current game
-		const gameCategories = JSON.parse(game[0].categories || '[]');
+		let gameCategories;
+		try {
+			gameCategories = JSON.parse(game[0].categories || "[]");
+			if (!Array.isArray(gameCategories)) {
+				gameCategories = [];
+			}
+		} catch (error) {
+			gameCategories = [];
+		}
 		// Construct the LIKE conditions for each category
 		const categoryConditions = gameCategories.map(
-			(category: string) => sql`${boardGames.categories} LIKE ${`%${category}%`}`
+			(category: string) =>
+				sql`${boardGames.categories} LIKE ${`%${category}%`}`,
 		);
 
 		// Fetch similar games
 		const similarGames = await db
 			.select()
 			.from(boardGames)
-			.where(and(or(...categoryConditions), sql`${boardGames.bggId} != ${id}`))
+			.where(
+				and(
+					or(...categoryConditions),
+					sql`${boardGames.bggId} != ${id}`,
+				),
+			)
 			.limit(4);
 
 		return json({ game: game[0], similarGames });
 	} else {
 		// Get all games with pagination, sorting, and filtering
-		const page = parseInt(url.searchParams.get('page') || '1');
-		const limit = parseInt(url.searchParams.get('limit') || '20');
-		const sortBy = url.searchParams.get('sortBy') || 'name';
-		const sortOrder = url.searchParams.get('sortOrder') || 'asc';
-		const filterName = url.searchParams.get('name');
-		const duration = url.searchParams.get('duration');
-		const players = url.searchParams.get('players');
-		const categories = url.searchParams.get('categories');
+		const page = parseInt(url.searchParams.get("page") || "1");
+		const limit = parseInt(url.searchParams.get("limit") || "20");
+		const sortBy = url.searchParams.get("sortBy") || "name";
+		const sortOrder = url.searchParams.get("sortOrder") || "asc";
+		const filterName = url.searchParams.get("name");
+		const duration = url.searchParams.get("duration");
+		const players = url.searchParams.get("players");
+		const categories = url.searchParams.get("categories");
 
 		let query = db.select().from(boardGames);
 		const whereConditions = [];
@@ -47,18 +63,20 @@ export const GET: RequestHandler = async ({ url }) => {
 			whereConditions.push(like(boardGames.name, `%${filterName}%`));
 		}
 		if (duration) {
-			whereConditions.push(sql`${boardGames.playingTime} <= ${parseInt(duration)}`);
+			whereConditions.push(
+				sql`${boardGames.playingTime} <= ${parseInt(duration)}`,
+			);
 		}
 		if (players) {
 			const playersNum = parseInt(players);
 			whereConditions.push(
-				sql`${boardGames.minPlayers} <= ${playersNum} AND ${boardGames.maxPlayers} >= ${playersNum}`
+				sql`${boardGames.minPlayers} <= ${playersNum} AND ${boardGames.maxPlayers} >= ${playersNum}`,
 			);
 		}
 		if (categories) {
-			const categoryList = categories.split(',');
+			const categoryList = categories.split(",");
 			const categoryConditions = categoryList.map(
-				(cat) => sql`${boardGames.categories} LIKE ${'%' + cat + '%'}`
+				(cat) => sql`${boardGames.categories} LIKE ${"%" + cat + "%"}`,
 			);
 			whereConditions.push(or(...categoryConditions));
 		}
@@ -70,9 +88,9 @@ export const GET: RequestHandler = async ({ url }) => {
 		// Apply sorting
 		if (sortBy in boardGames) {
 			query = query.orderBy(
-				sortOrder === 'desc'
+				sortOrder === "desc"
 					? desc(boardGames[sortBy as keyof typeof boardGames])
-					: asc(boardGames[sortBy as keyof typeof boardGames])
+					: asc(boardGames[sortBy as keyof typeof boardGames]),
 			);
 		}
 
@@ -98,12 +116,14 @@ export const GET: RequestHandler = async ({ url }) => {
 					totalCount,
 					page,
 					limit,
-					totalPages: Math.ceil(totalCount / limit)
-				}
+					totalPages: Math.ceil(totalCount / limit),
+				},
 			});
 		} catch (error) {
-			console.error('Error executing query:', error);
-			return json({ error: 'An error occurred while fetching games' }, { status: 500 });
+			console.error("Error executing query:", error);
+			return json({ error: "An error occurred while fetching games" }, {
+				status: 500,
+			});
 		}
 	}
 };
@@ -133,14 +153,16 @@ export const POST: RequestHandler = async ({ request }) => {
 				artists: JSON.stringify(gameData.artists),
 				publishers: JSON.stringify(gameData.publishers),
 				isStarred: gameData.starred || false,
-				adminNote: gameData.adminNote || null
+				adminNote: gameData.adminNote || null,
 			})
 			.returning();
 
 		return json(newGame[0], { status: 201 });
 	} catch (error) {
-		console.error('Error inserting game:', error);
-		return json({ error: 'Failed to insert game', reason: error }, { status: 500 });
+		console.error("Error inserting game:", error);
+		return json({ error: "Failed to insert game", reason: error }, {
+			status: 500,
+		});
 	}
 };
 
@@ -148,7 +170,9 @@ export const PUT: RequestHandler = async ({ request }) => {
 	const gameData = await request.json();
 
 	if (!gameData.bggId) {
-		return json({ error: 'BGG ID is required for updating' }, { status: 400 });
+		return json({ error: "BGG ID is required for updating" }, {
+			status: 400,
+		});
 	}
 
 	try {
@@ -172,39 +196,46 @@ export const PUT: RequestHandler = async ({ request }) => {
 				artists: JSON.stringify(gameData.artists),
 				publishers: JSON.stringify(gameData.publishers),
 				isStarred: gameData.starred || false,
-				adminNote: gameData.adminNote || null
+				adminNote: gameData.adminNote || null,
 			})
 			.where(eq(boardGames.bggId, gameData.bggId))
 			.returning();
 
 		if (updatedGame.length === 0) {
-			return json({ error: 'Game not found' }, { status: 404 });
+			return json({ error: "Game not found" }, { status: 404 });
 		}
 
 		return json(updatedGame[0]);
 	} catch (error) {
-		console.error('Error updating game:', error);
-		return json({ error: 'Failed to update game' }, { status: 500 });
+		console.error("Error updating game:", error);
+		return json({ error: "Failed to update game" }, { status: 500 });
 	}
 };
 
 export const DELETE: RequestHandler = async ({ url }) => {
-	const id = url.searchParams.get('id');
+	const id = url.searchParams.get("id");
 
 	if (!id) {
-		return json({ error: 'ID is required for deleting a game' }, { status: 400 });
+		return json({ error: "ID is required for deleting a game" }, {
+			status: 400,
+		});
 	}
 
 	try {
-		const deletedGame = await db.delete(boardGames).where(eq(boardGames.bggId, id)).returning();
+		const deletedGame = await db.delete(boardGames).where(
+			eq(boardGames.bggId, id),
+		).returning();
 
 		if (deletedGame.length === 0) {
-			return json({ error: 'Game not found' }, { status: 404 });
+			return json({ error: "Game not found" }, { status: 404 });
 		}
 
-		return json({ message: 'Game deleted successfully', deletedGame: deletedGame[0] });
+		return json({
+			message: "Game deleted successfully",
+			deletedGame: deletedGame[0],
+		});
 	} catch (error) {
-		console.error('Error deleting game:', error);
-		return json({ error: 'Failed to delete game' }, { status: 500 });
+		console.error("Error deleting game:", error);
+		return json({ error: "Failed to delete game" }, { status: 500 });
 	}
 };

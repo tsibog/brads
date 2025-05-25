@@ -82,7 +82,7 @@
 )}
 	<button
 		onclick={onClick}
-		class="w-12 h-12 aspect-square text-sm rounded {current
+		class="w-12 h-12 aspect-square text-sm rounded-sm {current
 			? 'bg-blue-500 text-white'
 			: disabled
 				? 'bg-gray-300 text-gray-500'
