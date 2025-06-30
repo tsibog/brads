@@ -1,5 +1,5 @@
 import { json, type RequestHandler } from "@sveltejs/kit";
-import { and, asc, desc, eq, like, or, sql } from "drizzle-orm";
+import { and, type AnyColumn, asc, desc, eq, like, or, sql } from "drizzle-orm";
 import { db } from "$lib/server/db";
 import { boardGames } from "$lib/server/db/schema";
 
@@ -53,7 +53,7 @@ export const GET: RequestHandler = async ({ url }) => {
 		const filterName = url.searchParams.get("name");
 		const duration = url.searchParams.get("duration");
 		const players = url.searchParams.get("players");
-		const categories = url.searchParams.get("categories");
+		const mechanics = url.searchParams.get("mechanics");
 
 		let query = db.select().from(boardGames);
 		const whereConditions = [];
@@ -73,32 +73,44 @@ export const GET: RequestHandler = async ({ url }) => {
 				sql`${boardGames.minPlayers} <= ${playersNum} AND ${boardGames.maxPlayers} >= ${playersNum}`,
 			);
 		}
-		if (categories) {
-			const categoryList = categories.split(",");
-			const categoryConditions = categoryList.map(
-				(cat) => sql`${boardGames.categories} LIKE ${"%" + cat + "%"}`,
+		if (mechanics) {
+			const mechanicList = mechanics.split(",");
+			const mechanicConditions = mechanicList.map(
+				(mech) => sql`${boardGames.mechanics} LIKE ${"%" + mech + "%"}`,
 			);
-			whereConditions.push(or(...categoryConditions));
+			whereConditions.push(or(...mechanicConditions));
 		}
 
 		if (whereConditions.length > 0) {
+			// @ts-ignore
 			query = query.where(and(...whereConditions));
 		}
 
 		// Apply sorting
-		if (sortBy in boardGames) {
+		const sortableColumns: Record<string, AnyColumn> = {
+			id: boardGames.id,
+			name: boardGames.name,
+			yearPublished: boardGames.yearPublished,
+			playingTime: boardGames.playingTime,
+			minPlayers: boardGames.minPlayers,
+			adminNote: boardGames.adminNote,
+		};
+		if (sortBy && sortableColumns[sortBy]) {
+			// @ts-ignore
 			query = query.orderBy(
 				sortOrder === "desc"
-					? desc(boardGames[sortBy as keyof typeof boardGames])
-					: asc(boardGames[sortBy as keyof typeof boardGames]),
+					? desc(sortableColumns[sortBy])
+					: asc(sortableColumns[sortBy]),
 			);
 		}
 
 		// Apply pagination
 		const offset = (page - 1) * limit;
+		// @ts-ignore
 		query = query.limit(limit).offset(offset);
 
 		try {
+			// @ts-ignore
 			const games = await query;
 
 			// Get total count for pagination
