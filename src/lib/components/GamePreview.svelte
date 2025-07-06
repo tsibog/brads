@@ -7,7 +7,7 @@
 		<img src={game.image} alt={game.name} class="h-full w-full object-cover" />
 	</div>
 	<div class="p-6">
-		<h2 class="text-2xl font-bold text-gray-800 mb-2">{game.name}</h2>
+		<h2 class="text-2xl text-gray-800 mb-2">{game.name}</h2>
 		<div class="space-y-2">
 			<p class="text-gray-600">
 				<span class="font-semibold">Year:</span>

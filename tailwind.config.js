@@ -1,19 +1,16 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-	content: ['./src/**/*.{html,js,svelte,ts}'],
+	content: ["./src/**/*.{html,js,svelte,ts}"],
 	theme: {
 		extend: {
-			fontFamily: {
-				londrina: ['"Londrina Solid"', 'cursive']
-			}
-		}
+			// Font families are now configured in CSS using @theme
+		},
 	},
 
 	future: {
 		respectDefaultRingColorOpacity: true,
 	},
 
-	cssVariables: {
-	},
-	plugins: []
+	cssVariables: {},
+	plugins: [],
 };

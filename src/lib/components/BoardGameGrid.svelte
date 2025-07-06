@@ -32,7 +32,7 @@
 			</div>
 		{/if}
 		<div class="absolute bottom-0 left-0 p-4 text-white">
-			<h5 class="mb-1 text-base sm:text-lg md:text-xl font-bold tracking-tight line-clamp-2">
+			<h5 class="mb-1 text-base sm:text-lg md:text-xl tracking-tight line-clamp-2">
 				{game.name}
 			</h5>
 			<p class="text-xs sm:text-sm flex flex-col">
