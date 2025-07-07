@@ -26,7 +26,7 @@
 		$page.url.searchParams.get('mechanics')?.split(',').filter(Boolean) || []
 	);
 
-	let filteredMechanics = $derived(
+	const filteredMechanics = $derived(
 		allMechanics
 			.filter((mechanic) =>
 				mechanic.toLowerCase().includes(mechanicSearch.toLowerCase())
@@ -40,10 +40,15 @@
 			})
 	);
 
+	const isLatestFirst = $derived.by(() => {
+		const sortBy = $page.url.searchParams.get('sortBy');
+		const sortOrder = $page.url.searchParams.get('sortOrder');
+		return sortBy === 'id' && sortOrder === 'desc';
+	});
+
 	const debouncedUpdateFilters = debounce(updateFilters, 300);
 
 	$effect(() => {
-		console.log(name, duration, players, selectedMechanics);
 		debouncedUpdateFilters();
 	});
 
@@ -99,6 +104,22 @@
 	function toggleFilterExpansion() {
 		isFilterExpanded = !isFilterExpanded;
 	}
+
+	async function toggleSortOrder() {
+		const url = new URL($page.url);
+		
+		if (isLatestFirst) {
+			// Switch to alphabetic (name ASC)
+			url.searchParams.delete('sortBy');
+			url.searchParams.delete('sortOrder');
+		} else {
+			// Switch to latest first (id DESC)
+			url.searchParams.set('sortBy', 'id');
+			url.searchParams.set('sortOrder', 'desc');
+		}
+		
+		await goto(url.toString(), { replaceState: true, keepFocus: true });
+	}
 </script>
 
 <div class="bg-white shadow-md rounded-lg p-4 md:p-6">
@@ -131,7 +152,7 @@
 
 	<!-- Desktop title and counter -->
 	<div class="hidden md:block mb-6">
-		<div class="flex justify-between items-center">
+		<div class="flex justify-between flex-col">
 			<h2 class="text-xl font-bold">Search & Filter</h2>
 			<p class="text-sm text-gray-600">
 				Showing {currentCount} of {totalCount} games
@@ -179,7 +200,7 @@
 
 			<div class="relative">
 				<h3 class="text-sm font-medium text-gray-700 mb-2">Mechanics</h3>
-				<div class="flex flex-wrap gap-2 mb-2">
+				<div class="flex flex-wrap gap-2">
 					{#each selectedMechanics as mechanic}
 						<span class="bg-indigo-100 text-indigo-800 text-xs font-medium px-2.5 py-0.5 rounded">
 							{mechanic}
@@ -217,6 +238,22 @@
 						{/each}
 					</div>
 				{/if}
+				<button
+				onclick={toggleSortOrder}
+				class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 transition-colors mt-2"
+			>
+				{#if isLatestFirst}
+					<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+					</svg>
+					Latest Additions
+				{:else}
+					<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+					</svg>
+					Alphabetic
+				{/if}
+			</button>
 			</div>
 
 			<div>

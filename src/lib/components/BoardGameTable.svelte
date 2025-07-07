@@ -36,7 +36,7 @@
 </script>
 
 <div class="overflow-x-auto shadow-md rounded-lg">
-	<table class="w-full text-sm text-left text-gray-700">
+	<table class="w-full text-lg text-left text-gray-700">
 		<thead class="text-xs text-gray-800 uppercase bg-brads-yellow-light">
 			<tr>
 				{#each columns as column}
@@ -70,13 +70,14 @@
 					<td class="px-6 py-4">{game.yearPublished}</td>
 					<td class="px-6 py-4">
 						{#if game.adminNote}
-							<span
-								class="bg-yellow-100 text-yellow-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded"
+							<a
+							href={`/admin/edit/${game.bggId}`}
+								class="bg-yellow-100 text-yellow-800 font-medium mr-2 px-2.5 py-0.5 rounded"
 							>
 								{game.adminNote}
-							</span>
+							</a>
 						{:else}
-							-
+							<a href={`/admin/edit/${game.bggId}`} class="text-blue-500">Add note</a>
 						{/if}
 					</td>
 				</tr>

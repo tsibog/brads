@@ -3,10 +3,10 @@
 	import { fly } from 'svelte/transition';
 	import type { BoardGame } from '$lib/server/db/schema';
 
-	let { games }: { games: BoardGame[] } = $props();
+	const { games }: { games: BoardGame[] } = $props();
 </script>
 
-{#snippet gameCard(game)}
+{#snippet gameCard(game: BoardGame)}
 	<div class="relative block overflow-hidden rounded-lg shadow-lg aspect-[3/4] group">
 		<img
 			class="w-full h-full object-cover rounded-lg transition-transform duration-300 group-hover:scale-105"
@@ -38,7 +38,7 @@
 			</div>
 		{/if}
 		<div class="absolute bottom-0 left-0 p-4 text-white">
-			<h5 class="mb-1 text-xl font-bold tracking-tight">
+			<h5 class="mb-1 text-xl tracking-tight">
 				{game.name}
 			</h5>
 			<p class="text-sm flex flex-col">

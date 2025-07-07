@@ -102,7 +102,7 @@
 </svelte:head>
 
 <main class="container mx-auto px-4 py-8 max-w-6xl">
-	<a href="/" class="text-teal-500 hover:text-teal-700 mb-4 inline-block font-bold"
+	<a href="/" class="text-teal-500 hover:text-teal-700 mb-4 inline-block text-3xl"
 		>&larr; Back to Game List</a
 	>
 
@@ -121,23 +121,23 @@
 		</div>
 
 		<div class="p-8">
-			<h2 class="text-4xl font-extrabold leading-tight mb-2">{game.name}</h2>
+			<h2 class="text-4xl leading-tight mb-2">{game.name}</h2>
 
 			<p class="text-xl">{game.yearPublished ?? 'Year unknown'}</p>
 
 			<div class="grid grid-cols-2 sm:grid-cols-3 gap-6 text-lg mb-8">
 				<div class="bg-white/20 p-4 rounded-xl">
-					<p class="font-semibold text-2xl">
+					<p class="  text-2xl">
 						{game.minPlayers ?? '?'} - {game.maxPlayers ?? '?'}
 					</p>
 					<p class="text-sm uppercase tracking-wide">Players</p>
 				</div>
 				<div class="bg-white/20 p-4 rounded-xl">
-					<p class="font-semibold text-2xl">{game.playingTime ?? '?'} min</p>
+					<p class="  text-2xl">{game.playingTime ?? '?'} min</p>
 					<p class="text-sm uppercase tracking-wide">Play Time</p>
 				</div>
 				<div class="bg-white/20 p-4 rounded-xl">
-					<p class="font-semibold text-2xl">{game.age ? `${game.age}+` : 'Any'}</p>
+					<p class="  text-2xl">{game.age ? `${game.age}+` : 'Any'}</p>
 					<p class="text-sm uppercase tracking-wide">Age</p>
 				</div>
 			</div>
@@ -145,10 +145,10 @@
 			<div class="space-y-6">
 				{#if categories && categories.length > 0}
 					<div>
-						<button onclick={toggleCategories} class="text-xl font-semibold mb-2 flex items-center">
+						<button onclick={toggleCategories} class={["text-xl", "mb-2", "flex", "items-center"]}>
 							Categories
 							<svg
-								class="w-4 h-4 ml-2"
+								class={["w-4", "h-4", "ml-2", categories.length < 4 ? "hidden" : ""]}
 								fill="none"
 								stroke="currentColor"
 								viewBox="0 0 24 24"
@@ -179,7 +179,7 @@
 
 				{#if mechanics && mechanics.length > 0}
 					<div>
-						<button onclick={toggleMechanics} class="text-xl font-semibold mb-2 flex items-center">
+						<button onclick={toggleMechanics} class="text-xl   mb-2 flex items-center">
 							Mechanics
 							<svg
 								class="w-4 h-4 ml-2"
@@ -212,13 +212,13 @@
 
 				{#if designers && designers.length > 0}
 					<div>
-						<h2 class="text-xl font-semibold mb-2">Designers</h2>
+						<h2 class="text-xl   mb-2">Designers</h2>
 						<div>{designers}</div>
 					</div>
 				{/if}
 			</div>
 			<a
-				class="text-xl text-brads-green-dark font-bold hover:text-brads-green transition-colors duration-200 float-right"
+				class="text-xl text-brads-green-dark   hover:text-brads-green transition-colors duration-200 float-right"
 				href={`https://boardgamegeek.com/boardgame/${game.bggId}`}
 				target="_blank"
 			>
@@ -230,7 +230,7 @@
 			<div class="px-8 py-6 bg-white/10">
 				<button
 					onclick={toggleDescription}
-					class="text-white bg-teal-600 hover:bg-teal-700 font-bold py-2 px-4 rounded-full focus:outline-none focus:shadow-outline transition duration-300"
+					class="text-white bg-teal-600 hover:bg-teal-700   py-2 px-4 rounded-full focus:outline-none focus:shadow-outline transition duration-300"
 				>
 					{isDescriptionExpanded ? 'Hide Description' : 'Show Description'}
 				</button>
@@ -248,7 +248,7 @@
 				class="bg-brads-yellow-light border-l-4 border-yellow-500 text-yellow-700 p-4"
 				role="alert"
 			>
-				<p class="font-bold">🌟 Staff favorite!</p>
+				<p class=" ">🌟 Staff favorite!</p>
 				{#if game.adminNote}
 					<div class="bg-brads-yellow-light text-brads-green-dark">
 						🗣️ <span class="italic">{game.adminNote}</span>
@@ -259,7 +259,7 @@
 	</div>
 
 	<div class="mt-12 bg-white rounded-lg shadow-lg p-6">
-		<h2 class="text-3xl font-bold mb-6 text-brads-green-dark">Comments</h2>
+		<h2 class="text-3xl   mb-6 text-brads-green-dark">Comments</h2>
 		{#if comments.length > 0}
 			<ul class="space-y-6">
 				{#each comments as comment}
@@ -268,12 +268,12 @@
 					>
 						<div class="flex items-start">
 							<div
-								class="bg-brads-green-dark text-white rounded-full w-12 h-12 flex items-center justify-center text-xl font-bold"
+								class="bg-brads-green-dark text-white rounded-full w-12 h-12 flex items-center justify-center text-xl  "
 							>
 								{comment.authorName[0].toUpperCase()}
 							</div>
 							<div class="ml-4 flex-grow">
-								<p class="font-semibold text-lg text-brads-green-dark">{comment.authorName}</p>
+								<p class="  text-lg text-brads-green-dark">{comment.authorName}</p>
 								<p class="text-gray-600 text-sm">{new Date(comment.createdAt).toLocaleString()}</p>
 							</div>
 						</div>
@@ -289,10 +289,10 @@
 	</div>
 
 	<div class="mt-1 bg-white rounded-lg shadow-lg p-6">
-		<h3 class="text-2xl font-bold mb-6 text-brads-green-dark">Add a Comment</h3>
+		<h3 class="text-2xl   mb-6 text-brads-green-dark">Add a Comment</h3>
 		<form onsubmit={(e) => submitComment(e)} class="space-y-6">
 			<div>
-				<label for="authorName" class="block mb-2 text-brads-green-dark font-semibold">Name:</label>
+				<label for="authorName" class="block mb-2 text-brads-green-dark  ">Name:</label>
 				<input
 					type="text"
 					id="authorName"
@@ -302,7 +302,7 @@
 				/>
 			</div>
 			<div>
-				<label for="content" class="block mb-2 text-brads-green-dark font-semibold">Comment:</label>
+				<label for="content" class="block mb-2 text-brads-green-dark  ">Comment:</label>
 				<textarea
 					id="content"
 					bind:value={newComment.content}
@@ -323,7 +323,7 @@
 
 	{#if data.similarGames.length > 0}
 		<div class="mt-8">
-			<h2 class="text-2xl font-bold mb-4">Similar Games</h2>
+			<h2 class="text-2xl   mb-4">Similar Games</h2>
 			<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
 				{#each data.similarGames as similarGame}
 					<a href={`/game/${similarGame.bggId}`} class="block">
@@ -334,7 +334,7 @@
 								class="w-full h-48 object-cover"
 							/>
 							<div class="p-4">
-								<h3 class="font-bold text-lg mb-2">{similarGame.name}</h3>
+								<h3 class="  text-lg mb-2">{similarGame.name}</h3>
 								<p class="text-sm text-gray-600">
 									{similarGame.minPlayers}-{similarGame.maxPlayers} players
 								</p>
