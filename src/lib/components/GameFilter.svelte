@@ -240,7 +240,7 @@
 				{/if}
 				<button
 				onclick={toggleSortOrder}
-				class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 transition-colors mt-2"
+				class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 transition-colors mt-2 hover:cursor-pointer"
 			>
 				{#if isLatestFirst}
 					<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -260,7 +260,8 @@
 				<button
 					type="button"
 					onclick={resetFilters}
-					class="w-full px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition duration-300"
+					disabled={!name && !duration && !players && selectedMechanics.length === 0}
+					class={["w-full px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition duration-300", !name && !duration && !players && selectedMechanics.length === 0 ? "opacity-50 cursor-not-allowed" : "hover:cursor-pointer"]}
 				>
 					Reset Filters
 				</button>
