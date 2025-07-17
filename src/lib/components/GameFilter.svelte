@@ -49,10 +49,6 @@
 	const debouncedUpdateFilters = debounce(updateFilters, 300);
 
 	$effect(() => {
-		debouncedUpdateFilters();
-	});
-
-	$effect(() => {
 		const checkMobile = () => {
 			isMobile = window.innerWidth < 768; // Assuming 768px as the breakpoint
 			isFilterExpanded = !isMobile;
@@ -71,6 +67,7 @@
 		duration = '';
 		players = '';
 		selectedMechanics = [];
+		debouncedUpdateFilters();
 	}
 
 	function updateFilters() {
@@ -99,6 +96,7 @@
 		} else {
 			selectedMechanics = selectedMechanics.filter((c) => c !== mechanic);
 		}
+		debouncedUpdateFilters();
 	}
 
 	function toggleFilterExpansion() {
@@ -168,6 +166,7 @@
 					type="text"
 					id="name"
 					bind:value={name}
+					oninput={debouncedUpdateFilters}
 					placeholder="Search games..."
 					class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
 				/>
@@ -180,6 +179,7 @@
 						type="number"
 						id="duration"
 						bind:value={duration}
+						oninput={debouncedUpdateFilters}
 						step="5"
 						placeholder="Minutes"
 						class="px-3 py-2 border border-gray-300 rounded-md w-full shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
@@ -193,6 +193,7 @@
 					type="number"
 					id="players"
 					bind:value={players}
+					oninput={debouncedUpdateFilters}
 					placeholder="Party size"
 					class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
 				/>
@@ -200,17 +201,7 @@
 
 			<div class="relative">
 				<h3 class="text-sm font-medium text-gray-700 mb-2">Mechanics</h3>
-				<div class="flex flex-wrap gap-2">
-					{#each selectedMechanics as mechanic}
-						<span class="bg-indigo-100 text-indigo-800 text-xs font-medium px-2.5 py-0.5 rounded">
-							{mechanic}
-							<button
-								class="ml-1 text-indigo-600 hover:text-indigo-800"
-								onclick={() => toggleMechanic(mechanic)}>×</button
-							>
-						</span>
-					{/each}
-				</div>
+
 				<input
 					type="text"
 					bind:value={mechanicSearch}
@@ -238,6 +229,22 @@
 						{/each}
 					</div>
 				{/if}
+				<div class="flex flex-wrap gap-2 mt-2">
+					{#each selectedMechanics as mechanic}
+						<span class="bg-indigo-100 text-indigo-800 text-xs font-medium px-2.5 py-0.5 rounded flex">
+							{mechanic}
+							<button
+								aria-label="remove {mechanic}"
+								class="ml-1 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-200 rounded-full p-0.5 transition-colors"
+								onclick={() => toggleMechanic(mechanic)}>
+								<svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+								</svg>
+							</button
+							>
+						</span>
+					{/each}
+				</div>
 				<button
 				onclick={toggleSortOrder}
 				class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 transition-colors mt-2 hover:cursor-pointer"
