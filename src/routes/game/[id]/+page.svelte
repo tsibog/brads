@@ -236,7 +236,7 @@
 				</button>
 
 				{#if isDescriptionExpanded}
-					<div transition:slide={{ duration: 300 }} class="mt-4 text-black/90 leading-relaxed">
+					<div transition:slide={{ duration: 300 }} class="mt-4 text-black/90 leading-relaxed font-light">
 						{@html game.description}
 					</div>
 				{/if}
