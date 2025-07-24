@@ -58,6 +58,7 @@
 		"drizzle-orm": "^0.42.0",
 		"lucia": "^3.2.2",
 		"node-fetch": "^3.3.2",
-		"oslo": "^1.2.1"
+		"oslo": "^1.2.1",
+		"sveltekit-rate-limiter": "^0.7.0"
 	}
 }

@@ -1,13 +1,119 @@
-<script>
+<script lang="ts">
 	import '../app.css';
 	import { dev } from '$app/environment';
 	import { injectAnalytics } from '@vercel/analytics/sveltekit';
+	import { page } from '$app/stores';
+	import { enhance } from '$app/forms';
+
+	let { data, children }: { data: any, children: any } = $props();
+	let isLoggingOut = $state(false);
 
 	injectAnalytics({ mode: dev ? 'development' : 'production' });
+
+	// Don't show header on admin pages or login/register pages
+	const shouldShowHeader = $derived.by(() => {
+		const pathname = $page.url.pathname;
+		return (
+			!pathname.startsWith('/admin/') &&
+			!pathname.startsWith('/login') &&
+			!pathname.startsWith('/register')
+		);
+	});
+
+	function handleLogout() {
+		isLoggingOut = true;
+		return async ({ result, update }: any) => {
+			await update();
+			isLoggingOut = false;
+		};
+	}
 </script>
 
 <div class="bg-brads-yellow-light min-h-screen font-londrina">
-	<slot />
+	{#if shouldShowHeader}
+		<header class="bg-brads-green-dark text-white shadow-md">
+			<div class="container mx-auto px-4 py-4">
+				<div class="flex justify-between items-center">
+					<div class="flex items-center space-x-6">
+						<a
+							href="/browse"
+							class="text-xl font-bold hover:text-brads-yellow-light transition-colors"
+						>
+							Brads Spelcafé
+						</a>
+						<nav class="hidden sm:flex space-x-4">
+							<a
+								href="/browse"
+								class="hover:text-brads-yellow-light transition-colors {$page.url.pathname ===
+								'/browse'
+									? 'text-brads-yellow-light font-bold'
+									: ''}"
+							>
+								Browse Games
+							</a>
+							{#if data.user}
+								<a
+									href="/party-finder"
+									class="hover:text-brads-yellow-light transition-colors {$page.url.pathname ===
+									'/party-finder'
+										? 'text-brads-yellow-light font-bold'
+										: ''}"
+								>
+									Party Finder
+								</a>
+							{/if}
+						</nav>
+					</div>
+
+					<div class="flex items-center space-x-4">
+						{#if data.user}
+							<span class="text-sm">Welcome, {data.user.displayName || data.user.username}!</span>
+							<a
+								href="/profile"
+								class="hover:text-brads-yellow-light transition-colors {$page.url.pathname ===
+								'/profile'
+									? 'text-brads-yellow-light font-bold'
+									: ''}"
+							>
+								Profile
+							</a>
+							{#if data.user.isAdmin}
+								<a
+									href="/admin"
+									class="bg-brads-yellow-light text-brads-green-dark px-3 py-1 rounded hover:bg-brads-yellow transition-colors"
+								>
+									Admin
+								</a>
+							{/if}
+							<form action="/logout" method="POST" use:enhance={handleLogout} class="inline">
+								<button
+									type="submit"
+									disabled={isLoggingOut}
+									class="hover:text-brads-yellow-light transition-colors disabled:opacity-50"
+								>
+									{#if isLoggingOut}
+										Logging out...
+									{:else}
+										Logout
+									{/if}
+								</button>
+							</form>
+						{:else}
+							<a href="/login" class="hover:text-brads-yellow-light transition-colors"> Sign In </a>
+							<a
+								href="/register"
+								class="bg-brads-yellow-light text-brads-green-dark px-3 py-1 rounded hover:bg-brads-yellow transition-colors"
+							>
+								Sign Up
+							</a>
+						{/if}
+					</div>
+				</div>
+			</div>
+		</header>
+	{/if}
+
+	{@render children()}
 
 	<footer class="bg-brads-green-dark text-white text-center py-4">
 		<p class="text-sm">
