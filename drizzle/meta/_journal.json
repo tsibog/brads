@@ -1,41 +1,48 @@
 {
-  "version": "7",
-  "dialect": "sqlite",
-  "entries": [
-    {
-      "idx": 0,
-      "version": "6",
-      "when": 1721897757035,
-      "tag": "0000_bizarre_trauma",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "6",
-      "when": 1721897895475,
-      "tag": "0001_easy_riptide",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "6",
-      "when": 1722592023592,
-      "tag": "0002_pink_betty_brant",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "6",
-      "when": 1723984992637,
-      "tag": "0003_wise_madelyne_pryor",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "6",
-      "when": 1724096757032,
-      "tag": "0004_salty_photon",
-      "breakpoints": true
-    }
-  ]
+	"version": "7",
+	"dialect": "sqlite",
+	"entries": [
+		{
+			"idx": 0,
+			"version": "6",
+			"when": 1721897757035,
+			"tag": "0000_bizarre_trauma",
+			"breakpoints": true
+		},
+		{
+			"idx": 1,
+			"version": "6",
+			"when": 1721897895475,
+			"tag": "0001_easy_riptide",
+			"breakpoints": true
+		},
+		{
+			"idx": 2,
+			"version": "6",
+			"when": 1722592023592,
+			"tag": "0002_pink_betty_brant",
+			"breakpoints": true
+		},
+		{
+			"idx": 3,
+			"version": "6",
+			"when": 1723984992637,
+			"tag": "0003_wise_madelyne_pryor",
+			"breakpoints": true
+		},
+		{
+			"idx": 4,
+			"version": "6",
+			"when": 1724096757032,
+			"tag": "0004_salty_photon",
+			"breakpoints": true
+		},
+		{
+			"idx": 5,
+			"version": "6",
+			"when": 1753390079539,
+			"tag": "0005_hot_weapon_omega",
+			"breakpoints": true
+		}
+	]
 }

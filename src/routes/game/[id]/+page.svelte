@@ -145,10 +145,10 @@
 			<div class="space-y-6">
 				{#if categories && categories.length > 0}
 					<div>
-						<button onclick={toggleCategories} class={["text-xl", "mb-2", "flex", "items-center"]}>
+						<button onclick={toggleCategories} class={['text-xl', 'mb-2', 'flex', 'items-center']}>
 							Categories
 							<svg
-								class={["w-4", "h-4", "ml-2", categories.length < 4 ? "hidden" : ""]}
+								class={['w-4', 'h-4', 'ml-2', categories.length < 4 ? 'hidden' : '']}
 								fill="none"
 								stroke="currentColor"
 								viewBox="0 0 24 24"
@@ -179,7 +179,7 @@
 
 				{#if mechanics && mechanics.length > 0}
 					<div>
-						<button onclick={toggleMechanics} class="text-xl   mb-2 flex items-center">
+						<button onclick={toggleMechanics} class="text-xl mb-2 flex items-center">
 							Mechanics
 							<svg
 								class="w-4 h-4 ml-2"
@@ -212,13 +212,13 @@
 
 				{#if designers && designers.length > 0}
 					<div>
-						<h2 class="text-xl   mb-2">Designers</h2>
+						<h2 class="text-xl mb-2">Designers</h2>
 						<div>{designers}</div>
 					</div>
 				{/if}
 			</div>
 			<a
-				class="text-xl text-brads-green-dark   hover:text-brads-green transition-colors duration-200 float-right"
+				class="text-xl text-brads-green-dark hover:text-brads-green transition-colors duration-200 float-right"
 				href={`https://boardgamegeek.com/boardgame/${game.bggId}`}
 				target="_blank"
 			>
@@ -230,13 +230,16 @@
 			<div class="px-8 py-6 bg-white/10">
 				<button
 					onclick={toggleDescription}
-					class="text-white bg-teal-600 hover:bg-teal-700   py-2 px-4 rounded-full focus:outline-none focus:shadow-outline transition duration-300"
+					class="text-white bg-teal-600 hover:bg-teal-700 py-2 px-4 rounded-full focus:outline-none focus:shadow-outline transition duration-300"
 				>
 					{isDescriptionExpanded ? 'Hide Description' : 'Show Description'}
 				</button>
 
 				{#if isDescriptionExpanded}
-					<div transition:slide={{ duration: 300 }} class="mt-4 text-black/90 leading-relaxed font-light">
+					<div
+						transition:slide={{ duration: 300 }}
+						class="mt-4 text-black/90 leading-relaxed font-light"
+					>
 						{@html game.description}
 					</div>
 				{/if}
@@ -259,7 +262,7 @@
 	</div>
 
 	<div class="mt-12 bg-white rounded-lg shadow-lg p-6">
-		<h2 class="text-3xl   mb-6 text-brads-green-dark">Comments</h2>
+		<h2 class="text-3xl mb-6 text-brads-green-dark">Comments</h2>
 		{#if comments.length > 0}
 			<ul class="space-y-6">
 				{#each comments as comment}
@@ -268,7 +271,7 @@
 					>
 						<div class="flex items-start">
 							<div
-								class="bg-brads-green-dark text-white rounded-full w-12 h-12 flex items-center justify-center text-xl  "
+								class="bg-brads-green-dark text-white rounded-full w-12 h-12 flex items-center justify-center text-xl"
 							>
 								{comment.authorName[0].toUpperCase()}
 							</div>
@@ -289,10 +292,10 @@
 	</div>
 
 	<div class="mt-1 bg-white rounded-lg shadow-lg p-6">
-		<h3 class="text-2xl   mb-6 text-brads-green-dark">Add a Comment</h3>
+		<h3 class="text-2xl mb-6 text-brads-green-dark">Add a Comment</h3>
 		<form onsubmit={(e) => submitComment(e)} class="space-y-6">
 			<div>
-				<label for="authorName" class="block mb-2 text-brads-green-dark  ">Name:</label>
+				<label for="authorName" class="block mb-2 text-brads-green-dark">Name:</label>
 				<input
 					type="text"
 					id="authorName"
@@ -302,7 +305,7 @@
 				/>
 			</div>
 			<div>
-				<label for="content" class="block mb-2 text-brads-green-dark  ">Comment:</label>
+				<label for="content" class="block mb-2 text-brads-green-dark">Comment:</label>
 				<textarea
 					id="content"
 					bind:value={newComment.content}
@@ -323,7 +326,7 @@
 
 	{#if data.similarGames.length > 0}
 		<div class="mt-8">
-			<h2 class="text-2xl   mb-4">Similar Games</h2>
+			<h2 class="text-2xl mb-4">Similar Games</h2>
 			<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
 				{#each data.similarGames as similarGame}
 					<a href={`/game/${similarGame.bggId}`} class="block">

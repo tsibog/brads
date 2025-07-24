@@ -71,7 +71,7 @@
 					<td class="px-6 py-4">
 						{#if game.adminNote}
 							<a
-							href={`/admin/edit/${game.bggId}`}
+								href={`/admin/edit/${game.bggId}`}
 								class="bg-yellow-100 text-yellow-800 font-medium mr-2 px-2.5 py-0.5 rounded"
 							>
 								{game.adminNote}

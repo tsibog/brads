@@ -67,7 +67,13 @@
 <div class="max-w-2xl mx-auto mt-8 p-6 bg-white rounded-lg shadow-md">
 	<h1 class="text-2xl font-bold mb-6">Edit Game: {game.name}</h1>
 
-	<form onsubmit={(e) => { e.preventDefault(); handleSubmit(); }} class="space-y-4">
+	<form
+		onsubmit={(e) => {
+			e.preventDefault();
+			handleSubmit();
+		}}
+		class="space-y-4"
+	>
 		<div>
 			<label class="block mb-2 font-bold" for="isStarred">
 				<input type="checkbox" id="isStarred" bind:checked={isStarred} class="mr-2" />

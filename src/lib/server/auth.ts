@@ -15,7 +15,20 @@ export const lucia = new Lucia(adapter, {
 	},
 	getUserAttributes: (attributes) => {
 		return {
-			username: attributes.username
+			username: attributes.username,
+			email: attributes.email,
+			isAdmin: attributes.is_admin,
+			displayName: attributes.display_name,
+			bio: attributes.bio,
+			experienceLevel: attributes.experience_level,
+			vibePreference: attributes.vibe_preference,
+			lookingForParty: attributes.looking_for_party,
+			partyStatus: attributes.party_status,
+			openToAnyGame: attributes.open_to_any_game,
+			contactEmail: attributes.contact_email,
+			contactPhone: attributes.contact_phone,
+			contactVisibleTo: attributes.contact_visible_to,
+			lastLogin: attributes.last_login
 		};
 	}
 });
@@ -25,6 +38,19 @@ declare module 'lucia' {
 		Lucia: typeof lucia;
 		DatabaseUserAttributes: {
 			username: string;
+			email: string | null;
+			is_admin: boolean;
+			display_name: string | null;
+			bio: string | null;
+			experience_level: string | null;
+			vibe_preference: string | null;
+			looking_for_party: boolean | null;
+			party_status: string | null;
+			open_to_any_game: boolean | null;
+			contact_email: string | null;
+			contact_phone: string | null;
+			contact_visible_to: string | null;
+			last_login: number | null;
 		};
 	}
 }

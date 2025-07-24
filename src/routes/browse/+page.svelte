@@ -25,7 +25,6 @@
 		return data.meta.page;
 	});
 
-
 	const isMobile = $derived.by(() => {
 		if (browser) {
 			return window.innerWidth < 640;
@@ -43,7 +42,6 @@
 		url.searchParams.set('page', newPage.toString());
 		await goto(url.toString(), { replaceState: true, keepFocus: true });
 	}
-
 
 	function generatePageNumbers(
 		current: number,
@@ -100,8 +98,8 @@
 
 	<div class="flex flex-col md:flex-row gap-8">
 		<aside class="w-full md:w-1/4">
-			<GameFilter 
-				allMechanics={data.allMechanics} 
+			<GameFilter
+				allMechanics={data.allMechanics}
 				currentCount={data.games.length}
 				totalCount={data.meta.totalCount}
 			/>

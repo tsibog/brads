@@ -4,11 +4,11 @@
 	import debounce from '$lib/utils/debounce';
 	import { slide } from 'svelte/transition';
 
-	const { 
+	const {
 		allMechanics,
 		currentCount = 0,
 		totalCount = 0
-	}: { 
+	}: {
 		allMechanics: string[];
 		currentCount?: number;
 		totalCount?: number;
@@ -28,13 +28,11 @@
 
 	const filteredMechanics = $derived(
 		allMechanics
-			.filter((mechanic) =>
-				mechanic.toLowerCase().includes(mechanicSearch.toLowerCase())
-			)
+			.filter((mechanic) => mechanic.toLowerCase().includes(mechanicSearch.toLowerCase()))
 			.sort((a, b) => {
 				// Always put "Cooperative Game" first
-				if (a === "Cooperative Game") return -1;
-				if (b === "Cooperative Game") return 1;
+				if (a === 'Cooperative Game') return -1;
+				if (b === 'Cooperative Game') return 1;
 				// Then sort alphabetically
 				return a.localeCompare(b);
 			})
@@ -105,7 +103,7 @@
 
 	async function toggleSortOrder() {
 		const url = new URL($page.url);
-		
+
 		if (isLatestFirst) {
 			// Switch to alphabetic (name ASC)
 			url.searchParams.delete('sortBy');
@@ -115,7 +113,7 @@
 			url.searchParams.set('sortBy', 'id');
 			url.searchParams.set('sortOrder', 'desc');
 		}
-		
+
 		await goto(url.toString(), { replaceState: true, keepFocus: true });
 	}
 </script>
@@ -133,7 +131,7 @@
 			class="text-brads-green-dark focus:outline-none"
 			aria-expanded={isFilterExpanded}
 			aria-controls="filter-content"
-			aria-label={isFilterExpanded ? "Collapse filters" : "Expand filters"}
+			aria-label={isFilterExpanded ? 'Collapse filters' : 'Expand filters'}
 		>
 			<svg
 				xmlns="http://www.w3.org/2000/svg"
@@ -231,36 +229,71 @@
 				{/if}
 				<div class="flex flex-wrap gap-2 mt-2">
 					{#each selectedMechanics as mechanic}
-						<span class="bg-indigo-100 text-indigo-800 text-xs font-medium px-2.5 py-0.5 rounded flex">
+						<span
+							class="bg-indigo-100 text-indigo-800 text-xs font-medium px-2.5 py-0.5 rounded flex"
+						>
 							{mechanic}
 							<button
 								aria-label="remove {mechanic}"
 								class="ml-1 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-200 rounded-full p-0.5 transition-colors"
-								onclick={() => toggleMechanic(mechanic)}>
-								<svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-								</svg>
-							</button
+								onclick={() => toggleMechanic(mechanic)}
 							>
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									class="h-3 w-3"
+									fill="none"
+									viewBox="0 0 24 24"
+									stroke="currentColor"
+								>
+									<path
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										stroke-width="2"
+										d="M6 18L18 6M6 6l12 12"
+									/>
+								</svg>
+							</button>
 						</span>
 					{/each}
 				</div>
 				<button
-				onclick={toggleSortOrder}
-				class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 transition-colors mt-2 hover:cursor-pointer"
-			>
-				{#if isLatestFirst}
-					<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-					</svg>
-					Latest Additions
-				{:else}
-					<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-					</svg>
-					Alphabetic
-				{/if}
-			</button>
+					onclick={toggleSortOrder}
+					class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 transition-colors mt-2 hover:cursor-pointer"
+				>
+					{#if isLatestFirst}
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							class="h-4 w-4"
+							fill="none"
+							viewBox="0 0 24 24"
+							stroke="currentColor"
+						>
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+							/>
+						</svg>
+						Latest Additions
+					{:else}
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							class="h-4 w-4"
+							fill="none"
+							viewBox="0 0 24 24"
+							stroke="currentColor"
+						>
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
+							/>
+						</svg>
+						Alphabetic
+					{/if}
+				</button>
 			</div>
 
 			<div>
@@ -268,7 +301,12 @@
 					type="button"
 					onclick={resetFilters}
 					disabled={!name && !duration && !players && selectedMechanics.length === 0}
-					class={["w-full px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition duration-300", !name && !duration && !players && selectedMechanics.length === 0 ? "opacity-50 cursor-not-allowed" : "hover:cursor-pointer"]}
+					class={[
+						'w-full px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition duration-300',
+						!name && !duration && !players && selectedMechanics.length === 0
+							? 'opacity-50 cursor-not-allowed'
+							: 'hover:cursor-pointer'
+					]}
 				>
 					Reset Filters
 				</button>

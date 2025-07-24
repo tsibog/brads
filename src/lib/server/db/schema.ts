@@ -8,7 +8,22 @@ export const users = sqliteTable('users', {
 	email: text('email').unique(),
 	is_admin: integer('is_admin', { mode: 'boolean' }).notNull().default(false),
 	created_at: integer('created_at', { mode: 'timestamp' }).notNull().defaultNow(),
-	updated_at: integer('updated_at', { mode: 'timestamp' }).notNull().defaultNow()
+	updated_at: integer('updated_at', { mode: 'timestamp' }).notNull().defaultNow(),
+	// Party Finder profile fields
+	display_name: text('display_name'),
+	bio: text('bio'),
+	experience_level: text('experience_level'),
+	vibe_preference: text('vibe_preference'),
+	// Party finder status
+	looking_for_party: integer('looking_for_party', { mode: 'boolean' }).default(false),
+	party_status: text('party_status').default('resting'),
+	open_to_any_game: integer('open_to_any_game', { mode: 'boolean' }).default(false),
+	// Contact & privacy
+	contact_email: text('contact_email'),
+	contact_phone: text('contact_phone'),
+	contact_visible_to: text('contact_visible_to').default('matches'),
+	// Activity tracking
+	last_login: integer('last_login', { mode: 'timestamp' })
 });
 
 export const sessions = sqliteTable('session', {
@@ -55,6 +70,35 @@ export const gameComments = sqliteTable('gameComments', {
 	isApproved: integer('is_approved', { mode: 'boolean' }).notNull().default(false)
 });
 
+export const userAvailability = sqliteTable('user_availability', {
+	id: integer('id').primaryKey(),
+	userId: text('user_id')
+		.notNull()
+		.references(() => users.id, { onDelete: 'cascade' }),
+	dayOfWeek: integer('day_of_week').notNull(),
+	timeSlotStart: text('time_slot_start'),
+	timeSlotEnd: text('time_slot_end'),
+	createdAt: integer('created_at', { mode: 'timestamp' }).notNull().defaultNow()
+});
+
+export const userGamePreferences = sqliteTable('user_game_preferences', {
+	id: integer('id').primaryKey(),
+	userId: text('user_id')
+		.notNull()
+		.references(() => users.id, { onDelete: 'cascade' }),
+	gameBggId: text('game_bgg_id')
+		.notNull()
+		.references(() => boardGames.bggId),
+	createdAt: integer('created_at', { mode: 'timestamp' }).notNull().defaultNow()
+});
+
+export const systemSettings = sqliteTable('system_settings', {
+	key: text('key').primaryKey(),
+	value: text('value').notNull(),
+	description: text('description'),
+	updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().defaultNow()
+});
+
 export type BoardGame = typeof boardGames.$inferSelect;
 export type NewBoardGame = typeof boardGames.$inferInsert;
 export type User = typeof users.$inferSelect;
@@ -63,3 +107,9 @@ export type Session = typeof sessions.$inferSelect;
 export type NewSession = typeof sessions.$inferInsert;
 export type Comment = typeof gameComments.$inferSelect;
 export type NewComment = typeof gameComments.$inferInsert;
+export type UserAvailability = typeof userAvailability.$inferSelect;
+export type NewUserAvailability = typeof userAvailability.$inferInsert;
+export type UserGamePreference = typeof userGamePreferences.$inferSelect;
+export type NewUserGamePreference = typeof userGamePreferences.$inferInsert;
+export type SystemSetting = typeof systemSettings.$inferSelect;
+export type NewSystemSetting = typeof systemSettings.$inferInsert;

@@ -1,0 +1,13 @@
+{
+	"mcpServers": {
+		"mcp-turso-cloud": {
+			"type": "stdio",
+			"command": "npx",
+			"args": ["-y", "mcp-turso-cloud"],
+			"env": {
+				"TURSO_API_TOKEN": "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJONExIOW1qT0VmQy1sYTZ6akVsRGdRIn0.F6OOGLrOaedh86zP-dIvn-s0V7MrRw7CVcX6jTmc1ohJf3U8xH7GwF9tG3iZmM8kMJcfjnGviL2l1Q7ITQX2Cg",
+				"TURSO_ORGANIZATION": "danderssongit"
+			}
+		}
+	}
+}
