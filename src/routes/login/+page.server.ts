@@ -3,9 +3,8 @@ import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from '../$types';
 import { Argon2id } from 'oslo/password';
 import { db } from '$lib/server/db';
-import { users } from '$lib/server/db/schema';
-import { eq } from 'drizzle-orm';
 import { RateLimiter } from 'sveltekit-rate-limiter/server';
+import { reactivateUserIfAutoRested } from '$lib/server/partyFinderUtils.js';
 
 // Login rate limiting: 5 attempts per 15 minutes per IP
 const loginLimiter = new RateLimiter({
@@ -67,16 +66,9 @@ export const actions: Actions = {
 				});
 			}
 
-			// Update last_login timestamp for non-admin users
+			// Update last_login and handle party finder reactivation for non-admin users
 			if (!user.is_admin) {
-				await db
-					.update(users)
-					.set({
-						last_login: new Date(),
-						// If user was auto-rested due to inactivity, set them back to active
-						party_status: user.party_status === 'resting' ? 'active' : user.party_status
-					})
-					.where(eq(users.id, user.id));
+				await reactivateUserIfAutoRested(user.id);
 			}
 
 			// Create session

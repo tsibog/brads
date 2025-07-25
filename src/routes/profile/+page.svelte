@@ -40,7 +40,7 @@
 	const handleProfileSubmit: SubmitFunction = () => {
 		isUpdatingProfile = true;
 		return async ({ update }) => {
-			await update({ reset: false});
+			await update({ reset: false });
 			isUpdatingProfile = false;
 		};
 	};

@@ -67,6 +67,18 @@
 							{/if}
 						</a>
 					</li>
+					<li>
+						<a
+							href="/admin/party-finder-settings"
+							class="block p-2 rounded hover:bg-brads-green-light {$page.url.pathname.includes(
+								'/party-finder-settings'
+							)
+								? 'bg-brads-green font-bold'
+								: ''}"
+						>
+							Party Finder Settings
+						</a>
+					</li>
 				</ul>
 			</nav>
 

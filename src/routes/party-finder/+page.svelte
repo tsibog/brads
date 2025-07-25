@@ -7,9 +7,7 @@
 	let { data }: { data: PageData } = $props();
 
 	// Convert user availability to day format (0-6, Sunday=0)
-	let selectedDays = $state(
-		data.userAvailability.map(a => a.dayOfWeek)
-	);
+	let selectedDays = $state(data.userAvailability.map((a) => a.dayOfWeek));
 
 	// User's current game preferences
 	let selectedGames = $state([...data.userGamePreferences]);
@@ -26,29 +24,26 @@
 
 		// Experience level filter
 		if (experienceFilter !== 'all') {
-			filtered = filtered.filter(p => p.experienceLevel === experienceFilter);
+			filtered = filtered.filter((p) => p.experienceLevel === experienceFilter);
 		}
 
 		// Vibe preference filter
 		if (vibeFilter !== 'all') {
-			filtered = filtered.filter(p => 
-				p.vibePreference === vibeFilter || p.vibePreference === 'both'
+			filtered = filtered.filter(
+				(p) => p.vibePreference === vibeFilter || p.vibePreference === 'both'
 			);
 		}
 
 		// Day availability filter
 		if (dayFilter !== 'all') {
 			const filterDay = parseInt(dayFilter);
-			filtered = filtered.filter(p => 
-				p.availability.some(a => a.dayOfWeek === filterDay)
-			);
+			filtered = filtered.filter((p) => p.availability.some((a) => a.dayOfWeek === filterDay));
 		}
 
 		// Game preference filter
 		if (gameFilter !== 'all') {
-			filtered = filtered.filter(p => 
-				p.openToAnyGame || 
-				p.gamePreferences.some(g => g.gameBggId === gameFilter)
+			filtered = filtered.filter(
+				(p) => p.openToAnyGame || p.gamePreferences.some((g) => g.gameBggId === gameFilter)
 			);
 		}
 
@@ -61,8 +56,8 @@
 	// Get unique games from all players for filter dropdown
 	const availableGames = $derived.by(() => {
 		const gameMap = new Map();
-		data.activePlayers.forEach(player => {
-			player.gamePreferences.forEach(game => {
+		data.activePlayers.forEach((player) => {
+			player.gamePreferences.forEach((game) => {
 				gameMap.set(game.gameBggId, game.name);
 			});
 		});
@@ -108,14 +103,17 @@
 		<!-- Main Content Area -->
 		<div class="w-full md:w-3/4">
 			<div class="space-y-6">
-
 				<!-- Party Finder Status Check -->
 				{#if !data.currentUser.lookingForParty}
 					<div class="bg-yellow-50 border border-yellow-200 rounded-md p-4">
 						<div class="flex">
 							<div class="flex-shrink-0">
 								<svg class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
-									<path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+									<path
+										fill-rule="evenodd"
+										d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+										clip-rule="evenodd"
+									/>
 								</svg>
 							</div>
 							<div class="ml-3">
@@ -123,7 +121,12 @@
 									You're not currently looking for players
 								</h3>
 								<div class="mt-2 text-sm text-yellow-700">
-									<p>To appear in other players' searches and see contact information, enable "Looking for Party" in your <a href="/profile" class="font-medium underline">profile settings</a>.</p>
+									<p>
+										To appear in other players' searches and see contact information, enable
+										"Looking for Party" in your <a href="/profile" class="font-medium underline"
+											>profile settings</a
+										>.
+									</p>
 								</div>
 							</div>
 						</div>
@@ -135,15 +138,20 @@
 						<div class="flex">
 							<div class="flex-shrink-0">
 								<svg class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
-									<path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+									<path
+										fill-rule="evenodd"
+										d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+										clip-rule="evenodd"
+									/>
 								</svg>
 							</div>
 							<div class="ml-3">
-								<h3 class="text-sm font-medium text-blue-800">
-									You're currently resting
-								</h3>
+								<h3 class="text-sm font-medium text-blue-800">You're currently resting</h3>
 								<div class="mt-2 text-sm text-blue-700">
-									<p>You won't appear in other players' searches while resting. Change your status in your <a href="/profile" class="font-medium underline">profile settings</a>.</p>
+									<p>
+										You won't appear in other players' searches while resting. Change your status in
+										your <a href="/profile" class="font-medium underline">profile settings</a>.
+									</p>
 								</div>
 							</div>
 						</div>
@@ -166,7 +174,9 @@
 						<!-- Filters -->
 						<div class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
 							<div>
-								<label for="experience-filter" class="block text-xs font-medium text-gray-700">Experience</label>
+								<label for="experience-filter" class="block text-xs font-medium text-gray-700"
+									>Experience</label
+								>
 								<select
 									id="experience-filter"
 									bind:value={experienceFilter}
@@ -180,7 +190,9 @@
 							</div>
 
 							<div>
-								<label for="vibe-filter" class="block text-xs font-medium text-gray-700">Play Style</label>
+								<label for="vibe-filter" class="block text-xs font-medium text-gray-700"
+									>Play Style</label
+								>
 								<select
 									id="vibe-filter"
 									bind:value={vibeFilter}
@@ -194,7 +206,9 @@
 							</div>
 
 							<div>
-								<label for="day-filter" class="block text-xs font-medium text-gray-700">Available Day</label>
+								<label for="day-filter" class="block text-xs font-medium text-gray-700"
+									>Available Day</label
+								>
 								<select
 									id="day-filter"
 									bind:value={dayFilter}
@@ -208,7 +222,9 @@
 							</div>
 
 							<div>
-								<label for="game-filter" class="block text-xs font-medium text-gray-700">Preferred Game</label>
+								<label for="game-filter" class="block text-xs font-medium text-gray-700"
+									>Preferred Game</label
+								>
 								<select
 									id="game-filter"
 									bind:value={gameFilter}
@@ -224,7 +240,7 @@
 					</div>
 
 					<div class="px-6 py-4">
-						<PlayerDiscoveryTable 
+						<PlayerDiscoveryTable
 							players={filteredPlayers}
 							currentUser={data.currentUser}
 							userGamePreferences={selectedGames}
