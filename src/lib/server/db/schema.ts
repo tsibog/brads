@@ -99,6 +99,7 @@ export const systemSettings = sqliteTable('system_settings', {
 	updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().defaultNow()
 });
 
+// Base database types (snake_case from database)
 export type BoardGame = typeof boardGames.$inferSelect;
 export type NewBoardGame = typeof boardGames.$inferInsert;
 export type User = typeof users.$inferSelect;
@@ -113,3 +114,47 @@ export type UserGamePreference = typeof userGamePreferences.$inferSelect;
 export type NewUserGamePreference = typeof userGamePreferences.$inferInsert;
 export type SystemSetting = typeof systemSettings.$inferSelect;
 export type NewSystemSetting = typeof systemSettings.$inferInsert;
+
+// Transformed types for frontend use (camelCase, matches Lucia getUserAttributes)
+export interface AppUser {
+	id: string;
+	username: string;
+	email: string | null;
+	isAdmin: boolean;
+	displayName: string | null;
+	bio: string | null;
+	experienceLevel: string | null;
+	vibePreference: string | null;
+	lookingForParty: boolean | null;
+	partyStatus: string | null;
+	openToAnyGame: boolean | null;
+	contactEmail: string | null;
+	contactPhone: string | null;
+	contactVisibleTo: string | null;
+	lastLogin: number | null;
+}
+
+// Game preference type for frontend
+export interface GamePreference {
+	gameBggId: string;
+	name: string;
+}
+
+// Player type for party finder (includes joined data)
+export interface Player {
+	id: string;
+	displayName: string | null;
+	username: string;
+	bio: string | null;
+	experienceLevel: string | null;
+	vibePreference: string | null;
+	lookingForParty: boolean | null;
+	partyStatus: string | null;
+	openToAnyGame: boolean | null;
+	contactVisibleTo: string | null;
+	contactEmail: string | null;
+	contactPhone: string | null;
+	lastLogin: Date | null;
+	availability: Array<{ dayOfWeek: number }>;
+	gamePreferences: GamePreference[];
+}

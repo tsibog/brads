@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { PageData } from './$types';
+	import type { Player, GamePreference } from '$lib/server/db/schema';
 	import DaySelector from '$lib/components/DaySelector.svelte';
 	import GameSelector from '$lib/components/GameSelector.svelte';
 	import PlayerDiscoveryTable from '$lib/components/PlayerDiscoveryTable.svelte';
@@ -20,30 +21,30 @@
 
 	// Filter active players based on current filters
 	const filteredPlayers = $derived.by(() => {
-		let filtered = data.activePlayers;
+		let filtered: Player[] = data.activePlayers;
 
 		// Experience level filter
 		if (experienceFilter !== 'all') {
-			filtered = filtered.filter((p) => p.experienceLevel === experienceFilter);
+			filtered = filtered.filter((p: Player) => p.experienceLevel === experienceFilter);
 		}
 
 		// Vibe preference filter
 		if (vibeFilter !== 'all') {
 			filtered = filtered.filter(
-				(p) => p.vibePreference === vibeFilter || p.vibePreference === 'both'
+				(p: Player) => p.vibePreference === vibeFilter || p.vibePreference === 'both'
 			);
 		}
 
 		// Day availability filter
 		if (dayFilter !== 'all') {
 			const filterDay = parseInt(dayFilter);
-			filtered = filtered.filter((p) => p.availability.some((a) => a.dayOfWeek === filterDay));
+			filtered = filtered.filter((p: Player) => p.availability.some((a: { dayOfWeek: number }) => a.dayOfWeek === filterDay));
 		}
 
 		// Game preference filter
 		if (gameFilter !== 'all') {
 			filtered = filtered.filter(
-				(p) => p.openToAnyGame || p.gamePreferences.some((g) => g.gameBggId === gameFilter)
+				(p: Player) => p.openToAnyGame || p.gamePreferences.some((g: GamePreference) => g.gameBggId === gameFilter)
 			);
 		}
 
@@ -55,9 +56,9 @@
 
 	// Get unique games from all players for filter dropdown
 	const availableGames = $derived.by(() => {
-		const gameMap = new Map();
-		data.activePlayers.forEach((player) => {
-			player.gamePreferences.forEach((game) => {
+		const gameMap = new Map<string, string>();
+		data.activePlayers.forEach((player: Player) => {
+			player.gamePreferences.forEach((game: GamePreference) => {
 				gameMap.set(game.gameBggId, game.name);
 			});
 		});

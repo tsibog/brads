@@ -1,30 +1,9 @@
 <script lang="ts">
-	interface Player {
-		id: string;
-		displayName: string | null;
-		username: string;
-		bio: string | null;
-		experienceLevel: string | null;
-		vibePreference: string | null;
-		lookingForParty: boolean | null;
-		partyStatus: string | null;
-		openToAnyGame: boolean | null;
-		contactVisibleTo: string | null;
-		contactEmail: string | null;
-		contactPhone: string | null;
-		lastLogin: Date | null;
-		availability: Array<{ dayOfWeek: number }>;
-		gamePreferences: Array<{ gameBggId: string; name: string }>;
-	}
-
-	interface GamePreference {
-		gameBggId: string;
-		name: string;
-	}
+	import type { Player, GamePreference, AppUser } from '$lib/server/db/schema';
 
 	interface Props {
 		players: Player[];
-		currentUser: any;
+		currentUser: AppUser;
 		userGamePreferences: GamePreference[];
 		userAvailability: number[];
 	}
