@@ -38,13 +38,17 @@
 		// Day availability filter
 		if (dayFilter !== 'all') {
 			const filterDay = parseInt(dayFilter);
-			filtered = filtered.filter((p: Player) => p.availability.some((a: { dayOfWeek: number }) => a.dayOfWeek === filterDay));
+			filtered = filtered.filter((p: Player) =>
+				p.availability.some((a: { dayOfWeek: number }) => a.dayOfWeek === filterDay)
+			);
 		}
 
 		// Game preference filter
 		if (gameFilter !== 'all') {
 			filtered = filtered.filter(
-				(p: Player) => p.openToAnyGame || p.gamePreferences.some((g: GamePreference) => g.gameBggId === gameFilter)
+				(p: Player) =>
+					p.openToAnyGame ||
+					p.gamePreferences.some((g: GamePreference) => g.gameBggId === gameFilter)
 			);
 		}
 

@@ -98,7 +98,9 @@ export const load: PageServerLoad = async ({ locals }) => {
 				.select({
 					userId: userGamePreferences.userId,
 					gameBggId: userGamePreferences.gameBggId,
-					name: boardGames.name
+					name: boardGames.name,
+					thumbnail: boardGames.thumbnail,
+					image: boardGames.image
 				})
 				.from(userGamePreferences)
 				.innerJoin(boardGames, eq(userGamePreferences.gameBggId, boardGames.bggId))

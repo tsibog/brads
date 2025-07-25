@@ -134,10 +134,20 @@ export interface AppUser {
 	lastLogin: number | null;
 }
 
-// Game preference type for frontend
+// Game preference type for frontend (basic)
 export interface GamePreference {
 	gameBggId: string;
 	name: string;
+	thumbnail?: string | null;
+	image?: string | null;
+}
+
+// Extended game preference with full game details
+export interface ExtendedGamePreference extends GamePreference {
+	id?: number;
+	minPlayers?: number | null;
+	maxPlayers?: number | null;
+	playingTime?: number | null;
 }
 
 // Player type for party finder (includes joined data)
