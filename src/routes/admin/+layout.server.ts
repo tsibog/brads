@@ -13,6 +13,12 @@ export const load: LayoutServerLoad = async ({ locals, url, fetch }) => {
 		throw redirect(302, '/admin/login');
 	}
 
+	// Check if the user has admin privileges
+	if (!locals.user.isAdmin) {
+		// Redirect non-admin users to main site
+		throw redirect(302, '/browse');
+	}
+
 	const response = await fetch('/api/comments?approvedOnly=false');
 	const pendingComments = await response.json();
 	const pendingCommentsCount = pendingComments.length;

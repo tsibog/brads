@@ -100,3 +100,7 @@ Located in `src/lib/server/db/schema.ts`:
 - Admin features require authentication and admin privileges
 - Game data is cached locally after BGG import
 - Comments require admin approval before display
+
+## Development Guidance
+
+- I am always running the dev server myself so no need to try to start it
