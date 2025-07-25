@@ -3,8 +3,9 @@ import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from '../$types';
 import { Argon2id } from 'oslo/password';
 import { db } from '$lib/server/db';
-import { users } from '$lib/server/db/schema';
+import { boardGames, userGamePreferences, users } from '$lib/server/db/schema';
 import { generateId } from 'lucia';
+import { inArray, sql } from 'drizzle-orm';
 import { RateLimiter } from 'sveltekit-rate-limiter/server';
 
 // Registration rate limiting: 3 attempts per hour per IP
@@ -23,6 +24,44 @@ export const load: PageServerLoad = async ({ locals }) => {
 function isValidEmail(email: string): boolean {
 	const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 	return emailRegex.test(email);
+}
+
+// Helper function to validate phone format
+function isValidPhone(phone: string): boolean {
+	// Basic phone validation - at least 8 digits, allows international format
+	const phoneRegex = /^[+]?[\d\s\-\(\)]{8,}$/;
+	return phoneRegex.test(phone.trim());
+}
+
+// Helper function to validate selected games
+async function validateSelectedGames(
+	selectedGames: string[]
+): Promise<{ isValid: boolean; validGames: string[] }> {
+	if (!Array.isArray(selectedGames) || selectedGames.length < 1 || selectedGames.length > 4) {
+		return { isValid: false, validGames: [] };
+	}
+
+	try {
+		// Check if all selected games exist in our database
+		const existingGames = await db
+			.select({ bggId: boardGames.bggId })
+			.from(boardGames)
+			.where(inArray(boardGames.bggId, selectedGames));
+
+		const validBggIds = existingGames.map((g) => g.bggId);
+		const validGames = selectedGames.filter((gameId) => validBggIds.includes(gameId));
+
+		return {
+			isValid:
+				validGames.length === selectedGames.length &&
+				validGames.length >= 1 &&
+				validGames.length <= 4,
+			validGames
+		};
+	} catch (error) {
+		console.error('Error validating games:', error);
+		return { isValid: false, validGames: [] };
+	}
 }
 
 // Helper function to validate password strength
@@ -56,15 +95,21 @@ export const actions: Actions = {
 		const formData = await request.formData();
 		const username = formData.get('username');
 		const email = formData.get('email');
+		const phone = formData.get('phone');
 		const password = formData.get('password');
 		const displayName = formData.get('display_name');
+		const selectedGamesData = formData.get('selected_games');
+
+		console.log('init get', selectedGamesData);
 
 		// Basic input validation
 		if (
 			typeof username !== 'string' ||
-			typeof email !== 'string' ||
 			typeof password !== 'string' ||
-			typeof displayName !== 'string'
+			typeof displayName !== 'string' ||
+			(email !== null && typeof email !== 'string') ||
+			(phone !== null && typeof phone !== 'string') ||
+			(selectedGamesData !== null && typeof selectedGamesData !== 'string')
 		) {
 			return fail(400, {
 				message: 'Invalid input types'
@@ -73,8 +118,22 @@ export const actions: Actions = {
 
 		// Sanitize inputs
 		const cleanUsername = sanitizeInput(username);
-		const cleanEmail = sanitizeInput(email);
+		const cleanEmail = email ? sanitizeInput(email) : '';
+		const cleanPhone = phone ? sanitizeInput(phone) : '';
 		const cleanDisplayName = sanitizeInput(displayName);
+
+		// Parse selected games
+		let selectedGames: string[] = [];
+		try {
+			if (selectedGamesData) {
+				selectedGames = JSON.parse(selectedGamesData);
+				console.log('selectedGamesData parsed', selectedGames);
+			}
+		} catch (error) {
+			return fail(400, {
+				message: 'Invalid game selection data'
+			});
+		}
 
 		// Validate username
 		if (cleanUsername.length < 3 || cleanUsername.length > 31) {
@@ -83,10 +142,33 @@ export const actions: Actions = {
 			});
 		}
 
-		// Validate email
-		if (!isValidEmail(cleanEmail)) {
+		// Contact validation - either email OR phone required
+		if (!cleanEmail.trim() && !cleanPhone.trim()) {
+			return fail(400, {
+				message: 'Either email or phone number is required'
+			});
+		}
+
+		// Validate email format if provided
+		if (cleanEmail.trim() && !isValidEmail(cleanEmail)) {
 			return fail(400, {
 				message: 'Please enter a valid email address'
+			});
+		}
+
+		// Validate phone format if provided
+		if (cleanPhone.trim() && !isValidPhone(cleanPhone)) {
+			return fail(400, {
+				message: 'Please enter a valid phone number'
+			});
+		}
+
+		// Validate game selection
+		const gameValidation = await validateSelectedGames(selectedGames);
+		console.log(gameValidation);
+		if (!gameValidation.isValid) {
+			return fail(400, {
+				message: 'Please select between 1-4 games from our café collection'
 			});
 		}
 
@@ -105,13 +187,20 @@ export const actions: Actions = {
 		}
 
 		try {
-			// Check for existing username or email (case-insensitive)
+			// Check for existing username, email, or phone (case-insensitive)
+			const conditions = [sql`lower(${users.username}) = lower(${cleanUsername})`];
+
+			if (cleanEmail.trim()) {
+				conditions.push(sql`lower(${users.email}) = lower(${cleanEmail})`);
+				conditions.push(sql`lower(${users.contact_email}) = lower(${cleanEmail})`);
+			}
+
+			if (cleanPhone.trim()) {
+				conditions.push(sql`${users.contact_phone} = ${cleanPhone}`);
+			}
+
 			const existingUser = await db.query.users.findFirst({
-				where: (users, { eq, or, sql }) =>
-					or(
-						sql`lower(${users.username}) = lower(${cleanUsername})`,
-						sql`lower(${users.email}) = lower(${cleanEmail})`
-					)
+				where: (users, { or }) => or(...conditions)
 			});
 
 			if (existingUser) {
@@ -120,9 +209,18 @@ export const actions: Actions = {
 						message: 'Username already exists'
 					});
 				}
-				if (existingUser.email?.toLowerCase() === cleanEmail.toLowerCase()) {
+				if (
+					cleanEmail.trim() &&
+					(existingUser.email?.toLowerCase() === cleanEmail.toLowerCase() ||
+						existingUser.contact_email?.toLowerCase() === cleanEmail.toLowerCase())
+				) {
 					return fail(400, {
 						message: 'Email already exists'
+					});
+				}
+				if (cleanPhone.trim() && existingUser.contact_phone === cleanPhone) {
+					return fail(400, {
+						message: 'Phone number already exists'
 					});
 				}
 			}
@@ -135,13 +233,25 @@ export const actions: Actions = {
 			await db.insert(users).values({
 				id: userId,
 				username: cleanUsername,
-				email: cleanEmail,
+				email: cleanEmail.trim() || null, // For login purposes
 				password_hash: passwordHash,
 				display_name: cleanDisplayName,
 				is_admin: false,
 				party_status: 'resting', // Default to resting
+				contact_email: cleanEmail.trim() || null, // For party finder contact
+				contact_phone: cleanPhone.trim() || null, // For party finder contact
 				last_login: new Date()
 			});
+
+			// Insert game preferences
+			if (gameValidation.validGames.length > 0) {
+				const gamePreferenceValues = gameValidation.validGames.map((gameBggId) => ({
+					userId,
+					gameBggId
+				}));
+
+				await db.insert(userGamePreferences).values(gamePreferenceValues);
+			}
 
 			// Create session
 			const session = await lucia.createSession(userId, {});

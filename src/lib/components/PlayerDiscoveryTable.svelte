@@ -143,7 +143,9 @@
 			{@const sharedDays = getSharedDays(player)}
 			{@const canShowContact = canViewContact(player)}
 
-			<div class="bg-white border border-gray-200 rounded-lg p-6 sm:p-4 hover:shadow-md transition-shadow">
+			<div
+				class="bg-white border border-gray-200 rounded-lg p-6 sm:p-4 hover:shadow-md transition-shadow"
+			>
 				<div class="flex flex-col lg:flex-row lg:gap-4">
 					<!-- Player Info -->
 					<div class="flex-1 min-w-0 mb-4 lg:mb-0">
@@ -206,7 +208,9 @@
 
 						<!-- Bio -->
 						{#if player.bio}
-							<p class="text-base sm:text-sm text-gray-700 italic mb-4 sm:mb-2 leading-relaxed">"{player.bio}"</p>
+							<p class="text-base sm:text-sm text-gray-700 italic mb-4 sm:mb-2 leading-relaxed">
+								"{player.bio}"
+							</p>
 						{/if}
 
 						<!-- Shared Availability -->
@@ -235,7 +239,7 @@
 						<h4 class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
 							Preferred Games
 						</h4>
-						
+
 						{#if player.gamePreferences.length > 0}
 							<div class="grid grid-cols-1 md:grid-cols-2 gap-2">
 								{#each player.gamePreferences.slice(0, 6) as game}
@@ -297,14 +301,20 @@
 								<div class="text-xs font-medium text-gray-500 uppercase tracking-wide">Contact</div>
 								{#if player.contactEmail}
 									<div class="text-sm text-gray-900">
-										<a href="mailto:{player.contactEmail}" class="hover:text-indigo-600 inline-block min-h-[44px] py-2">
+										<a
+											href="mailto:{player.contactEmail}"
+											class="hover:text-indigo-600 inline-block min-h-[44px] py-2"
+										>
 											{player.contactEmail}
 										</a>
 									</div>
 								{/if}
 								{#if player.contactPhone}
 									<div class="text-sm text-gray-900">
-										<a href="tel:{player.contactPhone}" class="hover:text-indigo-600 inline-block min-h-[44px] py-2">
+										<a
+											href="tel:{player.contactPhone}"
+											class="hover:text-indigo-600 inline-block min-h-[44px] py-2"
+										>
 											{player.contactPhone}
 										</a>
 									</div>
