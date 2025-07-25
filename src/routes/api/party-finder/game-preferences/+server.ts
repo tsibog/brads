@@ -18,9 +18,10 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		}
 
 		// Validate gamePreferences is an array of strings (BGG IDs)
-		if (!Array.isArray(gamePreferences) || !gamePreferences.every(id => 
-			typeof id === 'string' && id.length > 0
-		)) {
+		if (
+			!Array.isArray(gamePreferences) ||
+			!gamePreferences.every((id) => typeof id === 'string' && id.length > 0)
+		) {
 			throw error(400, 'Invalid gamePreferences format');
 		}
 
@@ -31,8 +32,8 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 				.from(boardGames)
 				.where(inArray(boardGames.bggId, gamePreferences));
 
-			const existingGameIds = existingGames.map(game => game.bggId);
-			const invalidGameIds = gamePreferences.filter(id => !existingGameIds.includes(id));
+			const existingGameIds = existingGames.map((game) => game.bggId);
+			const invalidGameIds = gamePreferences.filter((id) => !existingGameIds.includes(id));
 
 			if (invalidGameIds.length > 0) {
 				throw error(400, `Invalid games: ${invalidGameIds.join(', ')}`);
@@ -44,7 +45,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
 		// Insert new preference records
 		if (gamePreferences.length > 0) {
-			const preferenceRecords = gamePreferences.map(gameBggId => ({
+			const preferenceRecords = gamePreferences.map((gameBggId) => ({
 				userId,
 				gameBggId
 			}));
@@ -53,14 +54,13 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		}
 
 		return json({ success: true, message: 'Game preferences updated successfully' });
-
 	} catch (err) {
 		console.error('Error updating game preferences:', err);
-		
+
 		if (err instanceof Error && 'status' in err) {
 			throw err;
 		}
-		
+
 		throw error(500, 'Failed to update game preferences');
 	}
 };

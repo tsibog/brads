@@ -10,7 +10,7 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 	}
 
 	const query = url.searchParams.get('query');
-	
+
 	if (!query || query.length < 2) {
 		return json([]);
 	}
@@ -33,7 +33,6 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 			.orderBy(boardGames.name);
 
 		return json(games);
-
 	} catch (err) {
 		console.error('Error searching games:', err);
 		throw error(500, 'Failed to search games');

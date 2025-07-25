@@ -5,7 +5,7 @@
 	import { page } from '$app/stores';
 	import { enhance } from '$app/forms';
 
-	let { data, children }: { data: any, children: any } = $props();
+	let { data, children }: { data: any; children: any } = $props();
 	let isLoggingOut = $state(false);
 
 	injectAnalytics({ mode: dev ? 'development' : 'production' });
