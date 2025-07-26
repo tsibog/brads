@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import type { SubmitFunction } from '@sveltejs/kit';
+	import Icon from '@iconify/svelte';
 
 	interface User {
 		id: string;
@@ -10,9 +11,12 @@
 		bio: string | null;
 		experienceLevel: string | null;
 		vibePreference: string | null;
+		contactMethod: string | null;
+		contactValue: string | null;
+		contactVisibleTo: string | null;
+		// Legacy fields for backward compatibility
 		contactEmail: string | null;
 		contactPhone: string | null;
-		contactVisibleTo: string | null;
 		lookingForParty: boolean | null;
 		partyStatus: string | null;
 		openToAnyGame: boolean | null;
@@ -39,6 +43,26 @@
 			isUpdatingProfile = false;
 		};
 	};
+
+	// Get placeholder text based on contact method
+	function getContactPlaceholder(method: string | null): string {
+		switch (method) {
+			case 'email':
+				return 'your.email@example.com';
+			case 'phone':
+				return '+46 70 123 45 67';
+			case 'whatsapp':
+				return '+46 70 123 45 67';
+			case 'discord':
+				return '@username or username#1234';
+			default:
+				return '';
+		}
+	}
+
+	// Initialize contact method and value from user data or defaults
+	let contactMethod = $state(data.user.contactMethod || 'email');
+	let contactValue = $state(data.user.contactValue || '');
 </script>
 
 <svelte:head>
@@ -171,35 +195,73 @@
 
 					<div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
 						<div>
-							<label for="contact_email" class="block text-sm font-medium text-gray-700"
-								>Contact Email</label
+							<label for="contact_method" class="block text-sm font-medium text-gray-700 mb-2"
+								>Contact Method</label
 							>
-							<input
-								type="email"
-								id="contact_email"
-								name="contact_email"
+							<select
+								id="contact_method"
+								name="contact_method"
+								bind:value={contactMethod}
 								class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-								placeholder="contact@example.com"
-								bind:value={data.user.contactEmail}
 								disabled={isUpdatingProfile}
-							/>
-							<p class="mt-1 text-sm text-gray-500">Optional - for other players to reach you</p>
+							>
+								<option value="email">
+									<Icon icon="mdi:email" class="inline w-4 h-4 mr-2" />
+									Email
+								</option>
+								<option value="phone">
+									<Icon icon="mdi:phone" class="inline w-4 h-4 mr-2" />
+									Phone
+								</option>
+								<option value="whatsapp">
+									<Icon icon="mdi:whatsapp" class="inline w-4 h-4 mr-2" />
+									WhatsApp
+								</option>
+								<option value="discord">
+									<Icon icon="mdi:discord" class="inline w-4 h-4 mr-2" />
+									Discord
+								</option>
+							</select>
+							<p class="mt-1 text-sm text-gray-500">Choose your preferred contact method</p>
 						</div>
 
 						<div>
-							<label for="contact_phone" class="block text-sm font-medium text-gray-700"
-								>Contact Phone</label
+							<label
+								for="contact_value"
+								class="flex items-center text-sm font-medium text-gray-700 mb-2"
 							>
+								<Icon
+									icon="mdi:{contactMethod === 'email'
+										? 'email'
+										: contactMethod === 'phone'
+											? 'phone'
+											: contactMethod === 'whatsapp'
+												? 'whatsapp'
+												: 'discord'}"
+									class="w-4 h-4 mr-2"
+								/>
+								{contactMethod === 'email'
+									? 'Email Address'
+									: contactMethod === 'phone'
+										? 'Phone Number'
+										: contactMethod === 'whatsapp'
+											? 'WhatsApp Number'
+											: 'Discord Username'}
+							</label>
 							<input
-								type="tel"
-								id="contact_phone"
-								name="contact_phone"
+								type={contactMethod === 'email'
+									? 'email'
+									: contactMethod === 'phone' || contactMethod === 'whatsapp'
+										? 'tel'
+										: 'text'}
+								id="contact_value"
+								name="contact_value"
 								class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-								placeholder="+46 70 123 45 67"
-								bind:value={data.user.contactPhone}
+								placeholder={getContactPlaceholder(contactMethod)}
+								bind:value={contactValue}
 								disabled={isUpdatingProfile}
 							/>
-							<p class="mt-1 text-sm text-gray-500">Optional - for other players to reach you</p>
+							<p class="mt-1 text-sm text-gray-500">For other players to reach you</p>
 						</div>
 					</div>
 

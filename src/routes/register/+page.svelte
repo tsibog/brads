@@ -3,14 +3,15 @@
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import { fade, slide } from 'svelte/transition';
 	import debounce from '$lib/utils/debounce';
+	import Icon from '@iconify/svelte';
 
 	let { form }: { form: any } = $props();
 
 	let username = $state('');
-	let email = $state('');
-	let phone = $state('');
 	let password = $state('');
 	let displayName = $state('');
+	let contactMethod = $state('email');
+	let contactValue = $state('');
 	let isSubmitting = $state(false);
 
 	// Game selection state
@@ -20,10 +21,8 @@
 	let isLoading = $state(false);
 
 	// Client-side validation states
-	let emailError = $state('');
-	let phoneError = $state('');
-	let gameError = $state('');
 	let contactError = $state('');
+	let gameError = $state('');
 
 	const debouncedSearch = debounce(async () => {
 		if (searchQuery.length < 2) {
@@ -68,31 +67,57 @@
 		gameError = '';
 	};
 
+	// Get placeholder text based on contact method
+	function getContactPlaceholder(method: string): string {
+		switch (method) {
+			case 'email':
+				return 'your.email@example.com';
+			case 'phone':
+				return '+46 70 123 45 67';
+			case 'whatsapp':
+				return '+46 70 123 45 67';
+			case 'discord':
+				return '@username or username#1234';
+			default:
+				return '';
+		}
+	}
+
 	function validateForm() {
 		let isValid = true;
 
 		// Reset errors
-		emailError = '';
-		phoneError = '';
-		gameError = '';
 		contactError = '';
+		gameError = '';
 
-		// Contact validation - either email OR phone required
-		if (!email.trim() && !phone.trim()) {
-			contactError = 'Either email or phone number is required';
+		// Contact validation based on method
+		if (!contactValue.trim()) {
+			contactError = 'Contact information is required';
 			isValid = false;
-		}
-
-		// Email format validation if provided
-		if (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-			emailError = 'Please enter a valid email address';
-			isValid = false;
-		}
-
-		// Phone format validation if provided (basic)
-		if (phone.trim() && !/^[+]?[\d\s\-\(\)]{8,}$/.test(phone.trim())) {
-			phoneError = 'Please enter a valid phone number';
-			isValid = false;
+		} else {
+			// Method-specific validation
+			switch (contactMethod) {
+				case 'email':
+					if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactValue.trim())) {
+						contactError = 'Please enter a valid email address';
+						isValid = false;
+					}
+					break;
+				case 'phone':
+				case 'whatsapp':
+					if (!/^[+]?[\d\s\-\(\)]{8,}$/.test(contactValue.trim())) {
+						contactError = 'Please enter a valid phone number';
+						isValid = false;
+					}
+					break;
+				case 'discord':
+					// Discord allows flexible formats, minimal validation
+					if (contactValue.trim().length < 2) {
+						contactError = 'Please enter a valid Discord username';
+						isValid = false;
+					}
+					break;
+			}
 		}
 
 		// Game selection validation
@@ -137,6 +162,10 @@
 		console.log('Appending selected_games:', gameIdsJson);
 
 		formData.append('selected_games', gameIdsJson);
+
+		// Add contact method data
+		formData.append('contact_method', contactMethod);
+		formData.append('contact_value', contactValue);
 
 		console.log('=== PRE-SUBMISSION: FORM DATA AFTER APPEND ===');
 		console.log('FormData entries:', Object.fromEntries(formData.entries()));
@@ -211,8 +240,8 @@
 					<div class="border-t border-gray-200 pt-4">
 						<h3 class="text-sm font-medium text-gray-900 mb-2">Contact Information</h3>
 						<p class="text-xs text-gray-600 mb-3">
-							Provide either email or phone number (or both). This will be used for login and party
-							finder contact sharing.
+							Choose your preferred contact method. This will be used for login and party finder
+							contact sharing.
 						</p>
 
 						{#if contactError}
@@ -221,42 +250,76 @@
 					</div>
 
 					<div>
-						<label for="email" class="block text-sm font-medium text-gray-700"
-							>Email (optional if phone provided)</label
+						<label for="contact_method" class="block text-sm font-medium text-gray-700 mb-2"
+							>Contact Method</label
 						>
-						<input
-							id="email"
-							name="email"
-							type="email"
-							class="mt-1 appearance-none relative block w-full px-3 py-2 border {emailError
-								? 'border-red-300'
-								: 'border-gray-300'} placeholder-gray-500 text-gray-900 rounded-md focus:outline-hidden focus:ring-3 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-							placeholder="your.email@example.com"
-							bind:value={email}
+						<select
+							id="contact_method"
+							name="contact_method"
+							bind:value={contactMethod}
+							class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-hidden focus:ring-3 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
 							disabled={isSubmitting}
-						/>
-						{#if emailError}
-							<p class="text-red-500 text-xs mt-1">{emailError}</p>
-						{/if}
+						>
+							<option value="email">
+								<Icon icon="mdi:email" class="inline w-4 h-4 mr-2" />
+								Email
+							</option>
+							<option value="phone">
+								<Icon icon="mdi:phone" class="inline w-4 h-4 mr-2" />
+								Phone
+							</option>
+							<option value="whatsapp">
+								<Icon icon="mdi:whatsapp" class="inline w-4 h-4 mr-2" />
+								WhatsApp
+							</option>
+							<option value="discord">
+								<Icon icon="mdi:discord" class="inline w-4 h-4 mr-2" />
+								Discord
+							</option>
+						</select>
 					</div>
 
 					<div>
-						<label for="phone" class="block text-sm font-medium text-gray-700"
-							>Phone Number (optional if email provided)</label
+						<label
+							for="contact_value"
+							class="flex items-center text-sm font-medium text-gray-700 mb-2"
 						>
+							<Icon
+								icon="mdi:{contactMethod === 'email'
+									? 'email'
+									: contactMethod === 'phone'
+										? 'phone'
+										: contactMethod === 'whatsapp'
+											? 'whatsapp'
+											: 'discord'}"
+								class="w-4 h-4 mr-2"
+							/>
+							{contactMethod === 'email'
+								? 'Email Address'
+								: contactMethod === 'phone'
+									? 'Phone Number'
+									: contactMethod === 'whatsapp'
+										? 'WhatsApp Number'
+										: 'Discord Username'}
+						</label>
 						<input
-							id="phone"
-							name="phone"
-							type="tel"
-							class="mt-1 appearance-none relative block w-full px-3 py-2 border {phoneError
+							id="contact_value"
+							name="contact_value"
+							type={contactMethod === 'email'
+								? 'email'
+								: contactMethod === 'phone' || contactMethod === 'whatsapp'
+									? 'tel'
+									: 'text'}
+							required
+							class="mt-1 appearance-none relative block w-full px-3 py-2 border {contactError
 								? 'border-red-300'
 								: 'border-gray-300'} placeholder-gray-500 text-gray-900 rounded-md focus:outline-hidden focus:ring-3 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-							placeholder="+46 70 123 45 67"
-							bind:value={phone}
+							placeholder={getContactPlaceholder(contactMethod)}
+							bind:value={contactValue}
 							disabled={isSubmitting}
 						/>
-						{#if phoneError}
-							<p class="text-red-500 text-xs mt-1">{phoneError}</p>
+						{#if contactError}
+							<p class="text-red-500 text-xs mt-1">{contactError}</p>
 						{/if}
 					</div>
 				</div>

@@ -43,6 +43,13 @@
 			"when": 1753390079539,
 			"tag": "0005_hot_weapon_omega",
 			"breakpoints": true
+		},
+		{
+			"idx": 6,
+			"version": "6",
+			"when": 1753516070333,
+			"tag": "0006_oval_silvermane",
+			"breakpoints": true
 		}
 	]
 }

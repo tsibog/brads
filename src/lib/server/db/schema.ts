@@ -18,10 +18,13 @@ export const users = sqliteTable('users', {
 	looking_for_party: integer('looking_for_party', { mode: 'boolean' }).default(false),
 	party_status: text('party_status').default('resting'),
 	open_to_any_game: integer('open_to_any_game', { mode: 'boolean' }).default(false),
-	// Contact & privacy
+	// Contact & privacy (UPDATED: Flexible Contact Method System)
+	contact_method: text('contact_method'), // 'email', 'phone', 'whatsapp', 'discord'
+	contact_value: text('contact_value'), // The actual contact information
+	contact_visible_to: text('contact_visible_to').default('matches'),
+	// Legacy fields - will be removed after migration
 	contact_email: text('contact_email'),
 	contact_phone: text('contact_phone'),
-	contact_visible_to: text('contact_visible_to').default('matches'),
 	// Activity tracking
 	last_login: integer('last_login', { mode: 'timestamp' })
 });
@@ -128,9 +131,12 @@ export interface AppUser {
 	lookingForParty: boolean | null;
 	partyStatus: string | null;
 	openToAnyGame: boolean | null;
+	contactMethod: string | null;
+	contactValue: string | null;
+	contactVisibleTo: string | null;
+	// Legacy fields - will be removed after migration
 	contactEmail: string | null;
 	contactPhone: string | null;
-	contactVisibleTo: string | null;
 	lastLogin: number | null;
 }
 
@@ -162,6 +168,9 @@ export interface Player {
 	partyStatus: string | null;
 	openToAnyGame: boolean | null;
 	contactVisibleTo: string | null;
+	contactMethod: string | null;
+	contactValue: string | null;
+	// Legacy fields - will be removed after migration
 	contactEmail: string | null;
 	contactPhone: string | null;
 	lastLogin: Date | null;

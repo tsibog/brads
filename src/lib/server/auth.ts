@@ -25,9 +25,12 @@ export const lucia = new Lucia(adapter, {
 			lookingForParty: attributes.looking_for_party,
 			partyStatus: attributes.party_status,
 			openToAnyGame: attributes.open_to_any_game,
+			contactMethod: attributes.contact_method,
+			contactValue: attributes.contact_value,
+			contactVisibleTo: attributes.contact_visible_to,
+			// Legacy fields for backward compatibility
 			contactEmail: attributes.contact_email,
 			contactPhone: attributes.contact_phone,
-			contactVisibleTo: attributes.contact_visible_to,
 			lastLogin: attributes.last_login
 		};
 	}
@@ -47,9 +50,12 @@ declare module 'lucia' {
 			looking_for_party: boolean | null;
 			party_status: string | null;
 			open_to_any_game: boolean | null;
+			contact_method: string | null;
+			contact_value: string | null;
+			contact_visible_to: string | null;
+			// Legacy fields for backward compatibility
 			contact_email: string | null;
 			contact_phone: string | null;
-			contact_visible_to: string | null;
 			last_login: number | null;
 		};
 	}

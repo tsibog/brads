@@ -5,6 +5,7 @@
 		ExtendedGamePreference,
 		AppUser
 	} from '$lib/server/db/schema';
+	import Icon from '@iconify/svelte';
 
 	interface Props {
 		players: Player[];
@@ -108,6 +109,55 @@
 			case 'none':
 			default:
 				return false;
+		}
+	}
+
+	// Get contact method icon
+	function getContactIcon(method: string | null): string {
+		switch (method) {
+			case 'email':
+				return 'mdi:email';
+			case 'phone':
+				return 'mdi:phone';
+			case 'whatsapp':
+				return 'mdi:whatsapp';
+			case 'discord':
+				return 'mdi:discord';
+			default:
+				return 'mdi:email'; // Fallback
+		}
+	}
+
+	// Generate contact link based on method
+	function getContactLink(method: string | null, value: string | null): string {
+		if (!value) return '#';
+
+		switch (method) {
+			case 'email':
+				return `mailto:${value}`;
+			case 'phone':
+			case 'whatsapp':
+				return `tel:${value}`;
+			case 'discord':
+				return '#'; // Discord doesn't have a direct link format
+			default:
+				return '#';
+		}
+	}
+
+	// Get contact method display name
+	function getContactMethodName(method: string | null): string {
+		switch (method) {
+			case 'email':
+				return 'Email';
+			case 'phone':
+				return 'Phone';
+			case 'whatsapp':
+				return 'WhatsApp';
+			case 'discord':
+				return 'Discord';
+			default:
+				return 'Contact';
 		}
 	}
 
@@ -299,25 +349,57 @@
 						{#if canShowContact}
 							<div class="text-left lg:text-right space-y-2">
 								<div class="text-xs font-medium text-gray-500 uppercase tracking-wide">Contact</div>
-								{#if player.contactEmail}
+								{#if player.contactMethod && player.contactValue}
 									<div class="text-sm text-gray-900">
-										<a
-											href="mailto:{player.contactEmail}"
-											class="hover:text-indigo-600 inline-block min-h-[44px] py-2"
-										>
-											{player.contactEmail}
-										</a>
+										{#if player.contactMethod === 'discord'}
+											<!-- Discord doesn't have clickable link -->
+											<div
+												class="flex items-center justify-start lg:justify-end space-x-2 min-h-[44px] py-2"
+											>
+												<Icon
+													icon={getContactIcon(player.contactMethod)}
+													class="w-4 h-4 text-gray-600"
+												/>
+												<span>{player.contactValue}</span>
+											</div>
+										{:else}
+											<!-- Email, Phone, WhatsApp with clickable link -->
+											<a
+												href={getContactLink(player.contactMethod, player.contactValue)}
+												class="hover:text-indigo-600 inline-flex items-center space-x-2 min-h-[44px] py-2"
+												title="Contact via {getContactMethodName(player.contactMethod)}"
+											>
+												<Icon icon={getContactIcon(player.contactMethod)} class="w-4 h-4" />
+												<span>{player.contactValue}</span>
+											</a>
+										{/if}
 									</div>
-								{/if}
-								{#if player.contactPhone}
-									<div class="text-sm text-gray-900">
-										<a
-											href="tel:{player.contactPhone}"
-											class="hover:text-indigo-600 inline-block min-h-[44px] py-2"
-										>
-											{player.contactPhone}
-										</a>
-									</div>
+								{:else if player.contactEmail || player.contactPhone}
+									<!-- Fallback to legacy contact fields during transition -->
+									{#if player.contactEmail}
+										<div class="text-sm text-gray-900">
+											<a
+												href="mailto:{player.contactEmail}"
+												class="hover:text-indigo-600 inline-flex items-center space-x-2 min-h-[44px] py-2"
+											>
+												<Icon icon="mdi:email" class="w-4 h-4" />
+												<span>{player.contactEmail}</span>
+											</a>
+										</div>
+									{/if}
+									{#if player.contactPhone}
+										<div class="text-sm text-gray-900">
+											<a
+												href="tel:{player.contactPhone}"
+												class="hover:text-indigo-600 inline-flex items-center space-x-2 min-h-[44px] py-2"
+											>
+												<Icon icon="mdi:phone" class="w-4 h-4" />
+												<span>{player.contactPhone}</span>
+											</a>
+										</div>
+									{/if}
+								{:else}
+									<div class="text-xs text-gray-400 italic">No contact info</div>
 								{/if}
 							</div>
 						{:else}

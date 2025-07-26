@@ -20,17 +20,21 @@ export const load: PageServerLoad = async ({ locals }) => {
 	}
 };
 
-// Helper function to validate email format
-function isValidEmail(email: string): boolean {
-	const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-	return emailRegex.test(email);
-}
+// Helper function to validate contact information based on method
+function isValidContact(method: string, value: string): boolean {
+	const trimmedValue = value.trim();
 
-// Helper function to validate phone format
-function isValidPhone(phone: string): boolean {
-	// Basic phone validation - at least 8 digits, allows international format
-	const phoneRegex = /^[+]?[\d\s\-\(\)]{8,}$/;
-	return phoneRegex.test(phone.trim());
+	switch (method) {
+		case 'email':
+			return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedValue);
+		case 'phone':
+		case 'whatsapp':
+			return /^[+]?[\d\s\-\(\)]{8,}$/.test(trimmedValue);
+		case 'discord':
+			return trimmedValue.length >= 2; // Flexible validation for Discord
+		default:
+			return false;
+	}
 }
 
 // Helper function to validate selected games
@@ -94,10 +98,10 @@ export const actions: Actions = {
 		const { request, cookies } = event;
 		const formData = await request.formData();
 		const username = formData.get('username');
-		const email = formData.get('email');
-		const phone = formData.get('phone');
 		const password = formData.get('password');
 		const displayName = formData.get('display_name');
+		const contactMethod = formData.get('contact_method');
+		const contactValue = formData.get('contact_value');
 		const selectedGamesData = formData.get('selected_games');
 
 		console.log('init get', selectedGamesData);
@@ -107,8 +111,8 @@ export const actions: Actions = {
 			typeof username !== 'string' ||
 			typeof password !== 'string' ||
 			typeof displayName !== 'string' ||
-			(email !== null && typeof email !== 'string') ||
-			(phone !== null && typeof phone !== 'string') ||
+			typeof contactMethod !== 'string' ||
+			typeof contactValue !== 'string' ||
 			(selectedGamesData !== null && typeof selectedGamesData !== 'string')
 		) {
 			return fail(400, {
@@ -118,9 +122,9 @@ export const actions: Actions = {
 
 		// Sanitize inputs
 		const cleanUsername = sanitizeInput(username);
-		const cleanEmail = email ? sanitizeInput(email) : '';
-		const cleanPhone = phone ? sanitizeInput(phone) : '';
 		const cleanDisplayName = sanitizeInput(displayName);
+		const cleanContactMethod = sanitizeInput(contactMethod);
+		const cleanContactValue = sanitizeInput(contactValue);
 
 		// Parse selected games
 		let selectedGames: string[] = [];
@@ -142,24 +146,30 @@ export const actions: Actions = {
 			});
 		}
 
-		// Contact validation - either email OR phone required
-		if (!cleanEmail.trim() && !cleanPhone.trim()) {
+		// Validate contact method
+		const validMethods = ['email', 'phone', 'whatsapp', 'discord'];
+		if (!validMethods.includes(cleanContactMethod)) {
 			return fail(400, {
-				message: 'Either email or phone number is required'
+				message: 'Invalid contact method selected'
 			});
 		}
 
-		// Validate email format if provided
-		if (cleanEmail.trim() && !isValidEmail(cleanEmail)) {
+		// Validate contact value
+		if (!cleanContactValue.trim()) {
 			return fail(400, {
-				message: 'Please enter a valid email address'
+				message: 'Contact information is required'
 			});
 		}
 
-		// Validate phone format if provided
-		if (cleanPhone.trim() && !isValidPhone(cleanPhone)) {
+		if (!isValidContact(cleanContactMethod, cleanContactValue)) {
+			const methodName =
+				cleanContactMethod === 'whatsapp'
+					? 'WhatsApp number'
+					: cleanContactMethod === 'discord'
+						? 'Discord username'
+						: cleanContactMethod;
 			return fail(400, {
-				message: 'Please enter a valid phone number'
+				message: `Please enter a valid ${methodName}`
 			});
 		}
 
@@ -187,16 +197,25 @@ export const actions: Actions = {
 		}
 
 		try {
-			// Check for existing username, email, or phone (case-insensitive)
+			// Check for existing username and contact info
 			const conditions = [sql`lower(${users.username}) = lower(${cleanUsername})`];
 
-			if (cleanEmail.trim()) {
-				conditions.push(sql`lower(${users.email}) = lower(${cleanEmail})`);
-				conditions.push(sql`lower(${users.contact_email}) = lower(${cleanEmail})`);
-			}
-
-			if (cleanPhone.trim()) {
-				conditions.push(sql`${users.contact_phone} = ${cleanPhone}`);
+			// Check for duplicate contact information based on method
+			if (cleanContactMethod === 'email') {
+				conditions.push(sql`lower(${users.email}) = lower(${cleanContactValue})`);
+				conditions.push(sql`lower(${users.contact_email}) = lower(${cleanContactValue})`);
+				conditions.push(
+					sql`${users.contact_method} = 'email' AND lower(${users.contact_value}) = lower(${cleanContactValue})`
+				);
+			} else if (cleanContactMethod === 'phone' || cleanContactMethod === 'whatsapp') {
+				conditions.push(sql`${users.contact_phone} = ${cleanContactValue}`);
+				conditions.push(
+					sql`(${users.contact_method} = 'phone' OR ${users.contact_method} = 'whatsapp') AND ${users.contact_value} = ${cleanContactValue}`
+				);
+			} else if (cleanContactMethod === 'discord') {
+				conditions.push(
+					sql`${users.contact_method} = 'discord' AND lower(${users.contact_value}) = lower(${cleanContactValue})`
+				);
 			}
 
 			const existingUser = await db.query.users.findFirst({
@@ -209,20 +228,16 @@ export const actions: Actions = {
 						message: 'Username already exists'
 					});
 				}
-				if (
-					cleanEmail.trim() &&
-					(existingUser.email?.toLowerCase() === cleanEmail.toLowerCase() ||
-						existingUser.contact_email?.toLowerCase() === cleanEmail.toLowerCase())
-				) {
-					return fail(400, {
-						message: 'Email already exists'
-					});
-				}
-				if (cleanPhone.trim() && existingUser.contact_phone === cleanPhone) {
-					return fail(400, {
-						message: 'Phone number already exists'
-					});
-				}
+				// Contact information conflict
+				const methodName =
+					cleanContactMethod === 'whatsapp'
+						? 'WhatsApp number'
+						: cleanContactMethod === 'discord'
+							? 'Discord username'
+							: cleanContactMethod;
+				return fail(400, {
+					message: `This ${methodName} is already registered`
+				});
 			}
 
 			// Hash password
@@ -233,13 +248,18 @@ export const actions: Actions = {
 			await db.insert(users).values({
 				id: userId,
 				username: cleanUsername,
-				email: cleanEmail.trim() || null, // For login purposes
+				email: cleanContactMethod === 'email' ? cleanContactValue.trim() : null, // For login purposes
 				password_hash: passwordHash,
 				display_name: cleanDisplayName,
 				is_admin: false,
 				party_status: 'active', // Default to active
-				contact_email: cleanEmail.trim() || null, // For party finder contact
-				contact_phone: cleanPhone.trim() || null, // For party finder contact
+				contact_method: cleanContactMethod,
+				contact_value: cleanContactValue.trim(),
+				// Keep legacy fields for compatibility during transition
+				contact_email: cleanContactMethod === 'email' ? cleanContactValue.trim() : null,
+				contact_phone: ['phone', 'whatsapp'].includes(cleanContactMethod)
+					? cleanContactValue.trim()
+					: null,
 				last_login: new Date()
 			});
 

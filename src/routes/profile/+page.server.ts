@@ -27,9 +27,12 @@ export const load = async ({ locals }) => {
 			bio: user.bio,
 			experienceLevel: user.experience_level,
 			vibePreference: user.vibe_preference,
+			contactMethod: user.contact_method,
+			contactValue: user.contact_value,
+			contactVisibleTo: user.contact_visible_to,
+			// Legacy fields for backward compatibility
 			contactEmail: user.contact_email,
 			contactPhone: user.contact_phone,
-			contactVisibleTo: user.contact_visible_to,
 			lookingForParty: user.looking_for_party,
 			partyStatus: user.party_status,
 			openToAnyGame: user.open_to_any_game,
@@ -46,6 +49,23 @@ function sanitizeInput(input: string): string {
 		.substring(0, 255); // Limit length
 }
 
+// Helper function to validate contact information based on method
+function isValidContact(method: string, value: string): boolean {
+	const trimmedValue = value.trim();
+
+	switch (method) {
+		case 'email':
+			return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedValue);
+		case 'phone':
+		case 'whatsapp':
+			return /^[+]?[\d\s\-\(\)]{8,}$/.test(trimmedValue);
+		case 'discord':
+			return trimmedValue.length >= 2; // Flexible validation for Discord
+		default:
+			return false;
+	}
+}
+
 export const actions = {
 	updateProfile: async ({ request, locals }) => {
 		if (!locals.user) {
@@ -57,8 +77,8 @@ export const actions = {
 		const bio = formData.get('bio');
 		const experienceLevel = formData.get('experience_level');
 		const vibePreference = formData.get('vibe_preference');
-		const contactEmail = formData.get('contact_email');
-		const contactPhone = formData.get('contact_phone');
+		const contactMethod = formData.get('contact_method');
+		const contactValue = formData.get('contact_value');
 		const contactVisibleTo = formData.get('contact_visible_to');
 
 		// Validate input types
@@ -67,8 +87,8 @@ export const actions = {
 			typeof bio !== 'string' ||
 			typeof experienceLevel !== 'string' ||
 			typeof vibePreference !== 'string' ||
-			typeof contactEmail !== 'string' ||
-			typeof contactPhone !== 'string' ||
+			typeof contactMethod !== 'string' ||
+			typeof contactValue !== 'string' ||
 			typeof contactVisibleTo !== 'string'
 		) {
 			return fail(400, { message: 'Invalid input types' });
@@ -77,8 +97,8 @@ export const actions = {
 		// Sanitize inputs
 		const cleanDisplayName = sanitizeInput(displayName);
 		const cleanBio = sanitizeInput(bio);
-		const cleanContactEmail = sanitizeInput(contactEmail);
-		const cleanContactPhone = sanitizeInput(contactPhone);
+		const cleanContactMethod = sanitizeInput(contactMethod);
+		const cleanContactValue = sanitizeInput(contactValue);
 
 		// Validate display name
 		if (cleanDisplayName.length < 1 || cleanDisplayName.length > 50) {
@@ -109,9 +129,20 @@ export const actions = {
 			return fail(400, { message: 'Invalid contact visibility setting' });
 		}
 
-		// Validate contact email format if provided
-		if (cleanContactEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanContactEmail)) {
-			return fail(400, { message: 'Invalid contact email format' });
+		// Validate contact method and value
+		const validMethods = ['email', 'phone', 'whatsapp', 'discord'];
+		if (!validMethods.includes(cleanContactMethod)) {
+			return fail(400, { message: 'Invalid contact method selected' });
+		}
+
+		if (cleanContactValue.trim() && !isValidContact(cleanContactMethod, cleanContactValue)) {
+			const methodName =
+				cleanContactMethod === 'whatsapp'
+					? 'WhatsApp number'
+					: cleanContactMethod === 'discord'
+						? 'Discord username'
+						: cleanContactMethod;
+			return fail(400, { message: `Please enter a valid ${methodName}` });
 		}
 
 		try {
@@ -122,9 +153,16 @@ export const actions = {
 					bio: cleanBio || null,
 					experience_level: experienceLevel,
 					vibe_preference: vibePreference,
-					contact_email: cleanContactEmail || null,
-					contact_phone: cleanContactPhone || null,
+					contact_method: cleanContactMethod,
+					contact_value: cleanContactValue.trim() || null,
 					contact_visible_to: contactVisibleTo,
+					// Update email field for login purposes if contact method is email
+					email: cleanContactMethod === 'email' ? cleanContactValue.trim() : locals.user.email,
+					// Keep legacy fields for compatibility during transition
+					contact_email: cleanContactMethod === 'email' ? cleanContactValue.trim() : null,
+					contact_phone: ['phone', 'whatsapp'].includes(cleanContactMethod)
+						? cleanContactValue.trim()
+						: null,
 					updated_at: new Date()
 				})
 				.where(eq(users.id, locals.user.id));
