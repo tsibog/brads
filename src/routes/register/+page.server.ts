@@ -237,7 +237,7 @@ export const actions: Actions = {
 				password_hash: passwordHash,
 				display_name: cleanDisplayName,
 				is_admin: false,
-				party_status: 'resting', // Default to resting
+				party_status: 'active', // Default to active
 				contact_email: cleanEmail.trim() || null, // For party finder contact
 				contact_phone: cleanPhone.trim() || null, // For party finder contact
 				last_login: new Date()

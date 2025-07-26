@@ -48,9 +48,9 @@ looking_for_party: integer('looking_for_party', { mode: 'boolean' }).default(fal
 party_status: text('party_status').default('resting'), -- 'active', 'resting'
 open_to_any_game: integer('open_to_any_game', { mode: 'boolean' }).default(false),
 
--- Contact & privacy
-contact_email: text('contact_email'),
-contact_phone: text('contact_phone'),
+-- Contact & privacy (UPDATED: Flexible Contact Method System)
+contact_method: text('contact_method'), -- 'email', 'phone', 'whatsapp', 'discord'
+contact_value: text('contact_value'), -- The actual contact information
 contact_visible_to: text('contact_visible_to').default('matches'), -- 'none', 'matches', 'all'
 
 -- Activity tracking
@@ -330,6 +330,119 @@ A user appears in the Party Finder table when:
 - Rating/feedback system for gaming experiences
 - Integration with calendar systems
 - Push notifications for new matches
+
+## Phase 6: Contact Method Flexibility Enhancement
+
+**Status**: PLANNED - Implementation scheduled for next development session
+
+**Acceptance Criteria**: Users can select their preferred contact method from multiple options with appropriate validation and display
+
+**Overview**: Replace the current dual contact system (email + phone) with a flexible single contact method selection system that allows users to choose their preferred communication channel.
+
+### Database Schema Update
+
+Replace existing contact fields in `users` table:
+```sql
+-- REMOVE these fields:
+contact_email: text('contact_email'),
+contact_phone: text('contact_phone'),
+
+-- ADD these fields: 
+contact_method: text('contact_method'), -- 'email', 'phone', 'whatsapp', 'discord'
+contact_value: text('contact_value'), -- The actual contact information
+-- KEEP existing:
+contact_visible_to: text('contact_visible_to').default('matches')
+```
+
+### Implementation Steps
+
+1. **Database Migration**
+   - Update schema definition in `src/lib/server/db/schema.ts` ✅ COMPLETED
+   - Generate migration: `npm run db:generate`
+   - Run migration: `npm run db:migrate`
+   - Verify schema in production using MCP Turso tools
+
+2. **Package Dependencies**
+   - Install `@iconify/svelte` for contact method icons ✅ COMPLETED
+
+3. **Registration Form Enhancement** (`src/routes/register/+page.svelte`)
+   - Replace dual email/phone inputs with:
+     - Contact method selection dropdown (Email, Phone, WhatsApp, Discord)
+     - Single dynamic input field with method-specific validation
+     - Method-specific placeholder text
+   - Update client-side validation logic
+   - Remove existing email/phone validation functions
+
+4. **Registration Server Logic** (`src/routes/register/+page.server.ts`)
+   - Update validation to work with `contact_method` and `contact_value`
+   - Implement method-specific validation:
+     - Email: `/^[^\s@]+@[^\s@]+\.[^\s@]+$/`
+     - Phone/WhatsApp: `/^[+]?[\d\s\-\(\)]{8,}$/`
+     - Discord: Accept any string format (both @username and username#1234)
+   - Update database insertion logic
+
+5. **Profile Page Updates**
+   - Update `src/routes/profile/+page.svelte` for new contact method display/editing
+   - Update `src/routes/profile/+page.server.ts` server logic
+   - Maintain consistency with registration form UX
+
+6. **Party Finder Display Updates**
+   - Update `src/lib/components/PlayerDiscoveryTable.svelte`:
+     - Display contact method type with Iconify icons
+     - Update contact sharing/reveal logic
+     - Replace existing email/phone display logic
+   - Update contact visibility functions
+
+### Contact Method Configuration
+
+**Supported Methods**:
+- **Email**: Standard email validation, icon: `mdi:email`
+- **Phone**: Phone number validation, icon: `mdi:phone`  
+- **WhatsApp**: Phone number validation, icon: `mdi:whatsapp`
+- **Discord**: String validation (flexible format), icon: `mdi:discord`
+
+**Input Placeholders**:
+- Email: "your.email@example.com"
+- Phone: "+46 70 123 45 67"
+- WhatsApp: "+46 70 123 45 67" 
+- Discord: "@username or username#1234"
+
+### Critical Implementation Notes
+
+**Database Migration Safety**:
+- Use MCP Turso tools for production database updates
+- Test migration in development environment first
+- No data preservation required (dev environment only)
+
+**Validation Requirements**:
+- Method-specific validation with clear error messages  
+- Maintain existing privacy controls compatibility
+- Ensure backward compatibility during transition
+
+**UI/UX Consistency**:
+- Use Iconify icons for visual contact method identification
+- Maintain existing contact sharing privacy logic
+- Keep mobile-responsive design patterns
+
+**Files Requiring Updates**:
+- `src/lib/server/db/schema.ts` ✅ COMPLETED
+- `src/routes/register/+page.svelte` + `+page.server.ts`
+- `src/routes/profile/+page.svelte` + `+page.server.ts` 
+- `src/lib/components/PlayerDiscoveryTable.svelte`
+- Migration files in `drizzle/` directory
+
+### Testing Checklist
+
+- [ ] Database migration runs successfully in dev and production
+- [ ] Registration form accepts all 4 contact methods with proper validation
+- [ ] Profile page allows editing contact method and value
+- [ ] Party finder displays contact methods with appropriate icons
+- [ ] Contact sharing logic works with new unified system
+- [ ] All existing functionality remains unaffected
+- [ ] Mobile responsive design maintained
+- [ ] No console errors or TypeScript issues
+
+This enhancement improves user experience by allowing flexible contact preferences while maintaining all existing privacy and security features.
 
 ## Implementation Notes for Claude Agents
 

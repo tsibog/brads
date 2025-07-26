@@ -1,234 +1,127 @@
 # Party Finder Implementation Progress
 
-> **Specification Reference**: See [PARTY_FINDER_SPEC.md](./PARTY_FINDER_SPEC.md) for complete technical details
+> **Reference**: See [PARTY_FINDER_SPEC.md](./PARTY_FINDER_SPEC.md) for technical specification
 
-## Overall Progress: Phase 4 Complete (80% done)
+## Progress Overview (90% Complete)
 
-| Phase                                            | Status           | Completion Date | Notes                                               |
-| ------------------------------------------------ | ---------------- | --------------- | --------------------------------------------------- |
-| **Phase 1**: Database & Auth Foundation          | ✅ **COMPLETED** | 2025-01-24      | All database migrations and auth updates successful |
-| **Phase 2**: User Registration & Authentication  | ✅ **COMPLETED** | 2025-01-24      | Full auth system with profile management complete   |
-| **Phase 3**: Core Party Finder Interface         | ✅ **COMPLETED** | 2025-01-25      | Sidebar layout with player discovery complete       |
-| **Phase 4**: Matching Algorithm & Contact System | ✅ **COMPLETED** | 2025-01-25      | Admin config, caching, and auto-resting complete    |
-| **Phase 5**: UI Polish & Features                | ⏳ **PENDING**   | -               | Ready to begin                                      |
-
----
-
-## ✅ Phase 1: Database & Auth Foundation - **COMPLETED**
-
-**Completion Date**: 2025-01-24  
-**Migration File**: `drizzle/0005_hot_weapon_omega.sql`  
-**Database**: `brads-db` on Turso
-
-### Completed Tasks
-
-- ✅ **Extended users table** with 11 new columns:
-  - Profile fields: `display_name`, `bio`, `experience_level`, `vibe_preference`
-  - Party finder status: `looking_for_party`, `party_status`, `open_to_any_game`
-  - Contact & privacy: `contact_email`, `contact_phone`, `contact_visible_to`
-  - Activity tracking: `last_login`
-
-- ✅ **Created new tables** with proper foreign key constraints:
-  - `user_availability` - For tracking user availability by day
-  - `user_game_preferences` - For linking users to preferred games
-  - `system_settings` - For admin-configurable settings
-
-- ✅ **Database migration executed** successfully on production database
-- ✅ **Default system settings** inserted: `party_finder_inactive_days = '14'`
-- ✅ **Lucia auth system updated** to include all new user attributes in sessions
-- ✅ **TypeScript interfaces updated** for DatabaseUserAttributes
-- ✅ **Code formatted and linted** with no breaking changes
-
-### Database Verification
-
-- **Production users table**: Now has 18 columns (7 original + 11 new)
-- **New tables created**: All 3 tables with proper relationships
-- **Foreign key constraints**: Properly configured with cascade deletes
-- **Default settings**: System configuration populated
-- **Existing functionality**: Admin features preserved and working
-
-### Files Modified
-
-- ✅ `src/lib/server/db/schema.ts` - Added new schema definitions
-- ✅ `src/lib/server/auth.ts` - Updated getUserAttributes and DatabaseUserAttributes interface
-- ✅ `drizzle/0005_hot_weapon_omega.sql` - Generated migration file executed on production
+| Phase | Status | Date | Key Achievement |
+|-------|---------|------|----------------|
+| **Phase 1**: Database & Auth | ✅ **COMPLETED** | 2025-01-24 | Schema extended, Lucia auth updated |
+| **Phase 2**: User Registration | ✅ **COMPLETED** | 2025-01-24 | Public auth system with rate limiting |
+| **Phase 3**: Core Interface | ✅ **COMPLETED** | 2025-01-25 | Party finder UI with matching algorithm |
+| **Phase 4**: Admin & Caching | ✅ **COMPLETED** | 2025-01-25 | Auto-resting system and performance optimization |
+| **Phase 5**: UX Polish | ✅ **COMPLETED** | 2025-01-25 | Unified settings interface and UX improvements |
+| **Phase 6**: Contact Method Flexibility | 📋 **PLANNED** | 2025-01-26 | Flexible contact method selection system |
 
 ---
 
-## ✅ Phase 2: User Registration & Authentication - **COMPLETED**
+## Core Architecture
 
-**Completion Date**: 2025-01-24  
-**Prerequisites**: Phase 1 complete ✅  
-**Key Deliverables**: User registration, login/logout, profile management
+### Database Schema (Production: `brads-db` on Turso)
+- **users table**: Extended with 11 party finder columns (profile, status, contact, activity tracking)
+  - 🔄 **Contact fields updated**: `contact_method` + `contact_value` replace dual email/phone system
+- **user_availability**: User availability by day (Wed-Sun, European weekday system)
+- **user_game_preferences**: Links users to cafe games (local catalog only, not BGG)
+- **system_settings**: Admin-configurable settings (`party_finder_inactive_days = 14`)
 
-### Completed Tasks
+### Authentication System
+- **Lucia Auth**: Extended to include party finder attributes in sessions
+- **Dual Login Routes**: `/login` (public) and `/admin/login` (admin) - kept separate
+- **Rate Limiting**: `sveltekit-rate-limiter` for Vercel serverless compatibility
+- **Security**: Strong validation, no password reset (intentional), XSS protection
 
-- ✅ **Created separate `/login` route** for public users (preserves `/admin/login` unchanged)
-- ✅ **Created `/register` route** with comprehensive form validation and user-friendly design
-- ✅ **Implemented serverless-compatible rate limiting** using `sveltekit-rate-limiter`
-- ✅ **Created user profile page `/profile`** for complete account management
-- ✅ **Added navigation items** for public auth states with conditional display
-- ✅ **Updated session handling** to track `last_login` for public users with auto-reactivation
-- ✅ **Comprehensive input validation** and sanitization throughout all forms
-
-### Security Requirements (Serverless-Optimized) ✅
-
-- ✅ **Username uniqueness enforced** (case-insensitive database queries)
-- ✅ **Email uniqueness enforced** (case-insensitive database queries)
-- ✅ **Strong password validation** (min 8 chars, uppercase, lowercase, numbers)
-- ✅ **Serverless rate limiting**: Registration (3/hour per IP), Login (5/15min per IP)
-- ✅ **Memory-based rate limiting** leveraging Vercel function warm states with `sveltekit-rate-limiter`
-- ✅ **Input sanitization** for XSS prevention with proper HTML character filtering
-- ✅ **Admin login interface preserved** separately at `/admin/login` - no interference
-- ✅ **No password reset functionality** (intentionally omitted as per spec)
-
-### Files Created/Modified
-
-- ✅ `src/routes/register/+page.svelte` - Registration form with comprehensive validation
-- ✅ `src/routes/register/+page.server.ts` - Registration logic with rate limiting and security
-- ✅ `src/routes/login/+page.svelte` - Public user login form (separate from admin)
-- ✅ `src/routes/login/+page.server.ts` - Public login logic with rate limiting and session management
-- ✅ `src/routes/profile/+page.svelte` - Complete profile management interface
-- ✅ `src/routes/profile/+page.server.ts` - Profile update logic with party finder settings
-- ✅ `src/routes/logout/+page.server.ts` - Proper logout handling for public users
-- ✅ `src/routes/+layout.server.ts` - Layout server load for user data
-- ✅ `src/routes/+layout.svelte` - Added public auth navigation with conditional display
-- ✅ `package.json` - Added `sveltekit-rate-limiter` dependency
+### Performance & Infrastructure
+- **Caching**: Multi-level memory-based caching (5-30min TTL) optimized for serverless
+- **Auto-Resting**: Vercel cron job at 6 AM (`/api/cron/cleanup-inactive-users`)
+- **Auto-Reactivation**: Users automatically return to active status on login
+- **partyFinderUtils**: Core utility module for cleanup, caching, user management
 
 ---
 
-## ✅ Phase 3: Core Party Finder Interface - **COMPLETED**
+## Feature Summary
 
-**Completion Date**: 2025-01-25  
-**Prerequisites**: Phase 2 complete ✅  
-**Key Deliverables**: Party finder settings, player discovery table
+### User Registration & Profile Management
+- Public user registration with comprehensive validation and game selection
+- Profile management with party finder settings integration
+- Automatic `'active'` status for new users (changed from `'resting'`)
 
-### Completed Tasks
+### Party Finder Interface (`/party-finder`)
+- **Sidebar Layout**: Settings (availability, games, status) + player discovery table
+- **Smart Matching**: 4-factor algorithm (availability 40%, games 40%, experience 10%, vibe 10%)
+- **Privacy Controls**: Contact sharing based on match quality and user settings
+- **Filtering System**: By experience, vibe, days, and games
+- **Visual Indicators**: "Great Match" badges for 75%+ compatibility
 
-- ✅ **Created `/party-finder` route** with sidebar layout matching browse page design
-- ✅ **Built DaySelector component** with compact checkbox interface for cafe operating days (Wed-Sun)
-- ✅ **Built GameSelector component** with local game search from cafe catalog
-- ✅ **Created PlayerDiscoveryTable component** with compatibility scoring algorithm
-- ✅ **Implemented smart matching system** calculating compatibility based on:
-  - Availability overlap (40% of score)
-  - Game preferences overlap (40% of score)
-  - Experience level compatibility (10% of score)
-  - Vibe preference compatibility (10% of score)
-- ✅ **Added comprehensive filtering system** by experience, vibe, days, and games
-- ✅ **Implemented privacy-aware contact sharing** based on user settings and match quality
-- ✅ **Created status notifications** for party finder activation states
-- ✅ **Populated test data** with 8 diverse dummy users for comprehensive testing scenarios
-- ✅ **Refined UI/UX** with game preference highlighting and simplified match indicators
-
-### API Endpoints Created
-
-- ✅ `/api/party-finder/availability` - Save/update user day availability
-- ✅ `/api/party-finder/game-preferences` - Save/update game preferences
-- ✅ `/api/party-finder/games-search` - Search local cafe game collection
-
-### Components Architecture
-
-- ✅ **DaySelector.svelte** - Compact checkbox selection for cafe operating days (Wed-Sun)
-- ✅ **GameSelector.svelte** - Search interface for cafe games with thumbnails and details
-- ✅ **PlayerDiscoveryTable.svelte** - Main player browsing with match indicators and contact info
-
-### User Experience Features
-
-- ✅ **Sidebar layout** - Settings in left sidebar, player discovery in main area
-- ✅ **"Great Match" indicators** - Clean visual indicators for 75%+ compatibility (no percentage clutter)
-- ✅ **Shared availability display** - Shows overlapping days between users
-- ✅ **Game preference highlighting** - Displays all player games with shared interests highlighted in blue
-- ✅ **Contact visibility controls** - Respects user privacy settings with match-quality thresholds
-- ✅ **Activity indicators** - Shows last login times and user status
-- ✅ **European weekday system** - Wed-Sun availability matching cafe operating hours
-- ✅ **Flexible game matching** - Highlights preferences even for "open to any game" users
+### Admin Features
+- **Settings Page**: `/admin/party-finder-settings` for inactive user threshold configuration
+- **Test Data**: 8 diverse dummy users for comprehensive testing
 
 ---
 
-## ✅ Phase 4: Matching Algorithm & Contact System - **COMPLETED**
+## Current Status: Phase 5 UX Improvements ✅
 
-**Completion Date**: 2025-01-25  
-**Prerequisites**: Phase 3 complete ✅  
-**Key Deliverables**: Admin configuration, caching system, automated user management
+### Recently Completed (Major UX Overhaul)
+- **Unified Settings Interface**: Consolidated all party finder settings from profile into single cohesive panel
+- **Single Save Action**: Replaced 3 separate save buttons with one "Save All Party Finder Settings" button
+- **Visual Grouping**: Connected settings sections with clear hierarchy and consistent styling
+- **Simplified Components**: Removed individual save logic from DaySelector/GameSelector components
+- **Unified Server Action**: Single `updateSettings` action handles all updates in one transaction
+- **Removed Manual Resting**: Users can no longer manually set themselves to resting status
 
-### Completed Tasks
+### Architecture Improvements
+- **Form Enhancement**: Proper SvelteKit form enhancement with loading states and error handling
+- **Data Flow**: Hidden inputs pass component state to unified form handler
+- **Component Simplification**: DaySelector and GameSelector now focus only on UI, not persistence
 
-- ✅ **Created admin settings page** at `/admin/party-finder-settings` for configuring inactive user threshold
-- ✅ **Implemented Vercel cron-based auto-resting system** with daily cleanup job at 6 AM
-- ✅ **Added comprehensive caching system** with 5-10 minute TTL for improved performance
-- ✅ **Built auto-reactivation logic** that restores users to active when they log back in
-- ✅ **Enhanced partyFinderUtils module** with cleanup, caching, and user management functions
+### Phase 5 Completion Status ✅
+- ✅ **Unified Settings Interface**: Single cohesive panel for all party finder settings
+- ✅ **Single Save Action**: Replaced multiple save buttons with unified form submission
+- ✅ **Visual Grouping**: Clear hierarchy and consistent styling throughout interface
+- ✅ **Component Simplification**: DaySelector/GameSelector focus on UI only
+- ✅ **Form Enhancement**: Proper SvelteKit form enhancement with loading states
+- ✅ **Manual Resting Removal**: Streamlined status management (auto-only)
 
-### Infrastructure Added
+### Phase 6: Contact Method Flexibility (Next Session)
 
-- ✅ **Vercel Cron Job**: `/api/cron/cleanup-inactive-users` - Automated daily cleanup
-- ✅ **Admin Interface**: Real-time configuration of inactivity thresholds (1-365 days)
-- ✅ **Memory-based Caching**: Multi-level caching optimized for serverless functions
-- ✅ **Lazy Evaluation**: Backup filtering at query time for additional reliability
-- ✅ **Error Handling**: Comprehensive logging and graceful failure recovery
+**Status**: 📋 PLANNED - Schema updated, implementation ready
 
-### Performance Optimizations
+**Key Preparation Completed**:
+- ✅ Database schema updated (`contact_method` + `contact_value` fields)
+- ✅ @iconify/svelte package installed for contact method icons
+- ✅ Specification documentation updated with detailed implementation plan
 
-- ✅ **Player Discovery Caching**: 5-minute cache for active player queries
-- ✅ **Availability Caching**: 10-minute cache for user availability data
-- ✅ **Game Preferences Caching**: 10-minute cache for user game preference data
-- ✅ **System Settings Caching**: 30-minute cache for admin configuration
-- ✅ **Cache Invalidation**: Smart cache clearing when user statuses change
+**Implementation Checklist**:
+- [ ] Generate and run database migration (`npm run db:generate`, `npm run db:migrate`)
+- [ ] Update registration form with contact method dropdown
+- [ ] Update registration server validation logic
+- [ ] Update profile page for new contact system
+- [ ] Update PlayerDiscoveryTable with contact method icons
+- [ ] Test all contact methods and validation
+- [ ] Verify existing functionality remains intact
 
-### Files Created/Modified
+**Contact Methods to Support**:
+- **Email**: Standard validation, icon: `mdi:email`
+- **Phone**: Number validation, icon: `mdi:phone`
+- **WhatsApp**: Number validation, icon: `mdi:whatsapp`
+- **Discord**: Flexible string validation, icon: `mdi:discord`
 
-- ✅ `src/routes/admin/party-finder-settings/+page.svelte` - Admin configuration interface
-- ✅ `src/routes/admin/party-finder-settings/+page.server.ts` - Settings management logic
-- ✅ `src/routes/api/cron/cleanup-inactive-users/+server.ts` - Automated cleanup endpoint
-- ✅ `src/lib/server/partyFinderUtils.ts` - Core utilities for cleanup and caching
-- ✅ `vercel.json` - Added cron job configuration for daily execution
-- ✅ `src/routes/login/+page.server.ts` - Enhanced with auto-reactivation logic
-- ✅ `src/routes/party-finder/+page.server.ts` - Added multi-level caching
-
----
-
-## ⏳ Phase 5: UI Polish & Features - **PENDING**
-
-**Prerequisites**: Phase 4 complete  
-**Key Deliverables**: Mobile responsive design, activity indicators, polished UX
-
----
-
-## Development Notes
-
-### Technical Foundation Status
-
-- **Database Schema**: ✅ Complete with all required tables and relationships
-- **Authentication System**: ✅ Extended to support party finder attributes
-- **TypeScript Types**: ✅ Updated for all new user properties
-- **Migration System**: ✅ Working with Turso production database
-- **Code Quality**: ✅ Formatted and linted
-
-### Next Steps
-
-1. **Begin Phase 5**: UI Polish & Features
-2. **Focus Areas**: Mobile responsive design, navigation integration, activity indicators
-3. **Testing Strategy**: End-to-end party finder workflow validation across devices
-
-### Key Technical Decisions Made
-
-- **Database**: Using Turso MCP for safe production migrations
-- **Auth System**: Extended Lucia to include all party finder attributes
-- **Schema Design**: Proper foreign key relationships with cascade deletes
-- **Admin Separation**: Keep `/admin/login` separate from public `/login` route
-- **Rate Limiting**: Use `sveltekit-rate-limiter` for Vercel serverless compatibility
-- **Serverless Strategy**: Memory-based caching leveraging function warm states
-- **Automated Maintenance**: Vercel cron jobs for daily user cleanup and reactivation
-- **Performance Optimization**: Multi-level caching system with smart invalidation
-- **Security**: Intentionally omitting password reset (future: OTP system)
-- **UI Layout**: Sidebar design pattern for consistency with browse page
-- **Game Search**: Local cafe catalog only (not BGG) for relevant game selection
-- **Matching Algorithm**: 4-factor scoring system with privacy-aware contact sharing
-- **Weekday System**: European indexing (0=Monday, 6=Sunday) with cafe closure on Mon/Tue
-- **UI Design**: Clean "Great Match" indicators instead of percentage scores for better UX
-- **Test Data**: Comprehensive dummy users with varied profiles for realistic testing scenarios
+**Files Ready for Updates**:
+- `src/routes/register/+page.svelte` + `+page.server.ts`
+- `src/routes/profile/+page.svelte` + `+page.server.ts`
+- `src/lib/components/PlayerDiscoveryTable.svelte`
+- Migration files (to be generated)
 
 ---
 
-_Last Updated: 2025-01-25_  
-_Next Review: Start of Phase 5_
+## Key Technical Decisions (Reference)
+
+- **Database**: Turso with MCP for safe production migrations
+- **Serverless**: Memory-based caching, Vercel cron jobs, optimized for function warm states
+- **UI Pattern**: Sidebar design consistent with browse page, no manual resting capability
+- **Matching**: Local cafe games only, European weekday system (Mon/Tue closed)
+- **Security**: Case-insensitive uniqueness, rate limiting, no password reset (future: OTP)
+- **UX**: Clean match indicators, unified settings interface, automatic status management
+
+---
+
+_Last Updated: 2025-01-26 | Next: Implement Phase 6 Contact Method Flexibility_

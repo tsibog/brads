@@ -136,40 +136,5 @@ export const actions = {
 				message: 'An error occurred while updating your profile'
 			});
 		}
-	},
-
-	updatePartyStatus: async ({ request, locals }) => {
-		if (!locals.user) {
-			return fail(401, { message: 'Not authenticated' });
-		}
-
-		const formData = await request.formData();
-		const lookingForParty = formData.get('looking_for_party') === 'on';
-		const partyStatus = formData.get('party_status');
-		const openToAnyGame = formData.get('open_to_any_game') === 'on';
-
-		// Validate party status
-		if (typeof partyStatus !== 'string' || !['active', 'resting'].includes(partyStatus)) {
-			return fail(400, { message: 'Invalid party status' });
-		}
-
-		try {
-			await db
-				.update(users)
-				.set({
-					looking_for_party: lookingForParty,
-					party_status: partyStatus,
-					open_to_any_game: openToAnyGame,
-					updated_at: new Date()
-				})
-				.where(eq(users.id, locals.user.id));
-
-			return { success: true, message: 'Party finder settings updated' };
-		} catch (error) {
-			console.error('Party status update error:', error);
-			return fail(500, {
-				message: 'An error occurred while updating your party finder settings'
-			});
-		}
 	}
 };

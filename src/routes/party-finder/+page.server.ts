@@ -1,5 +1,5 @@
-import { redirect } from '@sveltejs/kit';
-import type { PageServerLoad } from './$types';
+import { redirect, fail } from '@sveltejs/kit';
+import type { PageServerLoad, Actions } from './$types';
 import { db } from '$lib/server/db';
 import { users, userAvailability, userGamePreferences, boardGames } from '$lib/server/db/schema';
 import { eq, and, inArray, gte } from 'drizzle-orm';
@@ -122,4 +122,85 @@ export const load: PageServerLoad = async ({ locals }) => {
 		userGamePreferences: userGamePreferencesData,
 		activePlayers: playersWithDetails
 	};
+};
+
+export const actions: Actions = {
+	updateSettings: async ({ request, locals }) => {
+		if (!locals.user) {
+			return fail(401, { message: 'Not authenticated' });
+		}
+
+		const formData = await request.formData();
+		const lookingForParty = formData.get('looking_for_party') === 'on';
+		const openToAnyGame = formData.get('open_to_any_game') === 'on';
+		const selectedDaysJson = formData.get('selected_days');
+		const selectedGamesJson = formData.get('selected_games');
+
+		let selectedDays: number[] = [];
+		let selectedGames: string[] = [];
+
+		// Parse selected days
+		try {
+			if (selectedDaysJson && typeof selectedDaysJson === 'string') {
+				selectedDays = JSON.parse(selectedDaysJson);
+			}
+		} catch (error) {
+			return fail(400, { message: 'Invalid availability data' });
+		}
+
+		// Parse selected games
+		try {
+			if (selectedGamesJson && typeof selectedGamesJson === 'string') {
+				selectedGames = JSON.parse(selectedGamesJson);
+			}
+		} catch (error) {
+			return fail(400, { message: 'Invalid game preferences data' });
+		}
+
+		try {
+			// Start transaction-like updates
+			const userId = locals.user.id;
+
+			// 1. Update user table with party status
+			await db
+				.update(users)
+				.set({
+					looking_for_party: lookingForParty,
+					open_to_any_game: openToAnyGame,
+					updated_at: new Date()
+				})
+				.where(eq(users.id, userId));
+
+			// 2. Update availability - delete old and insert new
+			await db.delete(userAvailability).where(eq(userAvailability.userId, userId));
+
+			if (selectedDays.length > 0) {
+				const availabilityData = selectedDays.map((dayOfWeek) => ({
+					userId,
+					dayOfWeek,
+					timeSlotStart: null,
+					timeSlotEnd: null
+				}));
+				await db.insert(userAvailability).values(availabilityData);
+			}
+
+			// 3. Update game preferences - delete old and insert new
+			await db.delete(userGamePreferences).where(eq(userGamePreferences.userId, userId));
+
+			if (selectedGames.length > 0) {
+				const gamePreferenceData = selectedGames.map((gameBggId) => ({
+					userId,
+					gameBggId
+				}));
+				await db.insert(userGamePreferences).values(gamePreferenceData);
+			}
+
+			return { success: true, message: 'All party finder settings updated successfully!' };
+		} catch (error) {
+			console.error('Party finder settings update error:', error);
+			return fail(500, {
+				message: 'An error occurred while updating your settings'
+			});
+		}
+	}
 };

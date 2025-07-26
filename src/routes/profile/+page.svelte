@@ -31,25 +31,12 @@
 	let { data, form }: { data: PageData; form: ActionData | null } = $props();
 
 	let isUpdatingProfile = $state(false);
-	let isUpdatingPartyStatus = $state(false);
-
-	// Profile form data - bind directly to data.user for proper state sync
-
-	// Party finder form data - bind directly to data.user for proper state sync
 
 	const handleProfileSubmit: SubmitFunction = () => {
 		isUpdatingProfile = true;
 		return async ({ update }) => {
 			await update({ reset: false });
 			isUpdatingProfile = false;
-		};
-	};
-
-	const handlePartyStatusSubmit: SubmitFunction = () => {
-		isUpdatingPartyStatus = true;
-		return async ({ update }) => {
-			await update({ reset: false });
-			isUpdatingPartyStatus = false;
 		};
 	};
 </script>
@@ -226,75 +213,6 @@
 								Saving...
 							{:else}
 								Save Profile
-							{/if}
-						</button>
-					</div>
-				</form>
-			</div>
-
-			<!-- Party Finder Settings -->
-			<div class="bg-white shadow rounded-lg">
-				<div class="px-6 py-4 border-b border-gray-200">
-					<h2 class="text-lg font-medium text-gray-900">Party Finder Settings</h2>
-				</div>
-				<form
-					method="POST"
-					action="?/updatePartyStatus"
-					use:enhance={handlePartyStatusSubmit}
-					class="px-6 py-4 space-y-6"
-				>
-					<div class="flex items-center">
-						<input
-							id="looking_for_party"
-							name="looking_for_party"
-							type="checkbox"
-							class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-							bind:checked={data.user.lookingForParty}
-							disabled={isUpdatingPartyStatus}
-						/>
-						<label for="looking_for_party" class="ml-2 block text-sm text-gray-900">
-							I'm looking for players to game with
-						</label>
-					</div>
-
-					<div>
-						<label for="party_status" class="block text-sm font-medium text-gray-700">Status</label>
-						<select
-							id="party_status"
-							name="party_status"
-							class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-							bind:value={data.user.partyStatus}
-							disabled={isUpdatingPartyStatus}
-						>
-							<option value="active">Active - Show me to other players</option>
-							<option value="resting">Resting - Hide me from party finder</option>
-						</select>
-					</div>
-
-					<div class="flex items-center">
-						<input
-							id="open_to_any_game"
-							name="open_to_any_game"
-							type="checkbox"
-							class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-							bind:checked={data.user.openToAnyGame}
-							disabled={isUpdatingPartyStatus}
-						/>
-						<label for="open_to_any_game" class="ml-2 block text-sm text-gray-900">
-							I'm open to playing any game
-						</label>
-					</div>
-
-					<div class="flex justify-end">
-						<button
-							type="submit"
-							disabled={isUpdatingPartyStatus}
-							class="bg-indigo-600 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
-						>
-							{#if isUpdatingPartyStatus}
-								Saving...
-							{:else}
-								Save Settings
 							{/if}
 						</button>
 					</div>
