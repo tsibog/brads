@@ -124,13 +124,13 @@ A user appears in the Party Finder table when:
 The Party Finder is a completed community platform that transforms the board game catalog into a player matching system. Users can register, set availability preferences, select preferred games, and discover compatible gaming partners at Brads Spelcafé.
 
 **Key Features**:
+
 - Public user registration with game selection during signup
 - Smart matching algorithm (4-factor scoring: availability, games, experience, vibe)
 - Flexible contact method system (Email, Phone, WhatsApp, Discord)
 - Privacy controls for contact information sharing
 - Automatic inactive user management with admin-configurable thresholds
 - Mobile-responsive interface with unified settings panel
-
 
 ## Security & Privacy Features
 
@@ -144,6 +144,58 @@ The system implements comprehensive security and privacy controls:
 
 **Future Enhancements**: OTP authentication, 2FA, email verification, secure account recovery.
 
+## Core Features
+
+### Player Discovery Pagination System
+
+**Objective**: Server-side pagination for the party finder player table to handle hundreds of registered players efficiently while maintaining intelligent match scoring and sorting.
+
+**Technical Implementation**:
+
+1. **API Endpoint**: `GET /api/party-finder/players`
+   - **Parameters**: `page` (default: 1), `limit` (default: 20), `sortBy` (default: compatibility), `sortOrder` (default: desc)
+   - **Optional Filters**: `experience`, `vibe`, `availability_day`, `game_preference`
+   - **Response Format**: `{ data: Player[], meta: { totalCount, page, limit, totalPages, averageCompatibility } }`
+
+2. **Server-Side Match Calculation**:
+   - Compatibility scoring algorithm moved from client to server
+   - 4-factor scoring system: availability overlap (40%), game preferences (40%), experience level (10%), vibe compatibility (10%)
+   - Calculate scores for ALL active players before pagination
+   - Sort by compatibility score (highest first) before applying LIMIT/OFFSET
+   - Include compatibility score in response data for each player
+
+3. **Pagination Implementation**:
+   - Default page size: 20 players
+   - Mobile-responsive pagination controls (adapted from `/browse` implementation)
+   - URL-based state management with `page` parameter
+   - Smart page number generation with ellipsis for large datasets
+
+4. **Performance Optimizations**:
+   - Multi-level caching strategy (5-30min TTL) maintained
+   - Cache compatibility calculations per user session
+   - Database query optimization with proper indexing
+   - Efficient sorting before pagination application
+
+5. **Enhanced Features**:
+   - Server-side filtering options integrated with pagination
+   - Sorting options: compatibility score, display name, experience level, last login
+   - "Show all matches above X% compatibility" option
+   - Match statistics in pagination metadata
+
+**Database Considerations**:
+
+- Add indexes on filtered columns (`experience_level`, `vibe_preference`, `last_login`)
+- Optimize user availability and game preference joins
+- Consider materialized compatibility scores for frequent users
+
+**Files Modified**:
+
+- `src/routes/api/party-finder/players/+server.ts` (new) - Paginated API with match calculation
+- `src/routes/party-finder/+page.server.ts` - Updated to use paginated API
+- `src/routes/party-finder/+page.svelte` - Add pagination controls
+- `src/lib/components/PlayerDiscoveryTable.svelte` - Remove client-side sorting, accept pre-calculated scores
+- `src/lib/server/partyFinderUtils.ts` - Move compatibility calculation logic here
+
 ## Future Enhancement Ideas
 
 - Time slot specificity (not just days)
@@ -152,7 +204,6 @@ The system implements comprehensive security and privacy controls:
 - Rating/feedback system for gaming experiences
 - Integration with calendar systems
 - Push notifications for new matches
-
 
 ## Development Reference
 
@@ -175,6 +226,7 @@ The system implements comprehensive security and privacy controls:
 ### Security Implementation
 
 The system implements comprehensive security measures:
+
 - Case-insensitive unique constraints on username/email
 - Strong password requirements with bcrypt hashing (12+ rounds)
 - Rate limiting via `sveltekit-rate-limiter` for serverless compatibility

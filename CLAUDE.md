@@ -2,24 +2,18 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Docs and details
+
+Use Context7 MCP to fetch latest docs for various libraries and packages.
+
 ## Development Commands
 
 **Start development server:**
-
-```bash
-npm run dev
-```
-
+I will have the server running always, no need to try to start it yourself.
 **Build for production:**
 
 ```bash
 npm run build
-```
-
-**Preview production build:**
-
-```bash
-npm run preview
 ```
 
 **Lint and format:**
@@ -32,12 +26,7 @@ npm run check         # Run svelte-check for type checking
 
 **Database operations:**
 
-```bash
-npm run db:generate   # Generate new migration files
-npm run db:push       # Push schema changes to database
-npm run db:migrate    # Run migrations
-npm run studio        # Open Drizzle Studio for database inspection
-```
+Use Turso MCP to do database operations.
 
 ## Project Architecture
 
@@ -104,3 +93,13 @@ Located in `src/lib/server/db/schema.ts`:
 ## Development Guidance
 
 - I am always running the dev server myself so no need to try to start it
+
+## Documentation Best Practices
+
+- Keep specification documents (e.g., PARTY_FINDER_SPEC.md) clean and concise
+  - Focus on architectural description of features
+  - Serve as a reference for the codebase
+- Separate implementation progress notes
+  - Use dedicated files like PARTY_FINDER_PROGRESS.md for tracking implementation status
+  - Progress documentation should be brief
+  - List changed files and provide short rationale for changes

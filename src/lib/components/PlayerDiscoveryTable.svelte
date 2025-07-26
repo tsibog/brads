@@ -3,13 +3,13 @@
 		Player,
 		GamePreference,
 		ExtendedGamePreference,
-		AppUser
+		BaseUser
 	} from '$lib/server/db/schema';
 	import Icon from '@iconify/svelte';
 
 	interface Props {
 		players: Player[];
-		currentUser: AppUser;
+		currentUser: BaseUser;
 		userGamePreferences: ExtendedGamePreference[];
 		userAvailability: number[];
 	}
@@ -18,8 +18,14 @@
 
 	const daysOfWeek = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-	// Calculate compatibility score between current user and another player
-	function calculateCompatibilityScore(player: Player): number {
+	// Get compatibility score from server-provided data or calculate if missing
+	function getCompatibilityScore(player: Player): number {
+		// Use server-provided score if available
+		if (player.compatibilityScore !== undefined) {
+			return player.compatibilityScore;
+		}
+
+		// Fallback calculation for backward compatibility
 		let score = 0;
 		let maxScore = 0;
 
@@ -32,7 +38,7 @@
 		// Game preferences overlap (40% of score)
 		maxScore += 40;
 		if (player.openToAnyGame || currentUser.openToAnyGame) {
-			score += 40; // Perfect match if either is open to any game
+			score += 40;
 		} else {
 			const userGameIds = userGamePreferences.map((g) => g.gameBggId);
 			const playerGameIds = player.gamePreferences.map((g) => g.gameBggId);
@@ -53,7 +59,7 @@
 				(player.experienceLevel === 'intermediate' &&
 					['beginner', 'advanced'].includes(currentUser.experienceLevel))
 			) {
-				score += 5; // Intermediate players are somewhat compatible with all levels
+				score += 5;
 			}
 		}
 
@@ -64,7 +70,7 @@
 		} else if (currentUser.vibePreference === player.vibePreference) {
 			score += 10;
 		} else {
-			score += 2; // Small score for different but not incompatible vibes
+			score += 2;
 		}
 
 		return Math.round((score / maxScore) * 100);
@@ -81,11 +87,12 @@
 	}
 
 	// Format last login for display
-	function formatLastLogin(lastLogin: Date | null): string {
+	function formatLastLogin(lastLogin: Date | string | null): string {
 		if (!lastLogin) return 'Never';
 
+		const loginDate = typeof lastLogin === 'string' ? new Date(lastLogin) : lastLogin;
 		const now = new Date();
-		const diffTime = Math.abs(now.getTime() - lastLogin.getTime());
+		const diffTime = Math.abs(now.getTime() - loginDate.getTime());
 		const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
 		if (diffDays === 0) return 'Today';
@@ -105,7 +112,7 @@
 			case 'all':
 				return true;
 			case 'matches':
-				return calculateCompatibilityScore(player) >= 50; // Show contact for good matches (50%+)
+				return getCompatibilityScore(player) >= 50; // Show contact for good matches (50%+)
 			case 'none':
 			default:
 				return false;
@@ -161,10 +168,8 @@
 		}
 	}
 
-	// Sort players by compatibility score (highest first)
-	const sortedPlayers = $derived(
-		[...players].sort((a, b) => calculateCompatibilityScore(b) - calculateCompatibilityScore(a))
-	);
+	// Players are already sorted by server, no need to re-sort
+	const sortedPlayers = $derived(players);
 </script>
 
 {#if sortedPlayers.length === 0}
@@ -188,7 +193,7 @@
 {:else}
 	<div class="space-y-4">
 		{#each sortedPlayers as player}
-			{@const compatibilityScore = calculateCompatibilityScore(player)}
+			{@const compatibilityScore = getCompatibilityScore(player)}
 			{@const sharedGames = getSharedGames(player)}
 			{@const sharedDays = getSharedDays(player)}
 			{@const canShowContact = canViewContact(player)}
@@ -407,9 +412,7 @@
 								<div class="text-xs text-gray-400 italic">
 									{#if !currentUser.lookingForParty || currentUser.partyStatus !== 'active'}
 										Enable "Looking for Party" to see contacts
-									{:else if player.contactVisibleTo === 'matches' && compatibilityScore < 50}
-										Contact visible to better matches
-									{:else}
+									{:else if player.contactVisibleTo === 'matches' && compatibilityScore < 50}{:else}
 										Contact info hidden
 									{/if}
 								</div>

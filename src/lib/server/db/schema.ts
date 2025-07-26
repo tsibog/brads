@@ -118,12 +118,10 @@ export type NewUserGamePreference = typeof userGamePreferences.$inferInsert;
 export type SystemSetting = typeof systemSettings.$inferSelect;
 export type NewSystemSetting = typeof systemSettings.$inferInsert;
 
-// Transformed types for frontend use (camelCase, matches Lucia getUserAttributes)
-export interface AppUser {
+// Base user interface with shared fields (camelCase, matches Lucia getUserAttributes)
+export interface BaseUser {
 	id: string;
 	username: string;
-	email: string | null;
-	isAdmin: boolean;
 	displayName: string | null;
 	bio: string | null;
 	experienceLevel: string | null;
@@ -137,7 +135,13 @@ export interface AppUser {
 	// Legacy fields - will be removed after migration
 	contactEmail: string | null;
 	contactPhone: string | null;
-	lastLogin: number | null;
+	lastLogin: Date | null;
+}
+
+// App user interface for authentication and general app use
+export interface AppUser extends BaseUser {
+	email: string | null;
+	isAdmin: boolean;
 }
 
 // Game preference type for frontend (basic)
@@ -156,24 +160,10 @@ export interface ExtendedGamePreference extends GamePreference {
 	playingTime?: number | null;
 }
 
-// Player type for party finder (includes joined data)
-export interface Player {
-	id: string;
-	displayName: string | null;
-	username: string;
-	bio: string | null;
-	experienceLevel: string | null;
-	vibePreference: string | null;
-	lookingForParty: boolean | null;
-	partyStatus: string | null;
-	openToAnyGame: boolean | null;
-	contactVisibleTo: string | null;
-	contactMethod: string | null;
-	contactValue: string | null;
-	// Legacy fields - will be removed after migration
-	contactEmail: string | null;
-	contactPhone: string | null;
-	lastLogin: Date | null;
+// Player type for party finder (extends BaseUser with joined data)
+export interface Player extends BaseUser {
 	availability: Array<{ dayOfWeek: number }>;
 	gamePreferences: GamePreference[];
+	// Server-calculated compatibility score (added in pagination implementation)
+	compatibilityScore?: number;
 }

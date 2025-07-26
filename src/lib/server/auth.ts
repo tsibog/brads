@@ -31,7 +31,7 @@ export const lucia = new Lucia(adapter, {
 			// Legacy fields for backward compatibility
 			contactEmail: attributes.contact_email,
 			contactPhone: attributes.contact_phone,
-			lastLogin: attributes.last_login
+			lastLogin: attributes.last_login ? new Date(attributes.last_login * 1000) : null
 		};
 	}
 });

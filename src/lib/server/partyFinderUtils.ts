@@ -186,3 +186,225 @@ export function shouldUserBeVisible(
 
 	return user.lastLogin > thresholdDate;
 }
+
+/**
+ * Player interface for compatibility calculations
+ */
+export interface PlayerForCompatibility {
+	id: string;
+	displayName: string | null;
+	username: string;
+	bio: string | null;
+	experienceLevel: string | null;
+	vibePreference: string | null;
+	lookingForParty: boolean;
+	partyStatus: string;
+	openToAnyGame: boolean;
+	contactVisibleTo: string | null;
+	contactMethod: string | null;
+	contactValue: string | null;
+	contactEmail: string | null;
+	contactPhone: string | null;
+	lastLogin: Date | null;
+	availability: Array<{ dayOfWeek: number }>;
+	gamePreferences: Array<{ gameBggId: string; name: string; thumbnail?: string; image?: string }>;
+	compatibilityScore?: number;
+}
+
+export interface CurrentUserForCompatibility {
+	id: string;
+	experienceLevel: string | null;
+	vibePreference: string | null;
+	openToAnyGame: boolean;
+	lookingForParty: boolean;
+	partyStatus: string;
+}
+
+/**
+ * Calculate compatibility score between current user and another player
+ * Uses the same 4-factor algorithm as the client-side version
+ */
+export function calculatePlayerCompatibility(
+	currentUser: CurrentUserForCompatibility,
+	currentUserAvailability: number[],
+	currentUserGamePreferences: string[],
+	player: PlayerForCompatibility
+): number {
+	let score = 0;
+	let maxScore = 0;
+
+	// Availability overlap (40% of score)
+	maxScore += 40;
+	const playerDays = player.availability.map((a) => a.dayOfWeek);
+	const commonDays = currentUserAvailability.filter((day) => playerDays.includes(day));
+	if (currentUserAvailability.length > 0 || playerDays.length > 0) {
+		score +=
+			(commonDays.length / Math.max(currentUserAvailability.length, playerDays.length, 1)) * 40;
+	}
+
+	// Game preferences overlap (40% of score)
+	maxScore += 40;
+	if (player.openToAnyGame || currentUser.openToAnyGame) {
+		score += 40; // Perfect match if either is open to any game
+	} else {
+		const playerGameIds = player.gamePreferences.map((g) => g.gameBggId);
+		const commonGames = currentUserGamePreferences.filter((id) => playerGameIds.includes(id));
+		if (currentUserGamePreferences.length > 0 && playerGameIds.length > 0) {
+			score +=
+				(commonGames.length /
+					Math.max(currentUserGamePreferences.length, playerGameIds.length, 1)) *
+				40;
+		}
+	}
+
+	// Experience level compatibility (10% of score)
+	maxScore += 10;
+	if (currentUser.experienceLevel && player.experienceLevel) {
+		if (currentUser.experienceLevel === player.experienceLevel) {
+			score += 10;
+		} else if (
+			(currentUser.experienceLevel === 'intermediate' &&
+				['beginner', 'advanced'].includes(player.experienceLevel)) ||
+			(player.experienceLevel === 'intermediate' &&
+				['beginner', 'advanced'].includes(currentUser.experienceLevel))
+		) {
+			score += 5; // Intermediate players are somewhat compatible with all levels
+		}
+	}
+
+	// Vibe compatibility (10% of score)
+	maxScore += 10;
+	if (currentUser.vibePreference === 'both' || player.vibePreference === 'both') {
+		score += 10;
+	} else if (currentUser.vibePreference === player.vibePreference) {
+		score += 10;
+	} else {
+		score += 2; // Small score for different but not incompatible vibes
+	}
+
+	return Math.round((score / maxScore) * 100);
+}
+
+/**
+ * Get paginated players with compatibility scores and filtering
+ */
+export async function getPaginatedPlayersWithCompatibility({
+	currentUser,
+	currentUserAvailability,
+	currentUserGamePreferences,
+	allPlayers,
+	page = 1,
+	limit = 20,
+	sortBy = 'compatibility',
+	sortOrder = 'desc',
+	filters = {}
+}: {
+	currentUser: CurrentUserForCompatibility;
+	currentUserAvailability: number[];
+	currentUserGamePreferences: string[];
+	allPlayers: PlayerForCompatibility[];
+	page?: number;
+	limit?: number;
+	sortBy?: string;
+	sortOrder?: 'asc' | 'desc';
+	filters?: {
+		experience?: string;
+		vibe?: string;
+		availability_day?: string;
+		game_preference?: string;
+	};
+}) {
+	// Filter players based on provided filters
+	let filteredPlayers = allPlayers.filter((player) => player.id !== currentUser.id);
+
+	// Apply experience filter
+	if (filters.experience && filters.experience !== 'all') {
+		filteredPlayers = filteredPlayers.filter((p) => p.experienceLevel === filters.experience);
+	}
+
+	// Apply vibe filter
+	if (filters.vibe && filters.vibe !== 'all') {
+		filteredPlayers = filteredPlayers.filter(
+			(p) => p.vibePreference === filters.vibe || p.vibePreference === 'both'
+		);
+	}
+
+	// Apply day availability filter
+	if (filters.availability_day && filters.availability_day !== 'all') {
+		const filterDay = parseInt(filters.availability_day);
+		filteredPlayers = filteredPlayers.filter((p) =>
+			p.availability.some((a) => a.dayOfWeek === filterDay)
+		);
+	}
+
+	// Apply game preference filter
+	if (filters.game_preference && filters.game_preference !== 'all') {
+		filteredPlayers = filteredPlayers.filter(
+			(p) =>
+				p.openToAnyGame || p.gamePreferences.some((g) => g.gameBggId === filters.game_preference)
+		);
+	}
+
+	// Calculate compatibility scores for all filtered players
+	const playersWithScores = filteredPlayers.map((player) => ({
+		...player,
+		compatibilityScore: calculatePlayerCompatibility(
+			currentUser,
+			currentUserAvailability,
+			currentUserGamePreferences,
+			player
+		)
+	}));
+
+	// Sort players
+	let sortedPlayers = [...playersWithScores];
+	if (sortBy === 'compatibility') {
+		sortedPlayers.sort((a, b) =>
+			sortOrder === 'desc'
+				? b.compatibilityScore! - a.compatibilityScore!
+				: a.compatibilityScore! - b.compatibilityScore!
+		);
+	} else if (sortBy === 'displayName') {
+		sortedPlayers.sort((a, b) => {
+			const nameA = (a.displayName || a.username).toLowerCase();
+			const nameB = (b.displayName || b.username).toLowerCase();
+			return sortOrder === 'desc' ? nameB.localeCompare(nameA) : nameA.localeCompare(nameB);
+		});
+	} else if (sortBy === 'experienceLevel') {
+		const experienceOrder = { beginner: 1, intermediate: 2, advanced: 3 };
+		sortedPlayers.sort((a, b) => {
+			const levelA = experienceOrder[a.experienceLevel as keyof typeof experienceOrder] || 0;
+			const levelB = experienceOrder[b.experienceLevel as keyof typeof experienceOrder] || 0;
+			return sortOrder === 'desc' ? levelB - levelA : levelA - levelB;
+		});
+	} else if (sortBy === 'lastLogin') {
+		sortedPlayers.sort((a, b) => {
+			const timeA = a.lastLogin?.getTime() || 0;
+			const timeB = b.lastLogin?.getTime() || 0;
+			return sortOrder === 'desc' ? timeB - timeA : timeA - timeB;
+		});
+	}
+
+	// Calculate pagination
+	const totalCount = sortedPlayers.length;
+	const totalPages = Math.ceil(totalCount / limit);
+	const offset = (page - 1) * limit;
+	const paginatedPlayers = sortedPlayers.slice(offset, offset + limit);
+
+	// Calculate average compatibility score
+	const averageCompatibility =
+		totalCount > 0
+			? Math.round(sortedPlayers.reduce((sum, p) => sum + p.compatibilityScore!, 0) / totalCount)
+			: 0;
+
+	return {
+		data: paginatedPlayers,
+		meta: {
+			totalCount,
+			page,
+			limit,
+			totalPages,
+			averageCompatibility
+		}
+	};
+}
