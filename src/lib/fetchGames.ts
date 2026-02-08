@@ -1,8 +1,20 @@
 import { db } from './server/db';
 import { boardGames, type BoardGame } from './server/db/schema';
-import fetch from 'node-fetch';
-import { DOMParser } from 'xmldom';
+import { DOMParser } from '@xmldom/xmldom';
 import { eq } from 'drizzle-orm';
+import { BGG_API_TOKEN } from '$env/static/private';
+
+const BGG_BASE_URL = 'https://boardgamegeek.com/xmlapi2';
+
+function bggFetch(url: string) {
+	const headers: Record<string, string> = {
+		Accept: 'application/xml'
+	};
+	if (BGG_API_TOKEN) {
+		headers['Authorization'] = `Bearer ${BGG_API_TOKEN}`;
+	}
+	return fetch(url, { headers });
+}
 
 const gameList: string[] = [
 	'Spirit Island',
@@ -15,8 +27,8 @@ const gameList: string[] = [
 ];
 
 async function searchGameId(name: string): Promise<string | null> {
-	const response = await fetch(
-		`https://boardgamegeek.com/xmlapi2/search?query=${encodeURIComponent(name)}&type=boardgame&exact=1`
+	const response = await bggFetch(
+		`${BGG_BASE_URL}/search?query=${encodeURIComponent(name)}&type=boardgame&exact=1`
 	);
 	const xmlText = await response.text();
 	const parser = new DOMParser();
@@ -33,7 +45,7 @@ async function searchGameId(name: string): Promise<string | null> {
 }
 
 async function fetchGameData(id: string) {
-	const response = await fetch(`https://boardgamegeek.com/xmlapi2/thing?id=${id}`);
+	const response = await bggFetch(`${BGG_BASE_URL}/thing?id=${id}`);
 	const xmlText = await response.text();
 	const parser = new DOMParser();
 	const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
