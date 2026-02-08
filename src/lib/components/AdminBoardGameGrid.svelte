@@ -22,7 +22,7 @@
 			</div>
 		{/if}
 		{#if game.isStarred}
-			<div class="absolute top-2 left-2 text-yellow-400">
+			<div class="absolute top-10 left-2 text-yellow-400">
 				<svg
 					xmlns="http://www.w3.org/2000/svg"
 					viewBox="0 0 24 24"
@@ -52,7 +52,7 @@
 		</div>
 		<a
 			href={`/admin/edit/${game.bggId}`}
-			class="absolute top-2 left-2 bg-blue-500 text-white px-2 py-1 rounded text-sm"
+			class="absolute top-2 left-2 bg-blue-500 text-white px-2 py-1 rounded text-sm z-10"
 		>
 			Edit
 		</a>

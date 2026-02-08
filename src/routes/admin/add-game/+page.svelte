@@ -2,6 +2,7 @@
 	import BGGSearch from '$lib/components/BGGSearch.svelte';
 	import GamePreview from '$lib/components/GamePreview.svelte';
 	import { fade } from 'svelte/transition';
+	import { toast } from '$lib/stores/toast';
 
 	let selectedGame: any = $state(null);
 	let isAdding = $state(false);
@@ -11,8 +12,6 @@
 	function handleGameSelect(game: any) {
 		selectedGame = game;
 	}
-
-	$inspect(selectedGame);
 
 	async function addGameToDB() {
 		if (selectedGame) {
@@ -29,12 +28,15 @@
 					body: JSON.stringify(gameData)
 				});
 				if (response.ok) {
-					alert('Game added successfully');
+					toast('Game added successfully');
+					selectedGame = null;
+					isStarred = false;
+					adminNote = '';
 				} else {
 					throw new Error('Failed to add game');
 				}
 			} catch (error) {
-				alert((error as Error).message);
+				toast((error as Error).message, 'error');
 			} finally {
 				isAdding = false;
 			}

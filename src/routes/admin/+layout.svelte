@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { enhance } from '$app/forms';
+	import Toast from '$lib/components/Toast.svelte';
 
 	let { children, data } = $props();
 	let isLoggingOut = $state(false);
@@ -27,9 +28,7 @@
 					<li>
 						<a
 							href="/admin/manage"
-							class="block p-2 rounded hover:bg-brads-green-light {$page.url.pathname.includes(
-								'/manage'
-							)
+							class="block p-2 rounded hover:bg-brads-green-light {$page.url.pathname.includes('/manage') || $page.url.pathname.includes('/edit')
 								? 'bg-brads-green font-bold'
 								: ''}"
 						>
@@ -90,3 +89,5 @@
 {:else}
 	{@render children()}
 {/if}
+
+<Toast />
