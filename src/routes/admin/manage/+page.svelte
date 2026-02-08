@@ -106,6 +106,10 @@
 	</div>
 </div>
 
+<p class="mb-2 text-sm text-gray-500">
+	Showing {(data.meta.page - 1) * data.meta.limit + 1}–{Math.min(data.meta.page * data.meta.limit, data.meta.totalCount)} of {data.meta.totalCount} games
+</p>
+
 {#if isGridView}
 	<AdminBoardGameGrid games={data.games} />
 {:else}

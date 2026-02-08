@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { fade } from 'svelte/transition';
+	import { toast } from '$lib/stores/toast';
 
 	type Comment = {
 		id: number;
@@ -39,8 +40,9 @@
 
 		if (response.ok) {
 			comments = comments.filter((comment) => comment.id !== id);
+			toast('Comment approved');
 		} else {
-			alert('Failed to approve comment');
+			toast('Failed to approve comment', 'error');
 		}
 	}
 
@@ -53,8 +55,9 @@
 
 		if (response.ok) {
 			comments = comments.filter((comment) => comment.id !== id);
+			toast('Comment declined');
 		} else {
-			alert('Failed to decline comment');
+			toast('Failed to decline comment', 'error');
 		}
 	}
 </script>
@@ -74,7 +77,7 @@
 				<li transition:fade={{ duration: 300 }} class="bg-white p-6 rounded-lg shadow-md">
 					<p class="font-semibold">{comment.authorName}</p>
 					<p class="text-gray-600 text-sm mb-2">
-						{formatDate(comment.createdAt)} | Game: {comment.gameName}
+						{formatDate(comment.createdAt)} | Game: <a href="/admin/edit/{comment.gameId}" class="text-blue-600 hover:underline">{comment.gameName}</a>
 					</p>
 					<p class="mb-4">{comment.content}</p>
 					<div class="flex space-x-4">
