@@ -1,6 +1,9 @@
 import { json } from '@sveltejs/kit';
 import { DOMParser } from '@xmldom/xmldom';
 import { BGG_API_TOKEN } from '$env/static/private';
+import { db } from '$lib/server/db';
+import { boardGames } from '$lib/server/db/schema';
+import { inArray } from 'drizzle-orm';
 
 const BGG_BASE_URL = 'https://boardgamegeek.com/xmlapi2';
 
@@ -96,5 +99,21 @@ export async function GET({ url }) {
 		numRatings: item.getElementsByTagName('usersrated')[0]?.getAttribute('value')
 	}));
 
-	return json(games);
+	// Check which games are already in the database
+	const bggIds = games.map((g) => g.id).filter((id): id is string => id !== null);
+	let existingIds: Set<string> = new Set();
+	if (bggIds.length > 0) {
+		const existing = await db
+			.select({ bggId: boardGames.bggId })
+			.from(boardGames)
+			.where(inArray(boardGames.bggId, bggIds));
+		existingIds = new Set(existing.map((e) => e.bggId));
+	}
+
+	const gamesWithStatus = games.map((g) => ({
+		...g,
+		inDatabase: existingIds.has(g.id ?? '')
+	}));
+
+	return json(gamesWithStatus);
 }
