@@ -70,9 +70,16 @@
 						onclick={() => onSelect(game)}
 						class="w-full text-left px-4 py-3 hover:bg-gray-100 transition duration-200 flex justify-between items-center"
 					>
-						<span class="text-gray-800 font-medium">{game.name}</span>
+						<span class="text-gray-800 font-medium flex items-center gap-2">
+							{game.name}
+							{#if game.inDatabase}
+								<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-brads-green text-white">
+									Already added
+								</span>
+							{/if}
+						</span>
 						{#if game.yearPublished}
-							<span class="text-sm text-gray-500">({game.yearPublished})</span>
+							<span class="text-sm text-gray-500 shrink-0 ml-2">({game.yearPublished})</span>
 						{/if}
 					</button>
 				</li>

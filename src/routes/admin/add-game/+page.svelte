@@ -61,11 +61,12 @@
 				</label>
 			</div>
 			<div class="mt-4">
-				<label for="adminNote" class="block text-sm font-medium text-gray-700">Admin Note</label>
+				<label for="adminNote" class="block text-sm font-medium text-gray-700 mb-1">Admin Note</label>
 				<textarea
 					id="adminNote"
 					bind:value={adminNote}
-					class="mt-1 block w-full rounded-md border-gray-300 shadow-xs focus:border-indigo-300 focus:ring-3 focus:ring-indigo-200 focus:ring-opacity-50"
+					placeholder="Add an optional note about this game..."
+					class="block w-full rounded-lg border-2 border-gray-300 bg-white p-3 text-gray-800 shadow-sm placeholder:text-gray-400 focus:border-brads-green-light focus:ring-2 focus:ring-brads-green/30 focus:outline-none transition duration-200"
 					rows="3"
 				></textarea>
 			</div>
