@@ -13,6 +13,7 @@
 
 	const sortOptions = [
 		{ value: 'name', label: 'Name' },
+		{ value: 'id', label: 'Recently Added' },
 		{ value: 'yearPublished', label: 'Year' },
 		{ value: 'playingTime', label: 'Play Time' },
 		{ value: 'minPlayers', label: 'Min Players' },
@@ -93,7 +94,7 @@
 
 	{#if isOpen}
 		<div
-			class="origin-top-left absolute left-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-10"
+			class="origin-top-left absolute left-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50"
 			role="menu"
 			aria-orientation="vertical"
 			aria-labelledby="options-menu"
