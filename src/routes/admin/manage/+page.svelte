@@ -22,12 +22,19 @@
 		};
 	} = $props();
 
-	let isGridView = $state(true);
+	let isGridView = $state($page.url.searchParams.get('view') !== 'table');
 	let currentSort = $state($page.url.searchParams.get('sortBy') || 'name');
 	let currentOrder: 'asc' | 'desc' = $state(
 		($page.url.searchParams.get('order') as 'asc' | 'desc') || 'asc'
 	);
 	let searchQuery = $state(data.searchQuery);
+
+	function setView(grid: boolean) {
+		isGridView = grid;
+		const url = new URL($page.url);
+		url.searchParams.set('view', grid ? 'grid' : 'table');
+		goto(url.toString(), { replaceState: true });
+	}
 
 	function handleSort(sortBy: string, orderBy: 'asc' | 'desc') {
 		const url = new URL($page.url);
@@ -77,7 +84,7 @@
 
 		<div class="bg-brads-yellow-light p-1 rounded-full inline-flex gap-1">
 			<button
-				onclick={() => (isGridView = true)}
+				onclick={() => setView(true)}
 				class="px-4 py-2 rounded-full transition-all duration-300 relative"
 				class:text-brads-yellow-light={isGridView}
 				class:font-bold={isGridView}
@@ -90,7 +97,7 @@
 				{/if}
 			</button>
 			<button
-				onclick={() => (isGridView = false)}
+				onclick={() => setView(false)}
 				class="px-4 py-2 rounded-full transition-all duration-300 relative"
 				class:text-brads-yellow-light={!isGridView}
 				class:font-bold={!isGridView}

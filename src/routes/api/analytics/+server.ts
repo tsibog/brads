@@ -30,20 +30,23 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 		return json({ error: 'Unauthorized' }, { status: 401 });
 	}
 
-	const period = url.searchParams.get('period') || '30'; // days
+	const period = url.searchParams.get('period') || '30'; // days, 0 = all time
 	const daysAgo = parseInt(period);
-	const sinceTimestamp = Math.floor(Date.now() / 1000) - daysAgo * 86400;
+	const isAllTime = daysAgo === 0;
+	const sinceTimestamp = isAllTime ? 0 : Math.floor(Date.now() / 1000) - daysAgo * 86400;
+	const timeFilter = isAllTime ? undefined : gte(gameViews.viewedAt, sql`${sinceTimestamp}`);
 
 	try {
 		// Total views in period
-		const totalViewsResult = await db
+		const totalViewsQuery = db
 			.select({ count: sql<number>`count(*)` })
-			.from(gameViews)
-			.where(gte(gameViews.viewedAt, sql`${sinceTimestamp}`));
+			.from(gameViews);
+		if (timeFilter) totalViewsQuery.where(timeFilter);
+		const totalViewsResult = await totalViewsQuery;
 		const totalViews = Number(totalViewsResult[0].count);
 
 		// Top viewed games
-		const topGames = await db
+		const topGamesQuery = db
 			.select({
 				gameId: gameViews.gameId,
 				gameName: boardGames.name,
@@ -51,28 +54,31 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 				thumbnail: boardGames.thumbnail
 			})
 			.from(gameViews)
-			.innerJoin(boardGames, eq(gameViews.gameId, boardGames.bggId))
-			.where(gte(gameViews.viewedAt, sql`${sinceTimestamp}`))
+			.innerJoin(boardGames, eq(gameViews.gameId, boardGames.bggId));
+		if (timeFilter) topGamesQuery.where(timeFilter);
+		const topGames = await topGamesQuery
 			.groupBy(gameViews.gameId)
 			.orderBy(desc(sql`count(*)`))
 			.limit(10);
 
 		// Views per day (for chart)
-		const viewsPerDay = await db
+		const viewsPerDayQuery = db
 			.select({
 				date: sql<string>`date(${gameViews.viewedAt}, 'unixepoch')`,
 				views: sql<number>`count(*)`
 			})
-			.from(gameViews)
-			.where(gte(gameViews.viewedAt, sql`${sinceTimestamp}`))
+			.from(gameViews);
+		if (timeFilter) viewsPerDayQuery.where(timeFilter);
+		const viewsPerDay = await viewsPerDayQuery
 			.groupBy(sql`date(${gameViews.viewedAt}, 'unixepoch')`)
 			.orderBy(sql`date(${gameViews.viewedAt}, 'unixepoch')`);
 
 		// Total unique games viewed
-		const uniqueGamesResult = await db
+		const uniqueGamesQuery = db
 			.select({ count: sql<number>`count(distinct ${gameViews.gameId})` })
-			.from(gameViews)
-			.where(gte(gameViews.viewedAt, sql`${sinceTimestamp}`));
+			.from(gameViews);
+		if (timeFilter) uniqueGamesQuery.where(timeFilter);
+		const uniqueGamesResult = await uniqueGamesQuery;
 		const uniqueGames = Number(uniqueGamesResult[0].count);
 
 		// Total games in library

@@ -12,6 +12,8 @@
 	let lineCanvas: HTMLCanvasElement;
 	let barCanvas: HTMLCanvasElement;
 
+	let periodLabel = $derived(period === 0 ? 'All time' : `Last ${period} days`);
+
 	async function fetchAnalytics() {
 		isLoading = true;
 		try {
@@ -35,8 +37,9 @@
 		lineChart?.destroy();
 		barChart?.destroy();
 
-		// Fill in missing dates for the line chart
-		const dates = fillDateRange(analytics.viewsPerDay, period);
+		// For all-time, use the raw data from the API; otherwise fill missing dates
+		const dates =
+			period === 0 ? analytics.viewsPerDay : fillDateRange(analytics.viewsPerDay, period);
 
 		// Views over time (line chart)
 		lineChart = new Chart(lineCanvas, {
@@ -159,15 +162,15 @@
 	<div class="flex items-center justify-between mb-6">
 		<h1 class="text-2xl font-bold text-gray-800">Analytics</h1>
 		<div class="flex gap-2">
-			{#each [7, 30, 90] as days}
+			{#each [{ value: 7, label: '7d' }, { value: 30, label: '30d' }, { value: 90, label: '90d' }, { value: 0, label: 'All' }] as { value, label }}
 				<button
-					onclick={() => handlePeriodChange(days)}
+					onclick={() => handlePeriodChange(value)}
 					class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors
-						{period === days
+						{period === value
 							? 'bg-brads-green-dark text-white'
 							: 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50'}"
 				>
-					{days}d
+					{label}
 				</button>
 			{/each}
 		</div>
@@ -183,12 +186,16 @@
 			<div class="bg-white rounded-lg shadow p-5">
 				<p class="text-sm text-gray-500 uppercase tracking-wide">Total Views</p>
 				<p class="text-3xl font-bold text-gray-800">{analytics.totalViews.toLocaleString()}</p>
-				<p class="text-xs text-gray-400 mt-1">Last {period} days</p>
+				<p class="text-xs text-gray-400 mt-1">{periodLabel}</p>
 			</div>
 			<div class="bg-white rounded-lg shadow p-5">
 				<p class="text-sm text-gray-500 uppercase tracking-wide">Avg / Day</p>
 				<p class="text-3xl font-bold text-gray-800">
-					{(analytics.totalViews / period).toFixed(1)}
+					{period === 0
+						? analytics.viewsPerDay.length > 0
+							? (analytics.totalViews / analytics.viewsPerDay.length).toFixed(1)
+							: '0'
+						: (analytics.totalViews / period).toFixed(1)}
 				</p>
 				<p class="text-xs text-gray-400 mt-1">Page views</p>
 			</div>
