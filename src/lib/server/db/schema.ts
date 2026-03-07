@@ -38,6 +38,7 @@ export const boardGames = sqliteTable('board_games', {
 	designers: text('designers'),
 	artists: text('artists'),
 	publishers: text('publishers'),
+	languages: text('languages'),
 	isStarred: integer('is_starred', { mode: 'boolean' }).default(false),
 	adminNote: text('admin_note')
 });

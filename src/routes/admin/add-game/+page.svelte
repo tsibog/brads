@@ -3,6 +3,8 @@
 	import GamePreview from '$lib/components/GamePreview.svelte';
 	import { fade } from 'svelte/transition';
 	import { toast } from '$lib/stores/toast';
+	import LanguagePicker from '$lib/components/LanguagePicker.svelte';
+	import type { LanguageCode } from '$lib/utils/languages';
 
 	let mode: 'bgg' | 'manual' = $state('bgg');
 	let selectedGame: any = $state(null);
@@ -22,6 +24,7 @@
 	let manualDescription = $state('');
 	let manualImage = $state('');
 	let manualThumbnail = $state('');
+	let manualLanguages: LanguageCode[] = $state([]);
 
 	function handleGameSelect(game: any) {
 		selectedGame = game;
@@ -46,6 +49,7 @@
 		manualDescription = '';
 		manualImage = '';
 		manualThumbnail = '';
+		manualLanguages = [];
 	}
 
 	async function addGameToDB() {
@@ -81,6 +85,7 @@
 				designers: [],
 				artists: [],
 				publishers: [],
+				languages: manualLanguages,
 				starred: isStarred,
 				adminNote: adminNote || null
 			};
@@ -252,6 +257,11 @@
 							<input type="url" id="manualThumb" bind:value={manualThumbnail} placeholder="https://... (defaults to full image)" class="w-full p-2 border rounded text-sm focus:ring-2 focus:ring-brads-green/30 focus:border-brads-green-light focus:outline-none" />
 						</div>
 					</div>
+				</div>
+
+				<div class="border-t pt-5">
+					<h3 class="font-bold text-sm text-gray-700 mb-3">Languages</h3>
+					<LanguagePicker bind:selected={manualLanguages} />
 				</div>
 
 				<div class="border-t pt-5">

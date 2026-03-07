@@ -2,11 +2,13 @@
 	import { flip } from 'svelte/animate';
 	import { fly } from 'svelte/transition';
 	import type { BoardGame } from '$lib/server/db/schema';
+	import { parseLanguages, getLanguageInfo } from '$lib/utils/languages';
 
 	const { games }: { games: BoardGame[] } = $props();
 </script>
 
 {#snippet gameCard(game: BoardGame)}
+	{@const langs = parseLanguages((game as any).languages)}
 	<a
 		class="relative block overflow-hidden rounded-lg shadow-lg aspect-[3/4] group"
 		href={`/game/${game.bggId}`}
@@ -29,6 +31,16 @@
 				class="absolute top-2 right-0 bg-brads-green text-white text-xs font-bold px-2 py-1 rounded-tl-lg rounded-bl-lg border-l border-t border-b border-black"
 			>
 				⭐ Staff Pick!
+			</div>
+		{/if}
+		{#if langs.length > 0}
+			<div class="absolute top-2 left-2 flex gap-0.5">
+				{#each langs as code}
+					{@const info = getLanguageInfo(code)}
+					{#if info}
+						<span class="text-lg drop-shadow-md" title={info.label}>{info.flag}</span>
+					{/if}
+				{/each}
 			</div>
 		{/if}
 		<div class="absolute bottom-0 left-0 p-4 text-white">

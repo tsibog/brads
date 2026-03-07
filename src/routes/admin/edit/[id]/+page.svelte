@@ -2,6 +2,8 @@
 	import { goto } from '$app/navigation';
 	import type { BoardGame } from '$lib/server/db/schema';
 	import ConfirmationModal from '$lib/components/ConfirmationModal.svelte';
+	import LanguagePicker from '$lib/components/LanguagePicker.svelte';
+	import { parseLanguages, type LanguageCode } from '$lib/utils/languages';
 	import { toast } from '$lib/stores/toast';
 
 	const {
@@ -25,6 +27,7 @@
 	let age = $state(game.age);
 	let thumbnail = $state(game.thumbnail || '');
 	let image = $state(game.image || '');
+	let languages: LanguageCode[] = $state(parseLanguages((game as any).languages));
 	let isStarred = $state(game.isStarred);
 	let adminNote = $state(game.adminNote || '');
 	let isDeleteModalOpen = $state(false);
@@ -47,6 +50,7 @@
 				age,
 				thumbnail,
 				image,
+				languages,
 				isStarred,
 				adminNote
 			})
@@ -231,6 +235,12 @@
 						/>
 					</div>
 				</div>
+			</div>
+
+			<!-- Languages -->
+			<div class="border-t pt-5">
+				<h3 class="font-bold text-sm text-gray-700 mb-3">Languages</h3>
+				<LanguagePicker bind:selected={languages} />
 			</div>
 
 			<!-- Staff Favorite & Admin Note -->

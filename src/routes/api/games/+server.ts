@@ -164,6 +164,7 @@ export const POST: RequestHandler = async ({ request }) => {
 				designers: JSON.stringify(gameData.designers),
 				artists: JSON.stringify(gameData.artists),
 				publishers: JSON.stringify(gameData.publishers),
+				languages: JSON.stringify(gameData.languages ?? []),
 				isStarred: gameData.isStarred ?? gameData.starred ?? false,
 				adminNote: gameData.adminNote || null,
 			})
@@ -213,6 +214,7 @@ export const PUT: RequestHandler = async ({ request }) => {
 				designers: toJsonString(gameData.designers),
 				artists: toJsonString(gameData.artists),
 				publishers: toJsonString(gameData.publishers),
+				languages: toJsonString(gameData.languages),
 				isStarred: gameData.isStarred ?? gameData.starred ?? false,
 				adminNote: gameData.adminNote || null,
 			})

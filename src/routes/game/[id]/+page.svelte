@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { BoardGame, Comment } from '$lib/server/db/schema';
 	import { slide } from 'svelte/transition';
+	import { parseLanguages, getLanguageInfo } from '$lib/utils/languages';
 
 	type PageProps = {
 		data: {
@@ -29,6 +30,7 @@
 	const designers = $derived.by(() => {
 		return cleanArray(game.designers);
 	});
+	const languages = $derived(parseLanguages((game as any).languages));
 
 	function toggleDescription() {
 		isDescriptionExpanded = !isDescriptionExpanded;
@@ -124,6 +126,20 @@
 			<h2 class="text-4xl leading-tight mb-2">{game.name}</h2>
 
 			<p class="text-xl">{game.yearPublished ?? 'Year unknown'}</p>
+
+			{#if languages.length > 0}
+				<div class="flex gap-2 mt-2 flex-wrap">
+					{#each languages as code}
+						{@const info = getLanguageInfo(code)}
+						{#if info}
+							<span class="inline-flex items-center gap-1 bg-white/20 px-3 py-1 rounded-full text-sm">
+								<span class="text-lg">{info.flag}</span>
+								{info.label}
+							</span>
+						{/if}
+					{/each}
+				</div>
+			{/if}
 
 			<div class="grid grid-cols-2 sm:grid-cols-3 gap-6 text-lg mb-8">
 				<div class="bg-white/20 p-4 rounded-xl">
