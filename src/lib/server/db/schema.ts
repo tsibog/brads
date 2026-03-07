@@ -56,6 +56,17 @@ export const gameComments = sqliteTable('gameComments', {
 	isApproved: integer('is_approved', { mode: 'boolean' }).notNull().default(false)
 });
 
+export const gameViews = sqliteTable('game_views', {
+	id: integer('id').primaryKey(),
+	gameId: text('game_id')
+		.notNull()
+		.references(() => boardGames.bggId),
+	viewedAt: integer('viewed_at', { mode: 'timestamp' })
+		.notNull()
+		.default(sql`(unixepoch())`),
+	path: text('path')
+});
+
 export type BoardGame = typeof boardGames.$inferSelect;
 export type NewBoardGame = typeof boardGames.$inferInsert;
 export type User = typeof users.$inferSelect;
@@ -64,3 +75,4 @@ export type Session = typeof sessions.$inferSelect;
 export type NewSession = typeof sessions.$inferInsert;
 export type Comment = typeof gameComments.$inferSelect;
 export type NewComment = typeof gameComments.$inferInsert;
+export type GameView = typeof gameViews.$inferSelect;
