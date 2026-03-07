@@ -66,6 +66,18 @@
 							{/if}
 						</a>
 					</li>
+					<li>
+						<a
+							href="/admin/analytics"
+							class="block p-2 rounded hover:bg-brads-green-light {$page.url.pathname.includes(
+								'/analytics'
+							)
+								? 'bg-brads-green font-bold'
+								: ''}"
+						>
+							Analytics
+						</a>
+					</li>
 				</ul>
 			</nav>
 
