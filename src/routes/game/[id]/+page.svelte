@@ -217,6 +217,7 @@
 					</div>
 				{/if}
 			</div>
+			{#if game.bggId && !game.bggId.startsWith('manual-')}
 			<a
 				class="text-xl text-brads-green-dark   hover:text-brads-green transition-colors duration-200 float-right"
 				href={`https://boardgamegeek.com/boardgame/${game.bggId}`}
@@ -224,6 +225,7 @@
 			>
 				🔗 BoardGameGeek Page
 			</a>
+			{/if}
 		</div>
 
 		{#if game.description}
