@@ -19,10 +19,7 @@
 </script>
 
 {#if $page.url.pathname !== '/admin/login' && $page.data.user}
-	<div
-		class="flex h-screen"
-		style="background: radial-gradient(circle at 20% 80%, rgba(139, 191, 126, 0.08) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(254, 232, 153, 0.12) 0%, transparent 50%), radial-gradient(circle at 50% 50%, rgba(83, 136, 116, 0.04) 0%, transparent 70%), linear-gradient(135deg, #f8f6f1 0%, #f0ede6 50%, #f5f2eb 100%);"
-	>
+	<div class="flex h-screen admin-bg">
 		<!-- Sidebar -->
 		<aside class="w-64 bg-brads-yellow-light shadow-md p-4 flex flex-col">
 			<nav class="flex-grow pb-4">
