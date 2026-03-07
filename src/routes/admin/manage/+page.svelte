@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import BoardGameTable from '$lib/components/BoardGameTable.svelte';
 	import SortDropdown from '$lib/components/SortDropdown.svelte';
 	import type { BoardGame } from '$lib/server/db/schema';
@@ -22,18 +23,21 @@
 		};
 	} = $props();
 
-	let isGridView = $state($page.url.searchParams.get('view') !== 'table');
+	let isGridView = $state(true);
 	let currentSort = $state($page.url.searchParams.get('sortBy') || 'name');
 	let currentOrder: 'asc' | 'desc' = $state(
 		($page.url.searchParams.get('order') as 'asc' | 'desc') || 'asc'
 	);
 	let searchQuery = $state(data.searchQuery);
 
+	onMount(() => {
+		const saved = localStorage.getItem('adminViewMode');
+		if (saved === 'table') isGridView = false;
+	});
+
 	function setView(grid: boolean) {
 		isGridView = grid;
-		const url = new URL($page.url);
-		url.searchParams.set('view', grid ? 'grid' : 'table');
-		goto(url.toString(), { replaceState: true });
+		localStorage.setItem('adminViewMode', grid ? 'grid' : 'table');
 	}
 
 	function handleSort(sortBy: string, orderBy: 'asc' | 'desc') {
