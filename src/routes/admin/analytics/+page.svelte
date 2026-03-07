@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, tick } from 'svelte';
 	import { Chart, registerables } from 'chart.js';
 
 	Chart.register(...registerables);
@@ -18,6 +18,7 @@
 			const response = await fetch(`/api/analytics?period=${period}`);
 			if (response.ok) {
 				analytics = await response.json();
+				await tick();
 				renderCharts();
 			}
 		} catch (error) {
