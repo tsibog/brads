@@ -1,7 +1,7 @@
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ params, fetch }) => {
+export const load: PageServerLoad = async ({ params, fetch, url }) => {
 	const id = params.id;
 
 	if (!id) {
@@ -19,6 +19,15 @@ export const load: PageServerLoad = async ({ params, fetch }) => {
 
 	const { game, similarGames } = await gameResponse.json();
 	const comments = await commentsResponse.json();
+
+	// Record page view (fire-and-forget, don't block page load)
+	fetch('/api/analytics', {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify({ gameId: id, path: url.pathname })
+	}).catch(() => {
+		// Silently ignore tracking failures
+	});
 
 	return { game, similarGames, comments };
 };
