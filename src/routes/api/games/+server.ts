@@ -164,7 +164,7 @@ export const POST: RequestHandler = async ({ request }) => {
 				designers: JSON.stringify(gameData.designers),
 				artists: JSON.stringify(gameData.artists),
 				publishers: JSON.stringify(gameData.publishers),
-				isStarred: gameData.starred || false,
+				isStarred: gameData.isStarred ?? gameData.starred ?? false,
 				adminNote: gameData.adminNote || null,
 			})
 			.returning();
@@ -187,6 +187,12 @@ export const PUT: RequestHandler = async ({ request }) => {
 		});
 	}
 
+	// Helper: ensure value is stored as a JSON string, whether it arrives as an array or already-stringified
+	const toJsonString = (val: unknown): string => {
+		if (typeof val === "string") return val;
+		return JSON.stringify(val ?? []);
+	};
+
 	try {
 		const updatedGame = await db
 			.update(boardGames)
@@ -202,12 +208,12 @@ export const PUT: RequestHandler = async ({ request }) => {
 				description: gameData.description,
 				thumbnail: gameData.thumbnail,
 				image: gameData.image,
-				categories: JSON.stringify(gameData.categories),
-				mechanics: JSON.stringify(gameData.mechanics),
-				designers: JSON.stringify(gameData.designers),
-				artists: JSON.stringify(gameData.artists),
-				publishers: JSON.stringify(gameData.publishers),
-				isStarred: gameData.starred || false,
+				categories: toJsonString(gameData.categories),
+				mechanics: toJsonString(gameData.mechanics),
+				designers: toJsonString(gameData.designers),
+				artists: toJsonString(gameData.artists),
+				publishers: toJsonString(gameData.publishers),
+				isStarred: gameData.isStarred ?? gameData.starred ?? false,
 				adminNote: gameData.adminNote || null,
 			})
 			.where(eq(boardGames.bggId, gameData.bggId))
