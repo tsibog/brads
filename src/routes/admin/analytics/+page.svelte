@@ -68,7 +68,7 @@
 					},
 					x: {
 						ticks: {
-							maxTicksAllowed: 10,
+							maxTicksLimit: 10,
 							maxRotation: 0
 						}
 					}
