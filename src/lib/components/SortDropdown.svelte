@@ -12,11 +12,12 @@
 	let isOpen = $state(false);
 
 	const sortOptions = [
-		{ value: 'name', label: 'Name' },
-		{ value: 'yearPublished', label: 'Year' },
-		{ value: 'playingTime', label: 'Play Time' },
-		{ value: 'minPlayers', label: 'Min Players' },
-		{ value: 'adminNote', label: 'Admin Note' }
+		{ value: 'name', label: 'Name', defaultOrder: 'asc' as const },
+		{ value: 'id', label: 'Recently Added', defaultOrder: 'desc' as const },
+		{ value: 'yearPublished', label: 'Year', defaultOrder: 'desc' as const },
+		{ value: 'playingTime', label: 'Play Time', defaultOrder: 'asc' as const },
+		{ value: 'minPlayers', label: 'Min Players', defaultOrder: 'asc' as const },
+		{ value: 'adminNote', label: 'Admin Note', defaultOrder: 'asc' as const }
 	];
 
 	function toggleDropdown() {
@@ -24,7 +25,8 @@
 	}
 
 	function selectOption(value: string) {
-		onsort(value, currentOrder);
+		const option = sortOptions.find((o) => o.value === value);
+		onsort(value, option?.defaultOrder ?? currentOrder);
 		isOpen = false;
 	}
 
@@ -93,7 +95,7 @@
 
 	{#if isOpen}
 		<div
-			class="origin-top-left absolute left-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-10"
+			class="origin-top-left absolute left-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50"
 			role="menu"
 			aria-orientation="vertical"
 			aria-labelledby="options-menu"

@@ -52,7 +52,7 @@
 		</div>
 		<a
 			href={`/admin/edit/${game.bggId}`}
-			class="absolute top-2 left-2 bg-blue-500 text-white px-2 py-1 rounded text-sm z-10"
+			class="absolute top-2 left-2 bg-blue-500 text-white px-2 py-1 rounded text-sm"
 		>
 			Edit
 		</a>

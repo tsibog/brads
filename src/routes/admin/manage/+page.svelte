@@ -6,6 +6,7 @@
 	import { page } from '$app/stores';
 	import debounce from '$lib/utils/debounce';
 	import AdminBoardGameGrid from '$lib/components/AdminBoardGameGrid.svelte';
+	import { adminViewMode } from '$lib/stores/adminPrefs';
 
 	const {
 		data
@@ -22,12 +23,15 @@
 		};
 	} = $props();
 
-	let isGridView = $state(true);
 	let currentSort = $state($page.url.searchParams.get('sortBy') || 'name');
 	let currentOrder: 'asc' | 'desc' = $state(
 		($page.url.searchParams.get('order') as 'asc' | 'desc') || 'asc'
 	);
 	let searchQuery = $state(data.searchQuery);
+
+	function setView(grid: boolean) {
+		adminViewMode.set(grid ? 'grid' : 'table');
+	}
 
 	function handleSort(sortBy: string, orderBy: 'asc' | 'desc') {
 		const url = new URL($page.url);
@@ -77,28 +81,28 @@
 
 		<div class="bg-brads-yellow-light p-1 rounded-full inline-flex gap-1">
 			<button
-				onclick={() => (isGridView = true)}
+				onclick={() => setView(true)}
 				class="px-4 py-2 rounded-full transition-all duration-300 relative"
-				class:text-brads-yellow-light={isGridView}
-				class:font-bold={isGridView}
-				class:bg-white={!isGridView}
-				class:bg-brads-green-light={isGridView}
+				class:text-brads-yellow-light={$adminViewMode === 'grid'}
+				class:font-bold={$adminViewMode === 'grid'}
+				class:bg-white={$adminViewMode === 'table'}
+				class:bg-brads-green-light={$adminViewMode === 'grid'}
 			>
 				Grid
-				{#if isGridView}
+				{#if $adminViewMode === 'grid'}
 					<span class="absolute inset-0 bg-brads-green-dark rounded-full -z-10"></span>
 				{/if}
 			</button>
 			<button
-				onclick={() => (isGridView = false)}
+				onclick={() => setView(false)}
 				class="px-4 py-2 rounded-full transition-all duration-300 relative"
-				class:text-brads-yellow-light={!isGridView}
-				class:font-bold={!isGridView}
-				class:bg-white={isGridView}
-				class:bg-brads-green-light={!isGridView}
+				class:text-brads-yellow-light={$adminViewMode === 'table'}
+				class:font-bold={$adminViewMode === 'table'}
+				class:bg-white={$adminViewMode === 'grid'}
+				class:bg-brads-green-light={$adminViewMode === 'table'}
 			>
 				Table
-				{#if !isGridView}
+				{#if $adminViewMode === 'table'}
 					<span class="absolute inset-0 bg-brads-green-dark rounded-full -z-10"></span>
 				{/if}
 			</button>
@@ -110,7 +114,7 @@
 	Showing {(data.meta.page - 1) * data.meta.limit + 1}–{Math.min(data.meta.page * data.meta.limit, data.meta.totalCount)} of {data.meta.totalCount} games
 </p>
 
-{#if isGridView}
+{#if $adminViewMode === 'grid'}
 	<AdminBoardGameGrid games={data.games} />
 {:else}
 	<BoardGameTable games={data.games} {currentSort} {currentOrder} onSort={handleSort} />

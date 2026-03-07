@@ -36,6 +36,20 @@
       "when": 1724096757032,
       "tag": "0004_salty_photon",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1741363200000,
+      "tag": "0005_add_languages",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1741363200001,
+      "tag": "0006_add_game_views",
+      "breakpoints": true
     }
   ]
 }

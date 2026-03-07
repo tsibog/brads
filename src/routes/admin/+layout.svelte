@@ -19,7 +19,7 @@
 </script>
 
 {#if $page.url.pathname !== '/admin/login' && $page.data.user}
-	<div class="flex h-screen bg-gray-100">
+	<div class="flex h-screen admin-bg">
 		<!-- Sidebar -->
 		<aside class="w-64 bg-brads-yellow-light shadow-md p-4 flex flex-col">
 			<nav class="flex-grow pb-4">
@@ -64,6 +64,18 @@
 									{pendingCommentsCount}
 								</span>
 							{/if}
+						</a>
+					</li>
+					<li>
+						<a
+							href="/admin/analytics"
+							class="block p-2 rounded hover:bg-brads-green-light {$page.url.pathname.includes(
+								'/analytics'
+							)
+								? 'bg-brads-green font-bold'
+								: ''}"
+						>
+							Analytics
 						</a>
 					</li>
 				</ul>
