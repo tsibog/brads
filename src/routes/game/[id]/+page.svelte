@@ -128,11 +128,11 @@
 			<p class="text-xl">{game.yearPublished ?? 'Year unknown'}</p>
 
 			{#if languages.length > 0}
-				<div class="flex gap-2 mt-2 flex-wrap">
+				<div class="flex gap-2 mt-3 mb-4 flex-wrap">
 					{#each languages as code}
 						{@const info = getLanguageInfo(code)}
 						{#if info}
-							<span class="inline-flex items-center gap-1 bg-white/20 px-3 py-1 rounded-full text-sm">
+							<span class="inline-flex items-center gap-1.5 bg-white/20 px-3 py-1.5 rounded-full text-sm">
 								<span class="text-lg">{info.flag}</span>
 								{info.label}
 							</span>
@@ -141,7 +141,7 @@
 				</div>
 			{/if}
 
-			<div class="grid grid-cols-2 sm:grid-cols-3 gap-6 text-lg mb-8">
+			<div class="grid grid-cols-2 sm:grid-cols-3 gap-6 text-lg mt-4 mb-8">
 				<div class="bg-white/20 p-4 rounded-xl">
 					<p class="  text-2xl">
 						{game.minPlayers ?? '?'} - {game.maxPlayers ?? '?'}
