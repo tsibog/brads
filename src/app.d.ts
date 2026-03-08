@@ -1,11 +1,11 @@
 // See https://kit.svelte.dev/docs/types#app
-import type { User } from 'lucia';
+import type { User, Session } from '$lib/server/db/schema';
 
 declare global {
 	namespace App {
 		interface Locals {
-			user: User | null;
-			session: import('lucia').Session | null;
+			user: Omit<User, 'password_hash'> | null;
+			session: Session | null;
 		}
 	}
 }

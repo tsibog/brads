@@ -1,7 +1,11 @@
-import { lucia } from '$lib/server/auth';
+import {
+	generateSessionToken,
+	createSession,
+	setSessionTokenCookie
+} from '$lib/server/auth';
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import { Argon2id } from 'oslo/password';
+import { hash, verify } from '@node-rs/argon2';
 import { db } from '$lib/server/db';
 
 export const load: PageServerLoad = async ({ locals }) => {
@@ -11,8 +15,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 };
 
 export const actions: Actions = {
-	default: async ({ request, cookies }) => {
-		const formData = await request.formData();
+	default: async (event) => {
+		const formData = await event.request.formData();
 		const username = formData.get('username');
 		const password = formData.get('password');
 
@@ -41,19 +45,16 @@ export const actions: Actions = {
 				});
 			}
 
-			const validPassword = await new Argon2id().verify(user.password_hash, password);
+			const validPassword = await verify(user.password_hash, password);
 			if (!validPassword) {
 				return fail(400, {
 					message: 'Incorrect username or password'
 				});
 			}
 
-			const session = await lucia.createSession(user.id, {});
-			const sessionCookie = lucia.createSessionCookie(session.id);
-			cookies.set(sessionCookie.name, sessionCookie.value, {
-				path: '.',
-				...sessionCookie.attributes
-			});
+			const token = generateSessionToken();
+			const session = await createSession(token, user.id);
+			setSessionTokenCookie(event, token, session.expiresAt);
 
 			return { success: true };
 		} catch (e) {
