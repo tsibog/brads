@@ -7,22 +7,31 @@
 	let period = $state(30);
 	let isLoading = $state(true);
 	let analytics = $state<any>(null);
+	let playStats = $state<any>(null);
 	let lineChart: Chart | null = null;
 	let barChart: Chart | null = null;
+	let playsBarChart: Chart | null = null;
 	let lineCanvas: HTMLCanvasElement;
 	let barCanvas: HTMLCanvasElement;
+	let playsBarCanvas: HTMLCanvasElement;
 
 	let periodLabel = $derived(period === 0 ? 'All time' : `Last ${period} days`);
 
 	async function fetchAnalytics() {
 		isLoading = true;
 		try {
-			const response = await fetch(`/api/analytics?period=${period}`);
-			if (response.ok) {
-				analytics = await response.json();
-				await tick();
-				renderCharts();
+			const [viewsRes, playsRes] = await Promise.all([
+				fetch(`/api/analytics?period=${period}`),
+				fetch(`/api/plays/stats?period=${period === 0 ? 'all' : period <= 7 ? 'week' : period <= 30 ? 'month' : 'year'}`)
+			]);
+			if (viewsRes.ok) {
+				analytics = await viewsRes.json();
 			}
+			if (playsRes.ok) {
+				playStats = await playsRes.json();
+			}
+			await tick();
+			renderCharts();
 		} catch (error) {
 			console.error('Failed to fetch analytics:', error);
 		} finally {
@@ -79,6 +88,41 @@
 				}
 			}
 		});
+
+		// Most played games (bar chart)
+		playsBarChart?.destroy();
+		if (playStats?.mostPlayed?.length > 0 && playsBarCanvas) {
+			playsBarChart = new Chart(playsBarCanvas, {
+				type: 'bar',
+				data: {
+					labels: playStats.mostPlayed.map((g: any) => truncate(g.gameName, 20)),
+					datasets: [
+						{
+							label: 'Plays',
+							data: playStats.mostPlayed.map((g: any) => g.playCount),
+							backgroundColor: '#538874',
+							borderColor: '#1a6045',
+							borderWidth: 1,
+							borderRadius: 4
+						}
+					]
+				},
+				options: {
+					responsive: true,
+					maintainAspectRatio: false,
+					indexAxis: 'y',
+					plugins: {
+						legend: { display: false }
+					},
+					scales: {
+						x: {
+							beginAtZero: true,
+							ticks: { precision: 0 }
+						}
+					}
+				}
+			});
+		}
 
 		// Top games (bar chart)
 		if (analytics.topGames.length > 0) {
@@ -224,7 +268,7 @@
 		</div>
 
 		<!-- Top games -->
-		<div class="bg-white rounded-lg shadow p-6">
+		<div class="bg-white rounded-lg shadow p-6 mb-8">
 			<h2 class="text-lg font-bold text-gray-800 mb-4">Most Viewed Games</h2>
 			{#if analytics.topGames.length > 0}
 				<div class="h-80">
@@ -234,5 +278,71 @@
 				<p class="text-gray-500 text-center py-8">No views recorded yet in this period.</p>
 			{/if}
 		</div>
+
+		<!-- Play logging stats -->
+		{#if playStats}
+			<div class="border-t-2 border-brads-green-light/30 pt-8">
+				<h2 class="text-xl font-bold text-gray-800 mb-6">Play Logging</h2>
+
+				<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+					<div class="bg-white rounded-lg shadow p-5">
+						<p class="text-sm text-gray-500 uppercase tracking-wide">Total Plays</p>
+						<p class="text-3xl font-bold text-gray-800">{playStats.totals?.totalPlays ?? 0}</p>
+					</div>
+					<div class="bg-white rounded-lg shadow p-5">
+						<p class="text-sm text-gray-500 uppercase tracking-wide">Unique Games</p>
+						<p class="text-3xl font-bold text-gray-800">{playStats.totals?.uniqueGames ?? 0}</p>
+					</div>
+					<div class="bg-white rounded-lg shadow p-5">
+						<p class="text-sm text-gray-500 uppercase tracking-wide">Player Sessions</p>
+						<p class="text-3xl font-bold text-gray-800">{playStats.totals?.totalPlayerSessions ?? 0}</p>
+					</div>
+					<div class="bg-white rounded-lg shadow p-5">
+						<p class="text-sm text-gray-500 uppercase tracking-wide">Active Loggers</p>
+						<p class="text-3xl font-bold text-gray-800">{playStats.totals?.uniqueUsers ?? 0}</p>
+					</div>
+				</div>
+
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+					<!-- Most played chart -->
+					<div class="bg-white rounded-lg shadow p-6">
+						<h3 class="text-lg font-bold text-gray-800 mb-4">Most Played Games</h3>
+						{#if playStats.mostPlayed?.length > 0}
+							<div class="h-80">
+								<canvas bind:this={playsBarCanvas}></canvas>
+							</div>
+						{:else}
+							<p class="text-gray-500 text-center py-8">No plays logged yet.</p>
+						{/if}
+					</div>
+
+					<!-- Recent plays list -->
+					<div class="bg-white rounded-lg shadow p-6">
+						<h3 class="text-lg font-bold text-gray-800 mb-4">Recent Plays</h3>
+						{#if playStats.recentPlays?.length > 0}
+							<ul class="space-y-3">
+								{#each playStats.recentPlays as play}
+									<li class="flex items-center gap-3 text-sm border-b border-gray-100 pb-2 last:border-0">
+										{#if play.gameThumbnail}
+											<img src={play.gameThumbnail} alt={play.gameName} class="w-8 h-8 rounded object-cover" />
+										{/if}
+										<div class="flex-1 min-w-0">
+											<span class="font-medium">{play.username}</span> played
+											<span class="font-medium">{play.gameName}</span>
+											<div class="text-xs text-gray-400">
+												{play.playerCount} player{play.playerCount !== 1 ? 's' : ''}
+												{#if play.durationMinutes} &middot; {play.durationMinutes}min{/if}
+											</div>
+										</div>
+									</li>
+								{/each}
+							</ul>
+						{:else}
+							<p class="text-gray-500 text-center py-8">No plays logged yet.</p>
+						{/if}
+					</div>
+				</div>
+			</div>
+		{/if}
 	{/if}
 </div>
