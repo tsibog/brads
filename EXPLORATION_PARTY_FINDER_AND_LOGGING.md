@@ -1,4 +1,10 @@
-# Exploration: Party Finder Branch & Play Logging System
+# Exploration: Party Finder Branch & Game Play Logging
+
+## Original Request (from cafe owner's letter)
+
+> "A way for people to log plays - either as one account so that, as a community, we can see which games are being played the most from our shelves, or as individual profiles, people can set up and get some stats and data!"
+
+The owner wants to know **which games from the cafe shelves are actually getting played**, and she wants that data visible both at the community level ("most played games") and at the individual level ("my play history / stats"). She also loves data in general — page views, usage patterns, etc.
 
 ## What Exists on `feat/party-finder`
 
@@ -73,62 +79,89 @@ The branch contains a fully built community platform on top of the game catalog.
 
 ### Reusable with Minor Adaptation
 
-1. **`user_availability` table** — Currently stores which days a user is free. For logging, this could serve a dual purpose: both "when I'm usually here" and as context for the logging system. The unused `timeSlotStart`/`timeSlotEnd` fields could finally be put to use for logging time ranges.
+1. **Game search component** — The `/api/party-finder/games-search` endpoint and game selector UI can be reused directly for "which game did you play?" selection when logging a play.
 
-2. **Cron job pattern** — The daily cleanup cron can be adapted for log retention, weekly summaries, or attendance streak tracking.
+2. **Cron job pattern** — The daily cleanup cron can be adapted for weekly/monthly stats summaries or digest emails.
 
-3. **Matching algorithm** — Could be repurposed to suggest "people who were here the same days as you" or "people who play the same games."
+3. **`PartyFinderSettings.svelte` sidebar layout** — The sidebar+main layout pattern maps well to a logging interface (sidebar: log a play form, main: recent plays feed or stats).
 
-4. **`PartyFinderSettings.svelte` sidebar** — The layout pattern (sidebar settings + main content) maps well to a logging interface (sidebar: log entry form, main: history/feed).
+4. **Filter/pagination components** — Already built for party finder, directly applicable to browsing play history.
 
 ### Needs to Be Built New
 
-1. **`play_logs` table** — Core new table:
+1. **`game_plays` table** — Core new table for logging plays:
    ```
-   id, visitorId (FK users), gameId (FK boardGames.bggId nullable),
-   visitDate, arrivalTime, departureTime (nullable),
-   playerCount, notes, createdAt
+   id, loggedById (FK users), gameBggId (FK boardGames.bggId),
+   playDate, playerCount, duration (nullable, minutes),
+   notes (nullable), createdAt
    ```
 
-2. **Log entry UI** — A page where authenticated users can log that they visited, optionally what they played, with whom, etc.
+2. **Log a Play UI** — Form where a logged-in user picks a game from the cafe catalog, says how many people played, optionally adds notes. Should be quick and easy — the user just finished a game and wants to tap a few things.
 
-3. **Public/admin log views** — "Who's at the cafe today?", historical visit logs, admin reports.
+3. **Community Stats Page** — The owner's core desire: "which games are being played the most from our shelves." Leaderboard of most-played games, recent plays feed, trends over time (weekly/monthly), busiest days.
 
-4. **Stats/insights** — Visit frequency, most played games, busiest days, personal streaks.
+4. **Personal Play History** — On the user's profile or a dedicated page: games they've logged, total plays, favorite games, play streaks. The "individual profiles with stats and data" from the request.
+
+5. **Admin Stats Dashboard** — Aggregated data the owner would love: total plays logged, unique players, most popular games, play trends, which games never get played (shelf warmers).
 
 ---
 
 ## Potential Approach
 
-### Option A: Build Logging as a Separate Feature, Same Auth
+### Option A: Individual Accounts (Recommended)
 
-Keep party finder and play logging as independent features that share the auth system and user table. This is the simplest path — no refactoring needed, just add new routes and a new table.
+Each user logs their own plays under their existing account. This gives both the community view the owner wants AND personal stats.
 
-- `/log` — Log a visit / what you played
-- `/activity` — Public feed of recent visits
-- `/profile` — Already exists, add a "my visits" tab
+- `/plays` — Community feed of recent plays + "most played" leaderboard
+- `/plays/log` — Quick "log a play" form (pick game, player count, optional notes)
+- `/plays/stats` — Community stats: most played, trends, busiest days
+- `/profile` — Already exists, add a "my plays" section with personal stats
 
-### Option B: Merge Into a Unified "Community" System
+**Pros:** Richer data (who plays what), personal stats motivate users to log, integrates with existing accounts from party finder.
+**Cons:** Requires users to have accounts, adoption depends on user engagement.
 
-Refactor party finder into a broader community platform. The play log becomes another facet of a user's profile alongside their availability and preferences.
+### Option B: Single Shared Account
 
-- Requires restructuring routes (e.g., `/community/find-players`, `/community/log`, `/community/activity`)
-- More cohesive UX, but more refactoring work
-- Makes sense if both features launch together
+One "cafe" account at the counter that anyone can use to log a play. Simpler, lower barrier.
 
-### Recommended: Option A
+- No individual attribution, just "Game X was played with N people on Date Y"
+- Could be a tablet at the counter
 
-The auth system is already cleanly separated. Adding logging alongside party finder (not inside it) avoids refactoring risk and lets each feature ship independently. The shared user/session system is the glue — everything else can be additive.
+**Pros:** Zero friction, no account needed, cafe staff can log plays too.
+**Cons:** No personal stats, less data, no accountability (anyone could log nonsense).
+
+### Option C: Both — Anonymous + Authenticated
+
+Allow anonymous play logging (anyone can say "we played Game X") but authenticated users get their plays tracked on their profile too.
+
+- Unauthenticated: simple form, logs the game + player count
+- Authenticated: same form but also links to their profile, builds stats
+
+**Pros:** Best of both worlds, lowest barrier for community data, rewards accounts with personal stats.
+**Cons:** Slightly more complex, need to handle both flows.
+
+### Recommendation
+
+**Option A** is the cleanest starting point. The account system already exists from party finder, so there's no extra signup friction for users who are already registered. If adoption is a concern, Option C can be added later by making the `loggedById` field nullable — but starting with authenticated-only keeps the data clean and trustworthy.
 
 ---
 
 ## Key Considerations
 
-- **The `user_availability` table has unused time slot fields** — These were designed for future use and could serve play logging naturally (when did they arrive/leave).
-- **The party finder spec mentions "Group formation tools" and "Rating/feedback system" as future ideas** — A play log partially fulfills both of these.
-- **Contact system is flexible** — Already supports email, phone, WhatsApp, Discord. No changes needed for logging.
-- **The cron infrastructure exists** — Can be extended for log-related automated tasks (weekly summaries, streak notifications).
-- **No password reset exists intentionally** — The spec notes this as a deliberate security choice. Worth revisiting if the user base grows with play logging.
+- **The game catalog is already there** — The `board_games` table has all the cafe's games with names, images, player counts, categories, and mechanics. Play logging can link directly to this via `bggId`. The game search endpoint already exists.
+- **The owner wants data** — She explicitly said "I love data." The stats/insights side of this feature is just as important as the logging form itself. Think: most played games leaderboard, play trends over time, "shelf warmers" report for games that never get played.
+- **Two audiences for the data** — Community members want to see what's popular and track their own plays. The owner/admin wants operational insights (which games justify shelf space, what gets played on which days).
+- **The party finder spec mentions "Group formation tools" as a future idea** — Play logging partially fulfills this: "these 4 people played Catan together last Wednesday."
+- **The cron infrastructure exists** — Can be extended for weekly play summary digests or "this game hasn't been played in 3 months" alerts to the owner.
+- **BGG integration opportunity** — BoardGameGeek itself has a play logging feature. There could be a future option to sync plays to BGG, but that's a stretch goal, not a launch requirement.
+
+## Other Items from the Letter (Already Addressed)
+
+The owner's letter also mentioned:
+- **Games with different names / wrong images** — Admin can already edit games and add comments (e.g., Tausch Rausch example)
+- **Manually adding games not on BGG** — Would need a manual game add form in admin (not yet built, but the schema supports it)
+- **Language flags/indicators** — Not yet built; would be a column addition to `board_games` and a UI update on `/browse`
+- **Usage analytics** — Separate from play logging; would need something like Plausible or a lightweight event tracking system
 
 ---
 
