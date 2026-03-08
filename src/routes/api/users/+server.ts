@@ -1,8 +1,7 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import { users } from '$lib/server/db/schema';
-import { Argon2id } from 'oslo/password';
-import { generateId } from 'lucia';
+import { hash } from '@node-rs/argon2';
 import { eq } from 'drizzle-orm';
 
 export const GET: RequestHandler = async () => {
@@ -26,11 +25,10 @@ export const POST: RequestHandler = async ({ request }) => {
 
 	try {
 		// Hash the password
-		const hasher = new Argon2id();
-		const password_hash = await hasher.hash(password);
+		const password_hash = await hash(password);
 
 		// Generate a unique ID
-		const id = generateId(15); // Generates a 15-character ID
+		const id = crypto.randomUUID();
 
 		// Insert the new user
 		const newUser = await db
