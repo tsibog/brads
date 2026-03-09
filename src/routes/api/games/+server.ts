@@ -1,7 +1,7 @@
 import { json, type RequestHandler } from "@sveltejs/kit";
 import { and, type AnyColumn, asc, desc, eq, like, or, sql } from "drizzle-orm";
 import { db } from "$lib/server/db";
-import { boardGames } from "$lib/server/db/schema";
+import { boardGames, gameComments, gameViews } from "$lib/server/db/schema";
 
 export const GET: RequestHandler = async ({ url }) => {
 	const id = url.searchParams.get("id");
@@ -242,6 +242,10 @@ export const DELETE: RequestHandler = async ({ url }) => {
 	}
 
 	try {
+		// Delete related records first to avoid foreign key constraint errors
+		await db.delete(gameComments).where(eq(gameComments.gameId, id));
+		await db.delete(gameViews).where(eq(gameViews.gameId, id));
+
 		const deletedGame = await db.delete(boardGames).where(
 			eq(boardGames.bggId, id),
 		).returning();

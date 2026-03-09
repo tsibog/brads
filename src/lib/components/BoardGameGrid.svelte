@@ -33,17 +33,7 @@
 				⭐ Staff Pick!
 			</div>
 		{/if}
-		{#if langs.length > 0}
-			<div class="absolute top-2 left-2 flex gap-0.5">
-				{#each langs as code}
-					{@const info = getLanguageInfo(code)}
-					{#if info}
-						<span class="text-lg drop-shadow-md" title={info.label}>{info.flag}</span>
-					{/if}
-				{/each}
-			</div>
-		{/if}
-		<div class="absolute bottom-0 left-0 p-4 text-white">
+			<div class="absolute bottom-0 left-0 p-4 text-white">
 			<h5 class="mb-1 text-base sm:text-lg md:text-xl tracking-tight line-clamp-2">
 				{game.name}
 			</h5>
@@ -56,6 +46,16 @@
 				</span>
 			</p>
 		</div>
+		{#if langs.length > 0}
+			<div class="absolute bottom-3 right-3 flex gap-1">
+				{#each langs as code}
+					{@const info = getLanguageInfo(code)}
+					{#if info}
+						<span class="text-2xl drop-shadow-lg" title={info.label}>{info.flag}</span>
+					{/if}
+				{/each}
+			</div>
+		{/if}
 	</a>
 {/snippet}
 
