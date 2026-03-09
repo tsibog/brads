@@ -6,13 +6,12 @@
 		username: string;
 		email: string | null;
 		is_admin: boolean;
+		must_reset_password: boolean;
 		created_at: number;
 	};
 
 	let userList = $state<UserRecord[]>([]);
 	let isLoading = $state(true);
-	let resetUserId = $state<string | null>(null);
-	let newPassword = $state('');
 	let message = $state('');
 	let messageType = $state<'success' | 'error'>('success');
 
@@ -36,23 +35,19 @@
 		setTimeout(() => (message = ''), 4000);
 	}
 
-	async function resetPassword(userId: string) {
-		if (!newPassword || newPassword.length < 6) {
-			showMessage('Password must be at least 6 characters', 'error');
-			return;
-		}
+	async function resetPassword(userId: string, username: string) {
+		if (!confirm(`Reset password for "${username}"?\n\nTheir temporary password will be: amnesiac\nThey'll be prompted to set a new one on next login.`)) return;
 
 		try {
 			const res = await fetch('/api/users', {
 				method: 'PUT',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ userId, newPassword })
+				body: JSON.stringify({ userId })
 			});
 
 			if (res.ok) {
-				showMessage('Password reset successfully', 'success');
-				resetUserId = null;
-				newPassword = '';
+				showMessage(`Password for "${username}" reset. Temporary password: amnesiac`, 'success');
+				fetchUsers();
 			} else {
 				const err = await res.json();
 				showMessage(err.error || 'Failed to reset password', 'error');
@@ -118,7 +113,7 @@
 					<tr class="bg-gray-50 border-b">
 						<th class="text-left px-4 py-3 text-sm font-medium text-gray-500">Username</th>
 						<th class="text-left px-4 py-3 text-sm font-medium text-gray-500">Email</th>
-						<th class="text-left px-4 py-3 text-sm font-medium text-gray-500">Role</th>
+						<th class="text-left px-4 py-3 text-sm font-medium text-gray-500">Status</th>
 						<th class="text-left px-4 py-3 text-sm font-medium text-gray-500">Joined</th>
 						<th class="text-right px-4 py-3 text-sm font-medium text-gray-500">Actions</th>
 					</tr>
@@ -129,26 +124,28 @@
 							<td class="px-4 py-3 font-medium">{user.username}</td>
 							<td class="px-4 py-3 text-sm text-gray-500">{user.email || '—'}</td>
 							<td class="px-4 py-3">
-								{#if user.is_admin}
-									<span
-										class="inline-block px-2 py-0.5 text-xs font-medium bg-purple-100 text-purple-700 rounded-full"
-										>Admin</span
-									>
-								{:else}
-									<span
-										class="inline-block px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-600 rounded-full"
-										>User</span
-									>
-								{/if}
+								<div class="flex flex-wrap gap-1">
+									{#if user.is_admin}
+										<span class="inline-block px-2 py-0.5 text-xs font-medium bg-purple-100 text-purple-700 rounded-full">
+											Admin
+										</span>
+									{:else}
+										<span class="inline-block px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-600 rounded-full">
+											User
+										</span>
+									{/if}
+									{#if user.must_reset_password}
+										<span class="inline-block px-2 py-0.5 text-xs font-medium bg-amber-100 text-amber-700 rounded-full">
+											Password Reset Pending
+										</span>
+									{/if}
+								</div>
 							</td>
 							<td class="px-4 py-3 text-sm text-gray-500">{formatDate(user.created_at)}</td>
 							<td class="px-4 py-3 text-right">
 								<div class="flex justify-end gap-2">
 									<button
-										onclick={() => {
-											resetUserId = resetUserId === user.id ? null : user.id;
-											newPassword = '';
-										}}
+										onclick={() => resetPassword(user.id, user.username)}
 										class="text-sm px-3 py-1 rounded bg-blue-50 text-blue-600 hover:bg-blue-100"
 									>
 										Reset Password
@@ -162,23 +159,6 @@
 										</button>
 									{/if}
 								</div>
-
-								{#if resetUserId === user.id}
-									<div class="mt-2 flex gap-2 justify-end">
-										<input
-											type="password"
-											bind:value={newPassword}
-											placeholder="New password (min 6)"
-											class="text-sm border border-gray-300 rounded px-3 py-1 w-48 focus:outline-none focus:ring-1 focus:ring-blue-400"
-										/>
-										<button
-											onclick={() => resetPassword(user.id)}
-											class="text-sm px-3 py-1 rounded bg-brads-green-dark text-white hover:bg-brads-green-dark/90"
-										>
-											Save
-										</button>
-									</div>
-								{/if}
 							</td>
 						</tr>
 					{/each}

@@ -15,6 +15,7 @@ export const GET: RequestHandler = async ({ locals }) => {
 			username: users.username,
 			email: users.email,
 			is_admin: users.is_admin,
+			must_reset_password: users.must_reset_password,
 			created_at: users.created_at
 		})
 		.from(users);
@@ -56,27 +57,25 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	}
 };
 
-// Admin password reset
+// Admin password reset — sets password to "amnesiac" and flags for forced reset
+const RESET_PASSWORD = 'amnesiac';
+
 export const PUT: RequestHandler = async ({ request, locals }) => {
 	if (!locals.user?.is_admin) {
 		return json({ error: 'Admin access required' }, { status: 403 });
 	}
 
-	const { userId, newPassword } = await request.json();
+	const { userId } = await request.json();
 
-	if (!userId || !newPassword) {
-		return json({ error: 'userId and newPassword are required' }, { status: 400 });
-	}
-
-	if (newPassword.length < 6) {
-		return json({ error: 'Password must be at least 6 characters' }, { status: 400 });
+	if (!userId) {
+		return json({ error: 'userId is required' }, { status: 400 });
 	}
 
 	try {
-		const password_hash = await hash(newPassword);
+		const password_hash = await hash(RESET_PASSWORD);
 		const updated = await db
 			.update(users)
-			.set({ password_hash })
+			.set({ password_hash, must_reset_password: true })
 			.where(eq(users.id, userId))
 			.returning();
 
@@ -84,7 +83,7 @@ export const PUT: RequestHandler = async ({ request, locals }) => {
 			return json({ error: 'User not found' }, { status: 404 });
 		}
 
-		return json({ message: 'Password reset successfully' });
+		return json({ message: 'Password reset to temporary password. User will be prompted to set a new one on next login.' });
 	} catch (error) {
 		console.error('Error resetting password:', error);
 		return json({ error: 'Failed to reset password' }, { status: 500 });

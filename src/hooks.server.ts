@@ -4,7 +4,7 @@ import {
 	setSessionTokenCookie,
 	deleteSessionTokenCookie
 } from '$lib/server/auth';
-import type { Handle } from '@sveltejs/kit';
+import { redirect, type Handle } from '@sveltejs/kit';
 
 export const handle: Handle = async ({ event, resolve }) => {
 	const token = getSessionToken(event);
@@ -22,5 +22,14 @@ export const handle: Handle = async ({ event, resolve }) => {
 	}
 	event.locals.user = user;
 	event.locals.session = session;
+
+	// Force password reset redirect
+	if (user?.must_reset_password) {
+		const path = event.url.pathname;
+		if (path !== '/reset-password' && path !== '/logout' && !path.startsWith('/api/')) {
+			redirect(302, '/reset-password');
+		}
+	}
+
 	return resolve(event);
 };

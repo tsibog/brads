@@ -57,6 +57,13 @@
       "when": 1741363200002,
       "tag": "0007_add_game_plays",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1741363200003,
+      "tag": "0008_add_must_reset_password",
+      "breakpoints": true
     }
   ]
 }

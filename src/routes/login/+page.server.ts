@@ -10,7 +10,7 @@ import { db } from '$lib/server/db';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	if (locals.user) {
-		redirect(302, '/plays');
+		redirect(302, locals.user.must_reset_password ? '/reset-password' : '/plays');
 	}
 };
 
@@ -48,7 +48,13 @@ export const actions: Actions = {
 			const token = generateSessionToken();
 			const session = await createSession(token, user.id);
 			setSessionTokenCookie(event, token, session.expiresAt);
+
+			if (user.must_reset_password) {
+				redirect(302, '/reset-password');
+			}
 		} catch (e) {
+			// Re-throw redirects
+			if (e && typeof e === 'object' && 'status' in e) throw e;
 			console.error(e);
 			return fail(500, { message: 'An unexpected error occurred' });
 		}

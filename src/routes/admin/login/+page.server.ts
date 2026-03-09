@@ -56,6 +56,10 @@ export const actions: Actions = {
 			const session = await createSession(token, user.id);
 			setSessionTokenCookie(event, token, session.expiresAt);
 
+			if (user.must_reset_password) {
+				redirect(302, '/reset-password');
+			}
+
 			return { success: true };
 		} catch (e) {
 			console.error(e);
