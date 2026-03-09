@@ -6,25 +6,6 @@
 	import GameFilter from '$lib/components/GameFilter.svelte';
 	import { browser } from '$app/environment';
 
-	const mondayMessages = [
-		"The innkeeper has gone to forage for rare spell components. We return on the morrow!",
-		"A wandering wizard has sealed the doors with an enchantment. The spell lifts on Tuesday.",
-		"The tavern cat knocked over a potion of deep slumber. Everyone's asleep until Tuesday.",
-		"Our barkeep is off wrestling a dragon for the secret recipe of Elven Ale. Back Tuesday!",
-		"The guild of adventurers has declared Monday a day of rest. Even heroes need a break.",
-		"A mischievous gnome has hidden all the dice. We're searching... see you Tuesday!",
-		"The magical hearth needs re-enchanting. The fire will roar again on Tuesday.",
-		"Monday is sacred to the ancient Board Game Gods. No mortal may play on this day.",
-		"The dungeon master called in sick. Something about a cursed burrito. Back Tuesday.",
-		"A band of goblins raided the snack supplies. We're restocking for Tuesday!"
-	];
-
-	const isMonday = $derived.by(() => {
-		return new Date().getDay() === 1;
-	});
-
-	const mondayMessage = mondayMessages[Math.floor(Math.random() * mondayMessages.length)];
-
 	const {
 		data
 	}: {
@@ -121,15 +102,6 @@
 			Game Plays
 		</a>
 	</div>
-
-	{#if isMonday}
-		<div class="bg-amber-50 border border-amber-300 rounded-xl p-6 mb-8 text-center">
-			<div class="text-4xl mb-3">&#x1F3F0;</div>
-			<h2 class="text-2xl font-londrina text-amber-800 mb-2">The Café is Closed Today</h2>
-			<p class="font-londrina text-lg text-amber-700 italic">"{mondayMessage}"</p>
-			<p class="font-londrina text-amber-600 mt-3">We're open Tuesday through Sunday!</p>
-		</div>
-	{/if}
 
 	<div class="flex flex-col md:flex-row gap-8">
 		<aside class="w-full md:w-1/4">

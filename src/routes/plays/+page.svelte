@@ -43,7 +43,30 @@
 	const { data }: { data: { stats: PlayStats; period: string; user: UserInfo } } = $props();
 	const user = $derived(data.user);
 
-	const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+	// Monday-first order (dayOfWeek: 1=Mon, 2=Tue, ..., 6=Sat, 0=Sun)
+	const days = [
+		{ name: 'Mon', dow: 1 },
+		{ name: 'Tue', dow: 2 },
+		{ name: 'Wed', dow: 3 },
+		{ name: 'Thu', dow: 4 },
+		{ name: 'Fri', dow: 5 },
+		{ name: 'Sat', dow: 6 },
+		{ name: 'Sun', dow: 0 }
+	];
+
+	const mondayClosedMessages = [
+		'Sealed by wizard. Back Tue!',
+		'Dragon hunt. Back Tue!',
+		'Gnomes stole the dice!',
+		'Hearth re-enchanting day',
+		'Heroes rest on Mondays',
+		'Tavern cat broke a potion',
+		'Goblins raided the snacks',
+		'DM called in sick',
+		'Cursed door. Lifts Tuesday',
+		'Foraging spell components'
+	];
+	const mondayMsg = mondayClosedMessages[Math.floor(Math.random() * mondayClosedMessages.length)];
 	const periods = [
 		{ value: 'week', label: 'This Week' },
 		{ value: 'month', label: 'This Month' },
@@ -593,18 +616,25 @@
 				<p class="text-brads-green-dark/50 font-londrina text-lg">No data yet</p>
 			{:else}
 				<div class="space-y-2">
-					{#each dayNames as day, i}
-						{@const dayData = data.stats.byDayOfWeek.find((d) => d.dayOfWeek === i)}
+					{#each days as day}
+						{@const dayData = data.stats.byDayOfWeek.find((d) => d.dayOfWeek === day.dow)}
 						{@const count = dayData?.count ?? 0}
 						<div class="flex items-center gap-3">
-							<span class="w-10 font-londrina text-lg text-brads-green-dark">{day}</span>
-							<div class="flex-1 bg-gray-100 rounded-full h-6 overflow-hidden">
-								<div
-									class="bg-brads-green-light h-full rounded-full transition-all"
-									style="width: {(count / maxDayCount) * 100}%"
-								></div>
-							</div>
-							<span class="w-8 text-right font-londrina text-brads-green-dark/60">{count}</span>
+							<span class="w-10 font-londrina text-lg text-brads-green-dark">{day.name}</span>
+							{#if day.dow === 1}
+								<div class="flex-1 bg-amber-50 rounded-full h-6 flex items-center px-3 border border-amber-200">
+									<span class="font-londrina text-xs text-amber-600 italic truncate">{mondayMsg}</span>
+								</div>
+								<span class="w-8 text-right font-londrina text-amber-400">--</span>
+							{:else}
+								<div class="flex-1 bg-gray-100 rounded-full h-6 overflow-hidden">
+									<div
+										class="bg-brads-green-light h-full rounded-full transition-all"
+										style="width: {(count / maxDayCount) * 100}%"
+									></div>
+								</div>
+								<span class="w-8 text-right font-londrina text-brads-green-dark/60">{count}</span>
+							{/if}
 						</div>
 					{/each}
 				</div>
