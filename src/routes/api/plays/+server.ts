@@ -1,7 +1,7 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import { gamePlays, boardGames, users } from '$lib/server/db/schema';
-import { desc, eq, sql, and, gte, lte } from 'drizzle-orm';
+import { desc, eq, sql, and, gte, lte, inArray } from 'drizzle-orm';
 
 export const GET: RequestHandler = async ({ url }) => {
 	const page = parseInt(url.searchParams.get('page') || '1');
@@ -67,7 +67,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	}
 
 	const body = await request.json();
-	const { gameBggId, playerCount, durationMinutes, notes, playDate } = body;
+	const { gameBggId, playerCount, durationMinutes, notes, playDate, taggedUsernames } = body;
 
 	if (!gameBggId || !playerCount) {
 		return json({ error: 'gameBggId and playerCount are required' }, { status: 400 });
@@ -83,20 +83,55 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		return json({ error: 'Game not found in catalog' }, { status: 404 });
 	}
 
+	// Resolve tagged usernames to user IDs
+	let taggedUserIds: string[] = [];
+	if (taggedUsernames && Array.isArray(taggedUsernames) && taggedUsernames.length > 0) {
+		const foundUsers = await db
+			.select({ id: users.id, username: users.username })
+			.from(users)
+			.where(inArray(users.username, taggedUsernames));
+
+		const foundUsernames = foundUsers.map((u) => u.username.toLowerCase());
+		const missing = taggedUsernames.filter(
+			(name: string) => !foundUsernames.includes(name.toLowerCase())
+		);
+
+		if (missing.length > 0) {
+			return json(
+				{ error: `Users not found: ${missing.join(', ')}`, missingUsernames: missing },
+				{ status: 400 }
+			);
+		}
+
+		taggedUserIds = foundUsers
+			.map((u) => u.id)
+			.filter((id) => id !== locals.user!.id); // don't duplicate the logging user
+	}
+
 	try {
+		const playData = {
+			gameBggId,
+			playerCount,
+			durationMinutes: durationMinutes || null,
+			notes: notes?.trim() || null,
+			playDate: playDate ? new Date(playDate) : new Date()
+		};
+
+		// Insert play for the logging user
 		const newPlay = await db
 			.insert(gamePlays)
-			.values({
-				userId: locals.user.id,
-				gameBggId,
-				playerCount,
-				durationMinutes: durationMinutes || null,
-				notes: notes?.trim() || null,
-				playDate: playDate ? new Date(playDate) : new Date()
-			})
+			.values({ ...playData, userId: locals.user.id })
 			.returning();
 
-		return json(newPlay[0], { status: 201 });
+		// Insert plays for tagged users
+		for (const userId of taggedUserIds) {
+			await db.insert(gamePlays).values({ ...playData, userId });
+		}
+
+		return json(
+			{ ...newPlay[0], taggedCount: taggedUserIds.length },
+			{ status: 201 }
+		);
 	} catch (error) {
 		console.error('Error logging play:', error);
 		return json({ error: 'Failed to log play' }, { status: 500 });

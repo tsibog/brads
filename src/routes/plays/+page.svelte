@@ -66,6 +66,13 @@
 	let submitMessage = $state('');
 	let searchTimeout: ReturnType<typeof setTimeout>;
 
+	// Tag players state
+	let playerSearch = $state('');
+	let playerSearchResults = $state<Array<{ id: string; username: string }>>([]);
+	let taggedPlayers = $state<Array<{ id: string; username: string }>>([]);
+	let playerSearchTimeout: ReturnType<typeof setTimeout>;
+	let invalidPlayers = $state<string[]>([]);
+
 	function formatDate(dateStr: string) {
 		const date = new Date(dateStr);
 		return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -102,10 +109,37 @@
 		searchResults = [];
 	}
 
+	async function searchPlayers() {
+		if (playerSearch.length < 1) {
+			playerSearchResults = [];
+			return;
+		}
+		clearTimeout(playerSearchTimeout);
+		playerSearchTimeout = setTimeout(async () => {
+			const res = await fetch(`/api/users/search?q=${encodeURIComponent(playerSearch)}`);
+			const json = await res.json();
+			playerSearchResults = (json as Array<{ id: string; username: string }>).filter(
+				(u) => !taggedPlayers.some((t) => t.id === u.id)
+			);
+		}, 200);
+	}
+
+	function tagPlayer(player: { id: string; username: string }) {
+		taggedPlayers = [...taggedPlayers, player];
+		playerSearch = '';
+		playerSearchResults = [];
+		invalidPlayers = invalidPlayers.filter((n) => n.toLowerCase() !== player.username.toLowerCase());
+	}
+
+	function removeTaggedPlayer(playerId: string) {
+		taggedPlayers = taggedPlayers.filter((p) => p.id !== playerId);
+	}
+
 	async function submitPlay() {
 		if (!selectedGame) return;
 		isSubmitting = true;
 		submitMessage = '';
+		invalidPlayers = [];
 
 		try {
 			const res = await fetch('/api/plays', {
@@ -116,23 +150,31 @@
 					playerCount,
 					durationMinutes: durationMinutes || null,
 					notes: notes.trim() || null,
-					playDate
+					playDate,
+					taggedUsernames: taggedPlayers.map((p) => p.username)
 				})
 			});
 
 			if (res.ok) {
-				submitMessage = 'Play logged!';
+				const result = await res.json();
+				const tagCount = result.taggedCount || 0;
+				submitMessage = tagCount > 0
+					? `Play logged for you and ${tagCount} other player${tagCount > 1 ? 's' : ''}!`
+					: 'Play logged!';
 				selectedGame = null;
 				gameSearch = '';
 				playerCount = 2;
 				durationMinutes = undefined;
 				notes = '';
 				playDate = new Date().toISOString().split('T')[0];
+				taggedPlayers = [];
 				showLogForm = false;
-				// Refresh the page to update stats
 				goto($page.url.toString(), { invalidateAll: true });
 			} else {
 				const err = await res.json();
+				if (err.missingUsernames) {
+					invalidPlayers = err.missingUsernames;
+				}
 				submitMessage = err.error || 'Failed to log play';
 			}
 		} catch {
@@ -329,6 +371,71 @@
 					></textarea>
 				</div>
 
+				<!-- Tag players -->
+				<div>
+					<label for="player-tag" class="block font-londrina text-lg text-brads-green-dark mb-1"
+						>Tag other players (optional)</label
+					>
+					<p class="text-sm text-brads-green-dark/50 font-londrina mb-2">
+						The play will also be logged for tagged players
+					</p>
+
+					{#if taggedPlayers.length > 0}
+						<div class="flex flex-wrap gap-2 mb-2">
+							{#each taggedPlayers as player}
+								<span
+									class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-londrina {invalidPlayers.some((n) => n.toLowerCase() === player.username.toLowerCase()) ? 'bg-red-100 text-red-700 border border-red-300' : 'bg-brads-green-light/20 text-brads-green-dark border border-brads-green-light/30'}"
+								>
+									{player.username}
+									<button
+										type="button"
+										onclick={() => removeTaggedPlayer(player.id)}
+										class="hover:text-red-600 ml-1 font-bold">&times;</button
+									>
+								</span>
+							{/each}
+						</div>
+					{/if}
+
+					<div class="relative">
+						<input
+							id="player-tag"
+							type="text"
+							bind:value={playerSearch}
+							oninput={searchPlayers}
+							placeholder="Search for a player..."
+							class="w-full border border-gray-300 rounded-lg px-4 py-2 font-londrina text-lg focus:outline-none focus:ring-2 focus:ring-brads-green-light"
+						/>
+						{#if playerSearchResults.length > 0}
+							<ul
+								class="absolute z-10 w-full bg-white border border-gray-200 rounded-lg shadow-lg mt-1 max-h-40 overflow-y-auto"
+							>
+								{#each playerSearchResults as player}
+									<li>
+										<button
+											type="button"
+											onclick={() => tagPlayer(player)}
+											class="w-full px-4 py-2 hover:bg-brads-green-light/10 text-left font-londrina text-lg"
+										>
+											{player.username}
+										</button>
+									</li>
+								{/each}
+							</ul>
+						{:else if playerSearch.length >= 1 && playerSearchResults.length === 0}
+							<div class="absolute z-10 w-full bg-white border border-gray-200 rounded-lg shadow-lg mt-1 px-4 py-2 text-brads-green-dark/50 font-londrina">
+								No players found
+							</div>
+						{/if}
+					</div>
+
+					{#if invalidPlayers.length > 0}
+						<p class="text-red-600 text-sm font-londrina mt-1">
+							Users not found: {invalidPlayers.join(', ')}
+						</p>
+					{/if}
+				</div>
+
 				<button
 					type="submit"
 					disabled={!selectedGame || isSubmitting}
@@ -339,7 +446,7 @@
 
 				{#if submitMessage}
 					<p
-						class="font-londrina text-lg {submitMessage === 'Play logged!'
+						class="font-londrina text-lg {submitMessage.includes('logged')
 							? 'text-green-600'
 							: 'text-red-600'}"
 					>
