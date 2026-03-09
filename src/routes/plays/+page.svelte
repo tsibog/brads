@@ -153,6 +153,21 @@
 </svelte:head>
 
 <main class="container mx-auto px-2 sm:px-4 py-8">
+	<!-- User bar -->
+	{#if user}
+		<div class="flex items-center justify-end gap-3 mb-2">
+			<span class="font-londrina text-brads-green-dark/60">Logged in as <strong class="text-brads-green-dark">{user.username}</strong></span>
+			<form action="/logout" method="POST">
+				<button
+					type="submit"
+					class="text-sm px-3 py-1 rounded border border-brads-green-light/30 text-brads-green-dark/60 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors font-londrina"
+				>
+					Log out
+				</button>
+			</form>
+		</div>
+	{/if}
+
 	<div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
 		<div>
 			<h1 class="text-3xl font-londrina text-brads-green-dark">Game Plays</h1>

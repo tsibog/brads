@@ -71,7 +71,7 @@ export function setSessionTokenCookie(event: RequestEvent, token: string, expire
 	event.cookies.set(SESSION_COOKIE_NAME, token, {
 		path: '/',
 		httpOnly: true,
-		sameSite: 'lax',
+		sameSite: dev ? 'lax' : 'none',
 		secure: !dev,
 		expires: new Date(expiresAt * 1000)
 	});
@@ -81,7 +81,7 @@ export function deleteSessionTokenCookie(event: RequestEvent): void {
 	event.cookies.set(SESSION_COOKIE_NAME, '', {
 		path: '/',
 		httpOnly: true,
-		sameSite: 'lax',
+		sameSite: dev ? 'lax' : 'none',
 		secure: !dev,
 		maxAge: 0
 	});
