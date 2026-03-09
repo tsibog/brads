@@ -39,7 +39,9 @@
 		}>;
 	};
 
-	const { data }: { data: { stats: PlayStats; period: string } } = $props();
+	type UserInfo = { id: string; username: string; is_admin: boolean } | null;
+	const { data }: { data: { stats: PlayStats; period: string; user: UserInfo } } = $props();
+	const user = $derived(data.user);
 
 	const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 	const periods = [
@@ -142,7 +144,7 @@
 
 	// Max bar width for the day-of-week chart
 	const maxDayCount = $derived(
-		Math.max(1, ...data.stats.byDayOfWeek.map((d) => d.count))
+		Math.max(1, ...(data.stats.byDayOfWeek ?? []).map((d) => d.count))
 	);
 </script>
 
@@ -165,12 +167,21 @@
 			>
 				Browse Games
 			</a>
-			<button
-				onclick={() => (showLogForm = !showLogForm)}
-				class="px-4 py-2 bg-brads-green-dark text-white rounded-lg font-londrina text-lg hover:bg-brads-green-dark/90 transition-colors"
-			>
-				{showLogForm ? 'Cancel' : 'Log a Play'}
-			</button>
+			{#if user}
+				<button
+					onclick={() => (showLogForm = !showLogForm)}
+					class="px-4 py-2 bg-brads-green-dark text-white rounded-lg font-londrina text-lg hover:bg-brads-green-dark/90 transition-colors"
+				>
+					{showLogForm ? 'Cancel' : 'Log a Play'}
+				</button>
+			{:else}
+				<a
+					href="/login"
+					class="px-4 py-2 bg-brads-green-dark text-white rounded-lg font-londrina text-lg hover:bg-brads-green-dark/90 transition-colors"
+				>
+					Login
+				</a>
+			{/if}
 		</div>
 	</div>
 
