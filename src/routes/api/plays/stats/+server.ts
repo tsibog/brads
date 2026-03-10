@@ -83,8 +83,8 @@ export const GET: RequestHandler = async ({ url }) => {
 		}
 		const sessions = [...sessionMap.values()];
 
-		// Recent plays (last 10 sessions)
-		const recentPlays = sessions.slice(0, 10);
+		// Recent plays (last 5 sessions)
+		const recentPlays = sessions.slice(0, 5);
 
 		// Most played games
 		const gameMap = new Map<string, { gameName: string; gameThumbnail: string | null; playCount: number; totalPlayers: number }>();
@@ -105,7 +105,7 @@ export const GET: RequestHandler = async ({ url }) => {
 		const mostPlayed = [...gameMap.entries()]
 			.map(([gameBggId, g]) => ({ gameBggId, ...g }))
 			.sort((a, b) => b.playCount - a.playCount)
-			.slice(0, 10);
+			.slice(0, 5);
 
 		// Total stats
 		const uniqueUserIds = new Set(allPlays.map((p) => p.userId));
@@ -145,7 +145,7 @@ export const GET: RequestHandler = async ({ url }) => {
 		const topPlayers = [...playerMap.values()]
 			.map((p) => ({ userId: p.userId, username: p.username, playCount: p.playCount, uniqueGames: p.gameIds.size }))
 			.sort((a, b) => b.playCount - a.playCount)
-			.slice(0, 10);
+			.slice(0, 5);
 
 		return json({
 			mostPlayed,
