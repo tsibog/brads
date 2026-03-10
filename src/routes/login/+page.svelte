@@ -76,7 +76,7 @@
 		</p>
 
 		<p class="text-center mt-2 font-londrina text-brads-green-dark/40">
-			<a href="/plays" class="hover:text-brads-green-dark/60">Back to Game Plays</a>
+			<a href="/plays" class="hover:text-brads-green-dark/60">Back to Adventure Log</a>
 		</p>
 	</div>
 </main>

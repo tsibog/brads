@@ -9,7 +9,7 @@ import { hash, verify } from '@node-rs/argon2';
 import { db } from '$lib/server/db';
 
 export const load: PageServerLoad = async ({ locals }) => {
-	if (locals.user) {
+	if (locals.user?.is_admin) {
 		redirect(302, '/admin');
 	}
 };
@@ -48,6 +48,12 @@ export const actions: Actions = {
 			const validPassword = await verify(user.password_hash, password);
 			if (!validPassword) {
 				return fail(400, {
+					message: 'Incorrect username or password'
+				});
+			}
+
+			if (!user.is_admin) {
+				return fail(403, {
 					message: 'Incorrect username or password'
 				});
 			}

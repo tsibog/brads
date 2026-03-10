@@ -214,7 +214,7 @@
 </script>
 
 <svelte:head>
-	<title>Game Plays - Brads Spelcafe</title>
+	<title>Adventure Log - Brads Spelcafe</title>
 </svelte:head>
 
 <main class="container mx-auto px-2 sm:px-4 py-8">
@@ -235,7 +235,7 @@
 
 	<div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
 		<div>
-			<h1 class="text-3xl font-londrina text-brads-green-dark">Game Plays</h1>
+			<h1 class="text-3xl font-londrina text-brads-green-dark">Adventure Log</h1>
 			<p class="text-brads-green-dark/70 font-londrina text-lg">
 				See what the community is playing
 			</p>

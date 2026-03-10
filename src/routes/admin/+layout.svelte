@@ -101,7 +101,7 @@
 					</li>
 					<li>
 						<a href="/plays" class="block p-2 rounded text-sm hover:bg-brads-green-light/50 text-gray-600">
-							Game Plays
+							Adventure Log
 						</a>
 					</li>
 				</ul>
