@@ -50,10 +50,9 @@ export const GET: RequestHandler = async ({ url }) => {
 			.from(gamePlays)
 			.where(whereClause);
 
-		// Recent plays (last 10)
-		const recentPlays = await db
+		// Recent plays (last 10 sessions, grouped by same game+date+notes)
+		const recentPlaysRaw = await db
 			.select({
-				id: gamePlays.id,
 				username: users.username,
 				gameName: boardGames.name,
 				gameThumbnail: boardGames.thumbnail,
@@ -68,7 +67,40 @@ export const GET: RequestHandler = async ({ url }) => {
 			.innerJoin(users, eq(gamePlays.userId, users.id))
 			.where(whereClause)
 			.orderBy(desc(gamePlays.playDate))
-			.limit(10);
+			.limit(50);
+
+		// Group plays into sessions (same game + date + duration + notes)
+		const sessionMap = new Map<string, {
+			usernames: string[];
+			gameName: string;
+			gameThumbnail: string | null;
+			gameBggId: string;
+			playDate: Date;
+			playerCount: number;
+			durationMinutes: number | null;
+			notes: string | null;
+		}>();
+		for (const play of recentPlaysRaw) {
+			const key = `${play.gameBggId}|${play.playDate.getTime()}|${play.durationMinutes}|${play.notes ?? ''}`;
+			const existing = sessionMap.get(key);
+			if (existing) {
+				if (!existing.usernames.includes(play.username)) {
+					existing.usernames.push(play.username);
+				}
+			} else {
+				sessionMap.set(key, {
+					usernames: [play.username],
+					gameName: play.gameName,
+					gameThumbnail: play.gameThumbnail,
+					gameBggId: play.gameBggId,
+					playDate: play.playDate,
+					playerCount: play.playerCount,
+					durationMinutes: play.durationMinutes,
+					notes: play.notes
+				});
+			}
+		}
+		const recentPlays = [...sessionMap.values()].slice(0, 10);
 
 		// Plays by day of week
 		const byDayOfWeek = await db

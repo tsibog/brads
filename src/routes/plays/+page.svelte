@@ -585,10 +585,14 @@
 							{/if}
 							<div class="flex-1 min-w-0">
 								<div class="font-londrina text-lg text-brads-green-dark">
-									<span class="font-bold">{play.username}</span> played
+									<span class="font-bold">{play.usernames[0]}</span> played
 									<a href="/game/{play.gameBggId}" class="underline hover:text-brads-green-light"
 										>{play.gameName}</a
-									>
+									>{#if play.usernames.length === 2}
+										{' '}with <span class="font-bold">{play.usernames[1]}</span>
+									{:else if play.usernames.length > 2}
+										{' '}with <span class="font-bold">{play.usernames[1]}</span> & {play.usernames.length - 2} more
+									{/if}
 								</div>
 								<div class="text-sm text-brads-green-dark/50 font-londrina">
 									{formatDate(play.playDate)} &middot; {play.playerCount} player{play.playerCount !==
