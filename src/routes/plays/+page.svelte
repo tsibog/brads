@@ -86,6 +86,7 @@
 	let durationMinutes = $state<number | undefined>(undefined);
 	let notes = $state('');
 	let playDate = $state(new Date().toISOString().split('T')[0]);
+	let isMonday = $derived(new Date(playDate + 'T12:00:00').getDay() === 1);
 	let isSubmitting = $state(false);
 	let submitMessage = $state('');
 	let searchTimeout: ReturnType<typeof setTimeout>;
@@ -203,7 +204,7 @@
 	}
 
 	async function submitPlay() {
-		if (!selectedGame) return;
+		if (!selectedGame || isMonday) return;
 		isSubmitting = true;
 		submitMessage = '';
 		invalidPlayers = [];
@@ -419,8 +420,11 @@
 							type="date"
 							bind:value={playDate}
 							max={new Date().toISOString().split('T')[0]}
-							class="w-full border border-gray-300 rounded-lg px-4 py-2 font-londrina text-lg focus:outline-none focus:ring-2 focus:ring-brads-green-light"
+							class="w-full border rounded-lg px-4 py-2 font-londrina text-lg focus:outline-none focus:ring-2 {isMonday ? 'border-amber-400 focus:ring-amber-300 bg-amber-50' : 'border-gray-300 focus:ring-brads-green-light'}"
 						/>
+						{#if isMonday}
+							<p class="text-amber-600 text-sm font-londrina mt-1">Brads is closed on Mondays! Pick another day.</p>
+						{/if}
 					</div>
 				</div>
 
@@ -505,7 +509,7 @@
 
 				<button
 					type="submit"
-					disabled={!selectedGame || isSubmitting}
+					disabled={!selectedGame || isSubmitting || isMonday}
 					class="w-full sm:w-auto px-6 py-2 bg-brads-green-dark text-white rounded-lg font-londrina text-lg hover:bg-brads-green-dark/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
 				>
 					{isSubmitting ? 'Logging...' : 'Log Play'}
@@ -695,10 +699,10 @@
 						{@const dayData = data.stats.byDayOfWeek.find((d) => d.dayOfWeek === day.dow)}
 						{@const count = dayData?.count ?? 0}
 						<div class="flex items-center gap-3">
-							<span class="w-10 font-londrina text-lg text-brads-green-dark">{day.name}</span>
+							<span class="w-12 shrink-0 font-londrina text-lg text-brads-green-dark">{day.name}</span>
 							{#if day.dow === 1}
-								<div class="flex-1 bg-amber-50 rounded-full h-6 flex items-center px-3 border border-amber-200">
-									<span class="font-londrina text-xs text-amber-600 italic truncate">{mondayMsg}</span>
+								<div class="flex-1 bg-amber-50 rounded-full h-6 flex items-center px-3 border border-amber-200 min-w-0">
+									<span class="font-londrina text-xs text-amber-600 italic whitespace-nowrap overflow-hidden text-ellipsis">{mondayMsg}</span>
 								</div>
 								<span class="w-8 text-right font-londrina text-amber-400">--</span>
 							{:else}
