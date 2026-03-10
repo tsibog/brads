@@ -75,7 +75,7 @@
 	}
 
 	function formatDate(timestamp: number) {
-		return new Date(timestamp).toLocaleDateString('en-GB', {
+		return new Date(timestamp * 1000).toLocaleDateString('en-GB', {
 			day: 'numeric',
 			month: 'short',
 			year: 'numeric'
