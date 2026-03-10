@@ -7,7 +7,7 @@
 		email: string | null;
 		is_admin: boolean;
 		must_reset_password: boolean;
-		created_at: number;
+		created_at: string;
 	};
 
 	let userList = $state<UserRecord[]>([]);
@@ -74,8 +74,8 @@
 		}
 	}
 
-	function formatDate(timestamp: number) {
-		return new Date(timestamp * 1000).toLocaleDateString('en-GB', {
+	function formatDate(timestamp: string | number) {
+		return new Date(timestamp).toLocaleDateString('en-GB', {
 			day: 'numeric',
 			month: 'short',
 			year: 'numeric'
