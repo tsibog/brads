@@ -46,6 +46,7 @@ export const GET: RequestHandler = async ({ url }) => {
 
 		// Group into unique sessions by game + date + duration + notes
 		type Session = {
+			playIds: number[];
 			usernames: string[];
 			userIds: string[];
 			gameName: string;
@@ -61,6 +62,7 @@ export const GET: RequestHandler = async ({ url }) => {
 			const key = `${play.gameBggId}|${play.playDate.getTime()}|${play.durationMinutes}|${play.notes ?? ''}`;
 			const existing = sessionMap.get(key);
 			if (existing) {
+				existing.playIds.push(play.id);
 				if (!existing.usernames.includes(play.username)) {
 					existing.usernames.push(play.username);
 				}
@@ -69,6 +71,7 @@ export const GET: RequestHandler = async ({ url }) => {
 				}
 			} else {
 				sessionMap.set(key, {
+					playIds: [play.id],
 					usernames: [play.username],
 					userIds: [play.userId],
 					gameName: play.gameName,

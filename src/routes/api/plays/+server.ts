@@ -138,6 +138,38 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	}
 };
 
+export const PUT: RequestHandler = async ({ request, locals }) => {
+	if (!locals.user?.is_admin) {
+		return json({ error: 'Admin access required' }, { status: 403 });
+	}
+
+	const body = await request.json();
+	const { id, notes } = body;
+
+	if (!id) {
+		return json({ error: 'Play ID is required' }, { status: 400 });
+	}
+
+	const playId = parseInt(id);
+
+	const play = await db.select().from(gamePlays).where(eq(gamePlays.id, playId));
+	if (play.length === 0) {
+		return json({ error: 'Play not found' }, { status: 404 });
+	}
+
+	try {
+		const updated = await db
+			.update(gamePlays)
+			.set({ notes: notes?.trim() || null })
+			.where(eq(gamePlays.id, playId))
+			.returning();
+		return json(updated[0]);
+	} catch (error) {
+		console.error('Error updating play notes:', error);
+		return json({ error: 'Failed to update play notes' }, { status: 500 });
+	}
+};
+
 export const DELETE: RequestHandler = async ({ url, locals }) => {
 	if (!locals.user) {
 		return json({ error: 'Authentication required' }, { status: 401 });

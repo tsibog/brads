@@ -17,8 +17,9 @@
 			uniqueUsers: number;
 		};
 		recentPlays: Array<{
-			id: number;
-			username: string;
+			playIds: number[];
+			usernames: string[];
+			userIds: string[];
 			gameName: string;
 			gameThumbnail: string | null;
 			gameBggId: string;
@@ -95,6 +96,49 @@
 	let taggedPlayers = $state<Array<{ id: string; username: string }>>([]);
 	let playerSearchTimeout: ReturnType<typeof setTimeout>;
 	let invalidPlayers = $state<string[]>([]);
+
+	// Admin edit notes state
+	let editingPlayIds = $state<number[] | null>(null);
+	let editNotesValue = $state('');
+	let isSavingNotes = $state(false);
+
+	function startEditNotes(playIds: number[], currentNotes: string | null) {
+		editingPlayIds = playIds;
+		editNotesValue = currentNotes ?? '';
+	}
+
+	function cancelEditNotes() {
+		editingPlayIds = null;
+		editNotesValue = '';
+	}
+
+	async function saveEditedNotes() {
+		if (!editingPlayIds) return;
+		isSavingNotes = true;
+		try {
+			for (const playId of editingPlayIds) {
+				const res = await fetch('/api/plays', {
+					method: 'PUT',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ id: playId, notes: editNotesValue })
+				});
+				if (!res.ok) throw new Error('Failed to update');
+			}
+			// Update local data
+			const play = data.stats.recentPlays.find(
+				(p) => JSON.stringify(p.playIds) === JSON.stringify(editingPlayIds)
+			);
+			if (play) {
+				play.notes = editNotesValue.trim() || null;
+			}
+			editingPlayIds = null;
+			editNotesValue = '';
+		} catch (error) {
+			console.error('Error saving notes:', error);
+		} finally {
+			isSavingNotes = false;
+		}
+	}
 
 	function formatDate(dateStr: string) {
 		const date = new Date(dateStr);
@@ -603,8 +647,35 @@
 										&middot; {play.durationMinutes} min
 									{/if}
 								</div>
-								{#if play.notes}
-									<p class="text-sm text-brads-green-dark/70 mt-1 italic">"{play.notes}"</p>
+								{#if editingPlayIds && JSON.stringify(editingPlayIds) === JSON.stringify(play.playIds)}
+									<div class="mt-1 flex items-center gap-2">
+										<input
+											type="text"
+											bind:value={editNotesValue}
+											class="flex-1 text-sm border border-brads-green-light/40 rounded px-2 py-1"
+											placeholder="Edit or clear note..."
+										/>
+										<button
+											onclick={saveEditedNotes}
+											disabled={isSavingNotes}
+											class="text-xs bg-brads-green-dark text-white px-2 py-1 rounded hover:bg-brads-green-dark/80"
+										>Save</button>
+										<button
+											onclick={cancelEditNotes}
+											class="text-xs text-brads-green-dark/50 hover:text-brads-green-dark"
+										>Cancel</button>
+									</div>
+								{:else}
+									{#if play.notes}
+										<p class="text-sm text-brads-green-dark/70 mt-1 italic inline">"{play.notes}"</p>
+									{/if}
+									{#if user?.is_admin}
+										<button
+											onclick={() => startEditNotes(play.playIds, play.notes)}
+											class="text-xs text-brads-green-dark/40 hover:text-brads-green-dark ml-1"
+											title="Edit/redact note"
+										>&#9998;</button>
+									{/if}
 								{/if}
 							</div>
 						</li>
