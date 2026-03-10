@@ -23,36 +23,12 @@ export const GET: RequestHandler = async ({ url }) => {
 		if (userId) conditions.push(eq(gamePlays.userId, userId));
 		const whereClause = conditions.length > 0 ? sql.join(conditions, sql` AND `) : sql`1=1`;
 
-		// Most played games
-		const mostPlayed = await db
+		// Fetch all plays with user+game info, then compute all stats in JS
+		// to properly deduplicate sessions (tagged players create multiple rows)
+		const allPlays = await db
 			.select({
-				gameBggId: gamePlays.gameBggId,
-				gameName: boardGames.name,
-				gameThumbnail: boardGames.thumbnail,
-				playCount: sql<number>`count(*)`.as('play_count'),
-				totalPlayers: sql<number>`sum(${gamePlays.playerCount})`.as('total_players')
-			})
-			.from(gamePlays)
-			.innerJoin(boardGames, eq(gamePlays.gameBggId, boardGames.bggId))
-			.where(whereClause)
-			.groupBy(gamePlays.gameBggId)
-			.orderBy(sql`play_count DESC`)
-			.limit(10);
-
-		// Total stats
-		const totals = await db
-			.select({
-				totalPlays: sql<number>`count(*)`,
-				totalPlayerSessions: sql<number>`sum(${gamePlays.playerCount})`,
-				uniqueGames: sql<number>`count(distinct ${gamePlays.gameBggId})`,
-				uniqueUsers: sql<number>`count(distinct ${gamePlays.userId})`
-			})
-			.from(gamePlays)
-			.where(whereClause);
-
-		// Recent plays (last 10 sessions, grouped by same game+date+notes)
-		const recentPlaysRaw = await db
-			.select({
+				id: gamePlays.id,
+				userId: gamePlays.userId,
 				username: users.username,
 				gameName: boardGames.name,
 				gameThumbnail: boardGames.thumbnail,
@@ -66,12 +42,12 @@ export const GET: RequestHandler = async ({ url }) => {
 			.innerJoin(boardGames, eq(gamePlays.gameBggId, boardGames.bggId))
 			.innerJoin(users, eq(gamePlays.userId, users.id))
 			.where(whereClause)
-			.orderBy(desc(gamePlays.playDate))
-			.limit(50);
+			.orderBy(desc(gamePlays.playDate));
 
-		// Group plays into sessions (same game + date + duration + notes)
-		const sessionMap = new Map<string, {
+		// Group into unique sessions by game + date + duration + notes
+		type Session = {
 			usernames: string[];
+			userIds: string[];
 			gameName: string;
 			gameThumbnail: string | null;
 			gameBggId: string;
@@ -79,17 +55,22 @@ export const GET: RequestHandler = async ({ url }) => {
 			playerCount: number;
 			durationMinutes: number | null;
 			notes: string | null;
-		}>();
-		for (const play of recentPlaysRaw) {
+		};
+		const sessionMap = new Map<string, Session>();
+		for (const play of allPlays) {
 			const key = `${play.gameBggId}|${play.playDate.getTime()}|${play.durationMinutes}|${play.notes ?? ''}`;
 			const existing = sessionMap.get(key);
 			if (existing) {
 				if (!existing.usernames.includes(play.username)) {
 					existing.usernames.push(play.username);
 				}
+				if (!existing.userIds.includes(play.userId)) {
+					existing.userIds.push(play.userId);
+				}
 			} else {
 				sessionMap.set(key, {
 					usernames: [play.username],
+					userIds: [play.userId],
 					gameName: play.gameName,
 					gameThumbnail: play.gameThumbnail,
 					gameBggId: play.gameBggId,
@@ -100,39 +81,75 @@ export const GET: RequestHandler = async ({ url }) => {
 				});
 			}
 		}
-		const recentPlays = [...sessionMap.values()].slice(0, 10);
+		const sessions = [...sessionMap.values()];
+
+		// Recent plays (last 10 sessions)
+		const recentPlays = sessions.slice(0, 10);
+
+		// Most played games
+		const gameMap = new Map<string, { gameName: string; gameThumbnail: string | null; playCount: number; totalPlayers: number }>();
+		for (const s of sessions) {
+			const existing = gameMap.get(s.gameBggId);
+			if (existing) {
+				existing.playCount++;
+				existing.totalPlayers += s.playerCount;
+			} else {
+				gameMap.set(s.gameBggId, {
+					gameName: s.gameName,
+					gameThumbnail: s.gameThumbnail,
+					playCount: 1,
+					totalPlayers: s.playerCount
+				});
+			}
+		}
+		const mostPlayed = [...gameMap.entries()]
+			.map(([gameBggId, g]) => ({ gameBggId, ...g }))
+			.sort((a, b) => b.playCount - a.playCount)
+			.slice(0, 10);
+
+		// Total stats
+		const uniqueUserIds = new Set(allPlays.map((p) => p.userId));
+		const uniqueGameIds = new Set(sessions.map((s) => s.gameBggId));
+		const totals = {
+			totalPlays: sessions.length,
+			totalPlayerSessions: sessions.reduce((sum, s) => sum + s.playerCount, 0),
+			uniqueGames: uniqueGameIds.size,
+			uniqueUsers: uniqueUserIds.size
+		};
 
 		// Plays by day of week
-		const byDayOfWeek = await db
-			.select({
-				dayOfWeek: sql<number>`cast(strftime('%w', ${gamePlays.playDate}, 'unixepoch') as integer)`.as(
-					'day_of_week'
-				),
-				count: sql<number>`count(*)`
-			})
-			.from(gamePlays)
-			.where(whereClause)
-			.groupBy(sql`day_of_week`)
-			.orderBy(sql`day_of_week`);
+		const dayCountMap = new Map<number, number>();
+		for (const s of sessions) {
+			const dow = s.playDate.getUTCDay();
+			dayCountMap.set(dow, (dayCountMap.get(dow) ?? 0) + 1);
+		}
+		const byDayOfWeek = [...dayCountMap.entries()]
+			.map(([dayOfWeek, count]) => ({ dayOfWeek, count }))
+			.sort((a, b) => a.dayOfWeek - b.dayOfWeek);
 
-		// Top players (most plays logged)
-		const topPlayers = await db
-			.select({
-				userId: gamePlays.userId,
-				username: users.username,
-				playCount: sql<number>`count(*)`.as('play_count'),
-				uniqueGames: sql<number>`count(distinct ${gamePlays.gameBggId})`.as('unique_games')
-			})
-			.from(gamePlays)
-			.innerJoin(users, eq(gamePlays.userId, users.id))
-			.where(whereClause)
-			.groupBy(gamePlays.userId)
-			.orderBy(sql`play_count DESC`)
-			.limit(10);
+		// Top players (per-user stats, counting sessions they participated in)
+		const playerMap = new Map<string, { userId: string; username: string; playCount: number; gameIds: Set<string> }>();
+		for (const s of sessions) {
+			for (let i = 0; i < s.userIds.length; i++) {
+				const uid = s.userIds[i];
+				const uname = s.usernames[i];
+				const existing = playerMap.get(uid);
+				if (existing) {
+					existing.playCount++;
+					existing.gameIds.add(s.gameBggId);
+				} else {
+					playerMap.set(uid, { userId: uid, username: uname, playCount: 1, gameIds: new Set([s.gameBggId]) });
+				}
+			}
+		}
+		const topPlayers = [...playerMap.values()]
+			.map((p) => ({ userId: p.userId, username: p.username, playCount: p.playCount, uniqueGames: p.gameIds.size }))
+			.sort((a, b) => b.playCount - a.playCount)
+			.slice(0, 10);
 
 		return json({
 			mostPlayed,
-			totals: totals[0],
+			totals,
 			recentPlays,
 			byDayOfWeek,
 			topPlayers
