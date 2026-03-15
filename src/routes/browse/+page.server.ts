@@ -1,4 +1,5 @@
 import type { PageServerLoad } from './$types';
+import { showPlays } from '$lib/flags';
 
 export const load: PageServerLoad = async ({ fetch, url, locals }) => {
 	const page = url.searchParams.get('page') || '1';
@@ -38,6 +39,7 @@ export const load: PageServerLoad = async ({ fetch, url, locals }) => {
 			page: parseInt(page)
 		},
 		allMechanics,
-		user: locals.user
+		user: locals.user,
+		playsEnabled: await showPlays()
 	};
 };

@@ -2,8 +2,10 @@ import { json, type RequestHandler } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import { gamePlays, boardGames, users } from '$lib/server/db/schema';
 import { desc, eq, sql, and, gte, lte, inArray } from 'drizzle-orm';
+import { showPlays } from '$lib/flags';
 
 export const GET: RequestHandler = async ({ url }) => {
+	if (!(await showPlays())) return json({ error: 'Not found' }, { status: 404 });
 	const page = parseInt(url.searchParams.get('page') || '1');
 	const limit = parseInt(url.searchParams.get('limit') || '20');
 	const gameBggId = url.searchParams.get('gameBggId');
@@ -62,6 +64,7 @@ export const GET: RequestHandler = async ({ url }) => {
 };
 
 export const POST: RequestHandler = async ({ request, locals }) => {
+	if (!(await showPlays())) return json({ error: 'Not found' }, { status: 404 });
 	if (!locals.user) {
 		return json({ error: 'Authentication required' }, { status: 401 });
 	}
@@ -139,6 +142,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 };
 
 export const PUT: RequestHandler = async ({ request, locals }) => {
+	if (!(await showPlays())) return json({ error: 'Not found' }, { status: 404 });
 	if (!locals.user?.is_admin) {
 		return json({ error: 'Admin access required' }, { status: 403 });
 	}
@@ -171,6 +175,7 @@ export const PUT: RequestHandler = async ({ request, locals }) => {
 };
 
 export const DELETE: RequestHandler = async ({ url, locals }) => {
+	if (!(await showPlays())) return json({ error: 'Not found' }, { status: 404 });
 	if (!locals.user) {
 		return json({ error: 'Authentication required' }, { status: 401 });
 	}

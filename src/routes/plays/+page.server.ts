@@ -1,6 +1,12 @@
+import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
+import { showPlays } from '$lib/flags';
 
 export const load: PageServerLoad = async ({ fetch, url, locals }) => {
+	if (!(await showPlays())) {
+		error(404, 'Not found');
+	}
+
 	const period = url.searchParams.get('period') || 'all';
 
 	let stats = {

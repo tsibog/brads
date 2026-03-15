@@ -3,13 +3,17 @@ import {
 	createSession,
 	setSessionTokenCookie
 } from '$lib/server/auth';
-import { fail, redirect } from '@sveltejs/kit';
+import { error, fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { hash } from '@node-rs/argon2';
 import { db } from '$lib/server/db';
 import { users } from '$lib/server/db/schema';
+import { showPlays } from '$lib/flags';
 
 export const load: PageServerLoad = async ({ locals }) => {
+	if (!(await showPlays())) {
+		error(404, 'Not found');
+	}
 	if (locals.user) {
 		redirect(302, '/plays');
 	}

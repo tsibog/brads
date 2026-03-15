@@ -5,8 +5,14 @@ import {
 	deleteSessionTokenCookie
 } from '$lib/server/auth';
 import { redirect, type Handle } from '@sveltejs/kit';
+import { sequence } from '@sveltejs/kit/hooks';
+import { createHandle } from 'flags/sveltekit';
+import { FLAGS_SECRET } from '$env/static/private';
+import * as flags from '$lib/flags';
 
-export const handle: Handle = async ({ event, resolve }) => {
+const flagsHandle = createHandle({ secret: FLAGS_SECRET, flags });
+
+const authHandle: Handle = async ({ event, resolve }) => {
 	const token = getSessionToken(event);
 	if (!token) {
 		event.locals.user = null;
@@ -33,3 +39,5 @@ export const handle: Handle = async ({ event, resolve }) => {
 
 	return resolve(event);
 };
+
+export const handle = sequence(flagsHandle, authHandle);
