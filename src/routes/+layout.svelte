@@ -2,8 +2,12 @@
 	import '../app.css';
 	import { dev } from '$app/environment';
 	import { injectAnalytics } from '@vercel/analytics/sveltekit';
+	import { onMount } from 'svelte';
+	import { mountVercelToolbar } from '@vercel/toolbar/vite';
 
 	injectAnalytics({ mode: dev ? 'development' : 'production' });
+
+	onMount(() => mountVercelToolbar());
 </script>
 
 <div class="bg-brads-yellow-light min-h-screen font-londrina">
