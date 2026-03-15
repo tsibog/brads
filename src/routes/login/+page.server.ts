@@ -20,6 +20,9 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 export const actions: Actions = {
 	default: async (event) => {
+		if (!(await showPlays())) {
+			error(404, 'Not found');
+		}
 		const formData = await event.request.formData();
 		const username = formData.get('username');
 		const password = formData.get('password');

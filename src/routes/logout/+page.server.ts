@@ -8,6 +8,6 @@ export const actions: Actions = {
 			await invalidateSession(event.locals.session.id);
 		}
 		deleteSessionTokenCookie(event);
-		redirect(302, '/plays');
+		redirect(302, '/browse');
 	}
 };
