@@ -1,9 +1,9 @@
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
-import { showPlays } from '$lib/flags';
+import { logBook } from '$lib/flags';
 
 export const load: PageServerLoad = async ({ fetch, url, locals }) => {
-	if (!(await showPlays())) {
+	if (!(await logBook())) {
 		error(404, 'Not found');
 	}
 

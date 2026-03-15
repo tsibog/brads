@@ -2,10 +2,10 @@ import { json, type RequestHandler } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import { gamePlays, boardGames, users } from '$lib/server/db/schema';
 import { desc, eq, sql, gte } from 'drizzle-orm';
-import { showPlays } from '$lib/flags';
+import { logBook } from '$lib/flags';
 
 export const GET: RequestHandler = async ({ url }) => {
-	if (!(await showPlays())) return json({ error: 'Not found' }, { status: 404 });
+	if (!(await logBook())) return json({ error: 'Not found' }, { status: 404 });
 	const period = url.searchParams.get('period') || 'all'; // all, week, month, year
 	const userId = url.searchParams.get('userId');
 

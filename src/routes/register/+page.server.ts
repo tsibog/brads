@@ -8,10 +8,10 @@ import type { Actions, PageServerLoad } from './$types';
 import { hash } from '@node-rs/argon2';
 import { db } from '$lib/server/db';
 import { users } from '$lib/server/db/schema';
-import { showPlays } from '$lib/flags';
+import { logBook } from '$lib/flags';
 
 export const load: PageServerLoad = async ({ locals }) => {
-	if (!(await showPlays())) {
+	if (!(await logBook())) {
 		error(404, 'Not found');
 	}
 	if (locals.user) {
@@ -21,7 +21,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 export const actions: Actions = {
 	default: async (event) => {
-		if (!(await showPlays())) {
+		if (!(await logBook())) {
 			error(404, 'Not found');
 		}
 		const formData = await event.request.formData();
