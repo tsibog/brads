@@ -7,6 +7,7 @@ export const users = sqliteTable('users', {
 	password_hash: text('password_hash').notNull(),
 	email: text('email').unique(),
 	is_admin: integer('is_admin', { mode: 'boolean' }).notNull().default(false),
+	must_reset_password: integer('must_reset_password', { mode: 'boolean' }).notNull().default(false),
 	created_at: integer('created_at', { mode: 'timestamp' }).notNull().defaultNow(),
 	updated_at: integer('updated_at', { mode: 'timestamp' }).notNull().defaultNow()
 });
@@ -75,4 +76,25 @@ export type Session = typeof sessions.$inferSelect;
 export type NewSession = typeof sessions.$inferInsert;
 export type Comment = typeof gameComments.$inferSelect;
 export type NewComment = typeof gameComments.$inferInsert;
+export const gamePlays = sqliteTable('game_plays', {
+	id: integer('id').primaryKey(),
+	userId: text('user_id')
+		.notNull()
+		.references(() => users.id),
+	gameBggId: text('game_bgg_id')
+		.notNull()
+		.references(() => boardGames.bggId),
+	playDate: integer('play_date', { mode: 'timestamp' })
+		.notNull()
+		.default(sql`(unixepoch())`),
+	playerCount: integer('player_count').notNull(),
+	durationMinutes: integer('duration_minutes'),
+	notes: text('notes'),
+	createdAt: integer('created_at', { mode: 'timestamp' })
+		.notNull()
+		.default(sql`(unixepoch())`)
+});
+
 export type GameView = typeof gameViews.$inferSelect;
+export type GamePlay = typeof gamePlays.$inferSelect;
+export type NewGamePlay = typeof gamePlays.$inferInsert;

@@ -78,6 +78,32 @@
 							Analytics
 						</a>
 					</li>
+					<li>
+						<a
+							href="/admin/users"
+							class="block p-2 rounded hover:bg-brads-green-light {$page.url.pathname.includes(
+								'/users'
+							)
+								? 'bg-brads-green font-bold'
+								: ''}"
+						>
+							Manage Users
+						</a>
+					</li>
+				</ul>
+
+				<h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mt-6 mb-2">Public Pages</h3>
+				<ul class="space-y-1">
+					<li>
+						<a href="/browse" class="block p-2 rounded text-sm hover:bg-brads-green-light/50 text-gray-600">
+							Game Catalogue
+						</a>
+					</li>
+					<li>
+						<a href="/plays" class="block p-2 rounded text-sm hover:bg-brads-green-light/50 text-gray-600">
+							Adventure Log
+						</a>
+					</li>
 				</ul>
 			</nav>
 

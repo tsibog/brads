@@ -7,9 +7,8 @@ export const load: LayoutServerLoad = async ({ locals, url, fetch }) => {
 		return {};
 	}
 
-	// Check if the user is authenticated
-	if (!locals.user) {
-		// Redirect to login page if not authenticated
+	// Check if the user is authenticated and is an admin
+	if (!locals.user || !locals.user.is_admin) {
 		throw redirect(302, '/admin/login');
 	}
 

@@ -4,48 +4,52 @@ import { users } from '$lib/server/db/schema';
 import { hash } from '@node-rs/argon2';
 import { eq } from 'drizzle-orm';
 
-export const GET: RequestHandler = async () => {
+export const GET: RequestHandler = async ({ locals }) => {
+	if (!locals.user?.is_admin) {
+		return json({ error: 'Admin access required' }, { status: 403 });
+	}
+
 	const allUsers = await db
 		.select({
 			id: users.id,
-			email: users.email
+			username: users.username,
+			email: users.email,
+			is_admin: users.is_admin,
+			must_reset_password: users.must_reset_password,
+			created_at: users.created_at
 		})
 		.from(users);
 
 	return json(allUsers);
 };
 
-export const POST: RequestHandler = async ({ request }) => {
+export const POST: RequestHandler = async ({ request, locals }) => {
+	if (!locals.user?.is_admin) {
+		return json({ error: 'Admin access required' }, { status: 403 });
+	}
+
 	const { username, email, password, isAdmin = false } = await request.json();
 
-	// Validate input
-	if (!username || !email || !password) {
-		return json({ error: 'Username, email, and password are required' }, { status: 400 });
+	if (!username || !password) {
+		return json({ error: 'Username and password are required' }, { status: 400 });
 	}
 
 	try {
-		// Hash the password
 		const password_hash = await hash(password);
-
-		// Generate a unique ID
 		const id = crypto.randomUUID();
 
-		// Insert the new user
 		const newUser = await db
 			.insert(users)
 			.values({
 				id,
 				username,
-				email,
+				email: email || null,
 				password_hash,
 				is_admin: isAdmin
-				// created_at and updated_at will use the default values
 			})
 			.returning();
 
-		// Remove password_hash from the returned user object
 		const { password_hash: _, ...userWithoutPassword } = newUser[0];
-
 		return json(userWithoutPassword, { status: 201 });
 	} catch (error) {
 		console.error('Error creating user:', error);
@@ -53,21 +57,60 @@ export const POST: RequestHandler = async ({ request }) => {
 	}
 };
 
-export const DELETE: RequestHandler = async ({ url }) => {
-	const id = url.searchParams.get('id');
+// Admin password reset — sets password to "amnesiac" and flags for forced reset
+const RESET_PASSWORD = 'amnesiac';
 
+export const PUT: RequestHandler = async ({ request, locals }) => {
+	if (!locals.user?.is_admin) {
+		return json({ error: 'Admin access required' }, { status: 403 });
+	}
+
+	const { userId } = await request.json();
+
+	if (!userId) {
+		return json({ error: 'userId is required' }, { status: 400 });
+	}
+
+	try {
+		const password_hash = await hash(RESET_PASSWORD);
+		const updated = await db
+			.update(users)
+			.set({ password_hash, must_reset_password: true })
+			.where(eq(users.id, userId))
+			.returning();
+
+		if (updated.length === 0) {
+			return json({ error: 'User not found' }, { status: 404 });
+		}
+
+		return json({ message: 'Password reset to temporary password. User will be prompted to set a new one on next login.' });
+	} catch (error) {
+		console.error('Error resetting password:', error);
+		return json({ error: 'Failed to reset password' }, { status: 500 });
+	}
+};
+
+export const DELETE: RequestHandler = async ({ url, locals }) => {
+	if (!locals.user?.is_admin) {
+		return json({ error: 'Admin access required' }, { status: 403 });
+	}
+
+	const id = url.searchParams.get('id');
 	if (!id) {
 		return json({ error: 'User ID is required' }, { status: 400 });
 	}
 
+	// Prevent deleting yourself
+	if (id === locals.user.id) {
+		return json({ error: 'Cannot delete your own account' }, { status: 400 });
+	}
+
 	try {
 		const deletedUser = await db.delete(users).where(eq(users.id, id)).returning();
-
 		if (deletedUser.length === 0) {
 			return json({ error: 'User not found' }, { status: 404 });
 		}
-
-		return json({ message: 'User deleted successfully' }, { status: 200 });
+		return json({ message: 'User deleted successfully' });
 	} catch (error) {
 		console.error('Error deleting user:', error);
 		return json({ error: 'Failed to delete user' }, { status: 500 });

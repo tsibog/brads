@@ -1,6 +1,7 @@
 import type { PageServerLoad } from './$types';
+import { showPlays } from '$lib/flags';
 
-export const load: PageServerLoad = async ({ fetch, url }) => {
+export const load: PageServerLoad = async ({ fetch, url, locals }) => {
 	const page = url.searchParams.get('page') || '1';
 	const limit = url.searchParams.get('limit') || '20';
 	const sortBy = url.searchParams.get('sortBy') || 'id';
@@ -37,6 +38,8 @@ export const load: PageServerLoad = async ({ fetch, url }) => {
 			...data.meta,
 			page: parseInt(page)
 		},
-		allMechanics
+		allMechanics,
+		user: locals.user,
+		playsEnabled: await showPlays()
 	};
 };

@@ -3,24 +3,30 @@ import {
 	createSession,
 	setSessionTokenCookie
 } from '$lib/server/auth';
-import { fail, redirect } from '@sveltejs/kit';
+import { error, fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import { hash, verify } from '@node-rs/argon2';
+import { verify } from '@node-rs/argon2';
 import { db } from '$lib/server/db';
+import { showPlays } from '$lib/flags';
 
 export const load: PageServerLoad = async ({ locals }) => {
-	if (locals.user?.is_admin) {
-		redirect(302, '/admin');
+	if (!(await showPlays())) {
+		error(404, 'Not found');
+	}
+	if (locals.user) {
+		redirect(302, locals.user.must_reset_password ? '/reset-password' : '/plays');
 	}
 };
 
 export const actions: Actions = {
 	default: async (event) => {
+		if (!(await showPlays())) {
+			error(404, 'Not found');
+		}
 		const formData = await event.request.formData();
 		const username = formData.get('username');
 		const password = formData.get('password');
 
-		// basic check
 		if (
 			typeof username !== 'string' ||
 			username.length < 1 ||
@@ -29,9 +35,7 @@ export const actions: Actions = {
 			password.length < 1 ||
 			password.length > 255
 		) {
-			return fail(400, {
-				message: 'Invalid input'
-			});
+			return fail(400, { message: 'Invalid input' });
 		}
 
 		try {
@@ -40,22 +44,12 @@ export const actions: Actions = {
 			});
 
 			if (!user) {
-				return fail(400, {
-					message: 'Incorrect username or password'
-				});
+				return fail(400, { message: 'Incorrect username or password' });
 			}
 
 			const validPassword = await verify(user.password_hash, password);
 			if (!validPassword) {
-				return fail(400, {
-					message: 'Incorrect username or password'
-				});
-			}
-
-			if (!user.is_admin) {
-				return fail(403, {
-					message: 'Incorrect username or password'
-				});
+				return fail(400, { message: 'Incorrect username or password' });
 			}
 
 			const token = generateSessionToken();
@@ -65,13 +59,13 @@ export const actions: Actions = {
 			if (user.must_reset_password) {
 				redirect(302, '/reset-password');
 			}
-
-			return { success: true };
 		} catch (e) {
+			// Re-throw redirects
+			if (e && typeof e === 'object' && 'status' in e) throw e;
 			console.error(e);
-			return fail(500, {
-				message: 'An unknown error occurred'
-			});
+			return fail(500, { message: 'An unexpected error occurred' });
 		}
+
+		redirect(302, '/plays');
 	}
 };
