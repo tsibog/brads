@@ -223,33 +223,38 @@ export async function getSharedPlayCounts(
 	const counts = new Map<string, number>();
 	if (otherUserIds.length === 0) return counts;
 
-	// Get all plays the current user participated in
-	const userPlays = await db
-		.select({ playId: playParticipants.playId })
-		.from(playParticipants)
-		.where(eq(playParticipants.userId, userId));
+	try {
+		// Get all plays the current user participated in
+		const userPlays = await db
+			.select({ playId: playParticipants.playId })
+			.from(playParticipants)
+			.where(eq(playParticipants.userId, userId));
 
-	if (userPlays.length === 0) return counts;
+		if (userPlays.length === 0) return counts;
 
-	const playIds = userPlays.map((p) => p.playId);
+		const playIds = userPlays.map((p) => p.playId);
 
-	// Find other users who participated in those same plays
-	const sharedPlays = await db
-		.select({
-			otherUserId: playParticipants.userId,
-			count: sql<number>`count(DISTINCT ${playParticipants.playId})`
-		})
-		.from(playParticipants)
-		.where(
-			and(
-				inArray(playParticipants.playId, playIds),
-				inArray(playParticipants.userId, otherUserIds)
+		// Find other users who participated in those same plays
+		const sharedPlays = await db
+			.select({
+				otherUserId: playParticipants.userId,
+				count: sql<number>`count(DISTINCT ${playParticipants.playId})`
+			})
+			.from(playParticipants)
+			.where(
+				and(
+					inArray(playParticipants.playId, playIds),
+					inArray(playParticipants.userId, otherUserIds)
+				)
 			)
-		)
-		.groupBy(playParticipants.userId);
+			.groupBy(playParticipants.userId);
 
-	for (const row of sharedPlays) {
-		counts.set(row.otherUserId, row.count);
+		for (const row of sharedPlays) {
+			counts.set(row.otherUserId, row.count);
+		}
+	} catch (e) {
+		// Table may not exist yet if migration hasn't been run — gracefully degrade
+		console.error('getSharedPlayCounts failed (play_participants table may not exist):', e);
 	}
 
 	return counts;
