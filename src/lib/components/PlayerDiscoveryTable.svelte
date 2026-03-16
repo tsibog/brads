@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { DAY_LABELS_SHORT, EXPERIENCE_LABELS_SHORT, PLAY_STYLE_LABELS } from '$lib/partyFinderConstants';
+
 	interface GamePref {
 		gameBggId: string;
 		name: string;
@@ -34,27 +36,6 @@
 
 	let { players, currentUser, currentUserGamePreferences }: Props = $props();
 
-	const dayLabels: Record<number, string> = {
-		0: 'Sun',
-		2: 'Tue',
-		3: 'Wed',
-		4: 'Thu',
-		5: 'Fri',
-		6: 'Sat'
-	};
-
-	const experienceLabels: Record<string, string> = {
-		new: 'New',
-		some_experience: 'Some exp.',
-		experienced: 'Experienced'
-	};
-
-	const playStyleLabels: Record<string, string> = {
-		casual: 'Casual',
-		competitive: 'Competitive',
-		either: 'Either'
-	};
-
 	// Contact visibility is enforced server-side — if contact info is present, it's safe to show
 	function shouldShowContact(player: Player): boolean {
 		return !!(player.contactMethod && player.contactValue);
@@ -82,12 +63,12 @@
 						<div class="flex items-center gap-3 mt-1 text-xs text-gray-500">
 							{#if player.experienceLevel}
 								<span class="bg-gray-100 rounded px-2 py-0.5">
-									{experienceLabels[player.experienceLevel] ?? player.experienceLevel}
+									{EXPERIENCE_LABELS_SHORT[player.experienceLevel] ?? player.experienceLevel}
 								</span>
 							{/if}
 							{#if player.playStyle}
 								<span class="bg-gray-100 rounded px-2 py-0.5">
-									{playStyleLabels[player.playStyle] ?? player.playStyle}
+									{PLAY_STYLE_LABELS[player.playStyle] ?? player.playStyle}
 								</span>
 							{/if}
 						</div>
@@ -124,7 +105,7 @@
 					<div class="mt-3 flex flex-wrap gap-1.5">
 						{#each player.availability as avail}
 							<span class="text-xs px-2 py-0.5 rounded bg-brads-green-dark/10 text-brads-green-dark">
-								{dayLabels[avail.dayOfWeek] ?? `Day ${avail.dayOfWeek}`}
+								{DAY_LABELS_SHORT[avail.dayOfWeek] ?? `Day ${avail.dayOfWeek}`}
 							</span>
 						{/each}
 					</div>

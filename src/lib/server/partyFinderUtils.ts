@@ -9,6 +9,7 @@ import {
 	boardGames
 } from './db/schema.js';
 import { eq, and, lt, sql, inArray } from 'drizzle-orm';
+import { VALID_DAYS } from '$lib/partyFinderConstants';
 
 /**
  * Get the configured number of days before users are considered inactive
@@ -446,4 +447,29 @@ export async function getPaginatedPlayersWithCompatibility({
 		data: paginatedPlayers,
 		meta: { totalCount, page, limit, totalPages, averageCompatibility }
 	};
+}
+
+/**
+ * Replace a user's availability days (delete + insert).
+ */
+export async function updateUserAvailability(userId: string, days: number[]) {
+	await db.delete(userAvailability).where(eq(userAvailability.userId, userId));
+	const validDays = days.filter((d) => (VALID_DAYS as readonly number[]).includes(d));
+	if (validDays.length > 0) {
+		await db
+			.insert(userAvailability)
+			.values(validDays.map((dayOfWeek) => ({ userId, dayOfWeek })));
+	}
+}
+
+/**
+ * Replace a user's game preferences (delete + insert).
+ */
+export async function updateUserGamePreferences(userId: string, gameBggIds: string[]) {
+	await db.delete(userGamePreferences).where(eq(userGamePreferences.userId, userId));
+	if (gameBggIds.length > 0) {
+		await db
+			.insert(userGamePreferences)
+			.values(gameBggIds.map((gameBggId) => ({ userId, gameBggId })));
+	}
 }

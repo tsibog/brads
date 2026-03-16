@@ -1,31 +1,32 @@
 import { fail, redirect } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
-import { users, userAvailability, userGamePreferences, boardGames } from '$lib/server/db/schema';
+import { users } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
 import type { Actions, PageServerLoad } from './$types';
+import {
+	sanitizeInput,
+	isValidContact,
+	EXPERIENCE_LEVELS,
+	PLAY_STYLES,
+	CONTACT_METHODS,
+	CONTACT_VISIBILITY_OPTIONS
+} from '$lib/partyFinderConstants';
+import {
+	loadPlayerData,
+	updateUserAvailability,
+	updateUserGamePreferences
+} from '$lib/server/partyFinderUtils';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	if (!locals.user) {
 		redirect(302, '/login');
 	}
 
-	const [user, availability, gamePrefs] = await Promise.all([
+	const [user, playerData] = await Promise.all([
 		db.query.users.findFirst({
 			where: (users, { eq }) => eq(users.id, locals.user!.id)
 		}),
-		db
-			.select({ dayOfWeek: userAvailability.dayOfWeek })
-			.from(userAvailability)
-			.where(eq(userAvailability.userId, locals.user.id)),
-		db
-			.select({
-				gameBggId: userGamePreferences.gameBggId,
-				name: boardGames.name,
-				thumbnail: boardGames.thumbnail
-			})
-			.from(userGamePreferences)
-			.leftJoin(boardGames, eq(userGamePreferences.gameBggId, boardGames.bggId))
-			.where(eq(userGamePreferences.userId, locals.user.id))
+		loadPlayerData(locals.user.id)
 	]);
 
 	if (!user) {
@@ -49,33 +50,14 @@ export const load: PageServerLoad = async ({ locals }) => {
 			openToAnyGame: user.open_to_any_game,
 			lastLogin: user.last_login
 		},
-		availability: availability.map((a) => a.dayOfWeek),
-		gamePreferences: gamePrefs.map((g) => ({
+		availability: playerData.availability.map((a) => a.dayOfWeek),
+		gamePreferences: playerData.gamePreferences.map((g) => ({
 			bggId: g.gameBggId,
-			name: g.name ?? 'Unknown',
+			name: g.name,
 			thumbnail: g.thumbnail
 		}))
 	};
 };
-
-function sanitizeInput(input: string): string {
-	return input.trim().replace(/[<>]/g, '').substring(0, 255);
-}
-
-function isValidContact(method: string, value: string): boolean {
-	const v = value.trim();
-	switch (method) {
-		case 'email':
-			return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
-		case 'phone':
-		case 'whatsapp':
-			return /^[+]?[\d\s\-\(\)]{8,}$/.test(v);
-		case 'discord':
-			return v.length >= 2;
-		default:
-			return false;
-	}
-}
 
 export const actions: Actions = {
 	updateProfile: async ({ request, locals }) => {
@@ -117,20 +99,19 @@ export const actions: Actions = {
 		if (cleanBio.length > 500) {
 			return fail(400, { message: 'Bio must be less than 500 characters' });
 		}
-		if (!['new', 'some_experience', 'experienced'].includes(experienceLevel)) {
+		if (!(EXPERIENCE_LEVELS as readonly string[]).includes(experienceLevel)) {
 			return fail(400, { message: 'Invalid experience level' });
 		}
-		if (!['casual', 'competitive', 'either'].includes(playStyle)) {
+		if (!(PLAY_STYLES as readonly string[]).includes(playStyle)) {
 			return fail(400, { message: 'Invalid play style' });
 		}
-		if (!['none', 'matches', 'all'].includes(contactVisibleTo)) {
+		if (!(CONTACT_VISIBILITY_OPTIONS as readonly string[]).includes(contactVisibleTo)) {
 			return fail(400, { message: 'Invalid contact visibility setting' });
 		}
 
 		const cleanContactValue = sanitizeInput(contactValue);
 		if (cleanContactValue) {
-			const validMethods = ['email', 'phone', 'whatsapp', 'discord'];
-			if (!validMethods.includes(contactMethod)) {
+			if (!(CONTACT_METHODS as readonly string[]).includes(contactMethod)) {
 				return fail(400, { message: 'Invalid contact method' });
 			}
 			if (!isValidContact(contactMethod, cleanContactValue)) {
@@ -183,31 +164,8 @@ export const actions: Actions = {
 				})
 				.where(eq(users.id, locals.user.id));
 
-			// Update availability — delete old + insert new
-			await db
-				.delete(userAvailability)
-				.where(eq(userAvailability.userId, locals.user.id));
-			if (selectedDays.length > 0) {
-				await db.insert(userAvailability).values(
-					selectedDays.map((day) => ({
-						userId: locals.user!.id,
-						dayOfWeek: day
-					}))
-				);
-			}
-
-			// Update game preferences — delete old + insert new
-			await db
-				.delete(userGamePreferences)
-				.where(eq(userGamePreferences.userId, locals.user.id));
-			if (selectedGames.length > 0) {
-				await db.insert(userGamePreferences).values(
-					selectedGames.map((bggId) => ({
-						userId: locals.user!.id,
-						gameBggId: bggId
-					}))
-				);
-			}
+			await updateUserAvailability(locals.user.id, selectedDays);
+			await updateUserGamePreferences(locals.user.id, selectedGames);
 
 			return { success: true, message: 'Profile updated successfully' };
 		} catch (error) {

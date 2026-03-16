@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { VALID_DAYS, DAY_LABELS_SHORT } from '$lib/partyFinderConstants';
+
 	interface Props {
 		selectedDays: number[];
 		onchange?: (days: number[]) => void;
@@ -8,14 +10,7 @@
 	let { selectedDays = $bindable([]), onchange, disabled = false }: Props = $props();
 
 	// Tue(2) through Sun(0) — cafe is closed Monday(1)
-	const days = [
-		{ value: 2, label: 'Tue' },
-		{ value: 3, label: 'Wed' },
-		{ value: 4, label: 'Thu' },
-		{ value: 5, label: 'Fri' },
-		{ value: 6, label: 'Sat' },
-		{ value: 0, label: 'Sun' }
-	];
+	const days = VALID_DAYS.map((value) => ({ value, label: DAY_LABELS_SHORT[value] }));
 
 	function toggleDay(day: number) {
 		if (disabled) return;

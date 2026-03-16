@@ -7,9 +7,17 @@ import { error, fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { hash } from '@node-rs/argon2';
 import { db } from '$lib/server/db';
-import { users, userGamePreferences, userAvailability, boardGames } from '$lib/server/db/schema';
+import { users, boardGames } from '$lib/server/db/schema';
 import { logBook } from '$lib/flags';
 import { inArray } from 'drizzle-orm';
+import {
+	sanitizeInput,
+	EXPERIENCE_LEVELS,
+	PLAY_STYLES,
+	CONTACT_METHODS,
+	MAX_GAME_PREFERENCES
+} from '$lib/partyFinderConstants';
+import { updateUserAvailability, updateUserGamePreferences } from '$lib/server/partyFinderUtils';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	if (!(await logBook())) {
@@ -75,17 +83,17 @@ export const actions: Actions = {
 		}
 
 		// Optional party finder fields
-		const cleanDisplayName = displayName.trim().replace(/[<>]/g, '').substring(0, 50);
-		const expLevel = typeof experienceLevel === 'string' && ['new', 'some_experience', 'experienced'].includes(experienceLevel)
+		const cleanDisplayName = sanitizeInput(displayName, 50);
+		const expLevel = typeof experienceLevel === 'string' && (EXPERIENCE_LEVELS as readonly string[]).includes(experienceLevel)
 			? experienceLevel
 			: null;
-		const pStyle = typeof playStyle === 'string' && ['casual', 'competitive', 'either'].includes(playStyle)
+		const pStyle = typeof playStyle === 'string' && (PLAY_STYLES as readonly string[]).includes(playStyle)
 			? playStyle
 			: null;
-		const cMethod = typeof contactMethod === 'string' && ['email', 'phone', 'whatsapp', 'discord'].includes(contactMethod)
+		const cMethod = typeof contactMethod === 'string' && (CONTACT_METHODS as readonly string[]).includes(contactMethod)
 			? contactMethod
 			: null;
-		const cValue = typeof contactValue === 'string' ? contactValue.trim().replace(/[<>]/g, '').substring(0, 255) : null;
+		const cValue = typeof contactValue === 'string' ? sanitizeInput(contactValue) : null;
 
 		// Parse game preferences (optional, 1-4 games)
 		let selectedGames: string[] = [];
@@ -138,9 +146,8 @@ export const actions: Actions = {
 				last_login: new Date()
 			});
 
-			// Insert game preferences if any
-			if (selectedGames.length > 0 && selectedGames.length <= 4) {
-				// Validate games exist
+			// Insert game preferences if any (validate games exist first)
+			if (selectedGames.length > 0 && selectedGames.length <= MAX_GAME_PREFERENCES) {
 				const existingGames = await db
 					.select({ bggId: boardGames.bggId })
 					.from(boardGames)
@@ -148,23 +155,11 @@ export const actions: Actions = {
 
 				const validBggIds = existingGames.map((g) => g.bggId);
 				const validGames = selectedGames.filter((gId) => validBggIds.includes(gId));
-
-				if (validGames.length > 0) {
-					await db.insert(userGamePreferences).values(
-						validGames.map((bggId) => ({ userId: id, gameBggId: bggId }))
-					);
-				}
+				await updateUserGamePreferences(id, validGames);
 			}
 
 			// Insert availability days if any
-			if (selectedDays.length > 0) {
-				const validDays = selectedDays.filter((d) => [0, 2, 3, 4, 5, 6].includes(d));
-				if (validDays.length > 0) {
-					await db.insert(userAvailability).values(
-						validDays.map((dayOfWeek) => ({ userId: id, dayOfWeek }))
-					);
-				}
-			}
+			await updateUserAvailability(id, selectedDays);
 
 			const token = generateSessionToken();
 			const session = await createSession(token, id);

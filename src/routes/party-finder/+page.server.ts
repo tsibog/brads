@@ -1,10 +1,14 @@
 import { error, fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { db } from '$lib/server/db';
-import { users, userAvailability, userGamePreferences, boardGames } from '$lib/server/db/schema';
+import { users, userGamePreferences, boardGames } from '$lib/server/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { partyFinder } from '$lib/flags';
-import { loadPlayerData } from '$lib/server/partyFinderUtils';
+import {
+	loadPlayerData,
+	updateUserAvailability,
+	updateUserGamePreferences
+} from '$lib/server/partyFinderUtils';
 
 export const load: PageServerLoad = async ({ locals, url, fetch }) => {
 	if (!(await partyFinder())) {
@@ -122,21 +126,8 @@ export const actions: Actions = {
 				})
 				.where(eq(users.id, userId));
 
-			// Update availability
-			await db.delete(userAvailability).where(eq(userAvailability.userId, userId));
-			if (selectedDays.length > 0) {
-				await db.insert(userAvailability).values(
-					selectedDays.map((dayOfWeek) => ({ userId, dayOfWeek }))
-				);
-			}
-
-			// Update game preferences
-			await db.delete(userGamePreferences).where(eq(userGamePreferences.userId, userId));
-			if (selectedGames.length > 0) {
-				await db.insert(userGamePreferences).values(
-					selectedGames.map((gameBggId) => ({ userId, gameBggId }))
-				);
-			}
+			await updateUserAvailability(userId, selectedDays);
+			await updateUserGamePreferences(userId, selectedGames);
 
 			return { success: true, message: 'Party finder settings updated!' };
 		} catch (error) {

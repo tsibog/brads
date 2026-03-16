@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { VALID_DAYS, DAY_LABELS_FULL, EXPERIENCE_LABELS, PLAY_STYLE_LABELS } from '$lib/partyFinderConstants';
+
 	interface Props {
 		experience: string;
 		playStyle: string;
@@ -10,14 +12,7 @@
 
 	let { experience = $bindable('all'), playStyle = $bindable('all'), day = $bindable('all'), game = $bindable('all'), availableGames, onFilterChange }: Props = $props();
 
-	const dayLabels: Record<string, string> = {
-		'0': 'Sunday',
-		'2': 'Tuesday',
-		'3': 'Wednesday',
-		'4': 'Thursday',
-		'5': 'Friday',
-		'6': 'Saturday'
-	};
+	const dayOptions = VALID_DAYS.map((d) => ({ value: String(d), label: DAY_LABELS_FULL[d] }));
 </script>
 
 <div class="flex flex-wrap gap-3">
@@ -27,9 +22,9 @@
 		class="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brads-green-light"
 	>
 		<option value="all">All Experience</option>
-		<option value="new">New to board games</option>
-		<option value="some_experience">Some experience</option>
-		<option value="experienced">Experienced</option>
+		{#each Object.entries(EXPERIENCE_LABELS) as [value, label]}
+			<option {value}>{label}</option>
+		{/each}
 	</select>
 
 	<select
@@ -38,9 +33,9 @@
 		class="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brads-green-light"
 	>
 		<option value="all">All Play Styles</option>
-		<option value="casual">Casual</option>
-		<option value="competitive">Competitive</option>
-		<option value="either">Either</option>
+		{#each Object.entries(PLAY_STYLE_LABELS) as [value, label]}
+			<option {value}>{label}</option>
+		{/each}
 	</select>
 
 	<select
@@ -49,8 +44,8 @@
 		class="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brads-green-light"
 	>
 		<option value="all">All Days</option>
-		{#each Object.entries(dayLabels) as [value, label]}
-			<option {value}>{label}</option>
+		{#each dayOptions as opt}
+			<option value={opt.value}>{opt.label}</option>
 		{/each}
 	</select>
 
