@@ -15,7 +15,6 @@
 		openToAnyGame: boolean;
 		contactMethod: string | null;
 		contactValue: string | null;
-		contactVisibleTo: string | null;
 		lastLogin: string | null;
 		availability: Array<{ dayOfWeek: number }>;
 		gamePreferences: GamePref[];
@@ -56,13 +55,9 @@
 		either: 'Either'
 	};
 
+	// Contact visibility is enforced server-side — if contact info is present, it's safe to show
 	function shouldShowContact(player: Player): boolean {
-		if (!currentUser.looking_for_party || currentUser.party_status !== 'active') return false;
-		if (!player.contactValue) return false;
-		if (player.contactVisibleTo === 'none') return false;
-		if (player.contactVisibleTo === 'all') return true;
-		if (player.contactVisibleTo === 'matches') return player.compatibilityScore >= 50;
-		return false;
+		return !!(player.contactMethod && player.contactValue);
 	}
 
 	function isSharedGame(bggId: string): boolean {

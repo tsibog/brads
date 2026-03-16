@@ -7,6 +7,7 @@ import {
 	getPaginatedPlayersWithCompatibility,
 	getSharedPlayCounts,
 	loadPlayerData,
+	loadAllPlayerData,
 	type PlayerForCompatibility
 } from '$lib/server/partyFinderUtils';
 
@@ -44,29 +45,30 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 		.from(users)
 		.where(and(eq(users.looking_for_party, true), eq(users.party_status, 'active')));
 
-	// Load availability and game preferences for all active users
-	const allPlayers: PlayerForCompatibility[] = await Promise.all(
-		activeUsers.map(async (u) => {
-			const data = await loadPlayerData(u.id);
-			return {
-				id: u.id,
-				username: u.username,
-				displayName: u.displayName,
-				bio: u.bio,
-				experienceLevel: u.experienceLevel,
-				playStyle: u.playStyle,
-				lookingForParty: u.lookingForParty ?? false,
-				partyStatus: u.partyStatus ?? 'resting',
-				openToAnyGame: u.openToAnyGame ?? false,
-				contactMethod: u.contactMethod,
-				contactValue: u.contactValue,
-				contactVisibleTo: u.contactVisibleTo,
-				lastLogin: u.lastLogin,
-				availability: data.availability,
-				gamePreferences: data.gamePreferences
-			};
-		})
-	);
+	// Batch-load availability and game preferences for all active users (2 queries instead of 2N)
+	const allUserIds = activeUsers.map((u) => u.id);
+	const allPlayerData = await loadAllPlayerData(allUserIds);
+
+	const allPlayers: PlayerForCompatibility[] = activeUsers.map((u) => {
+		const data = allPlayerData.get(u.id) ?? { availability: [], gamePreferences: [] };
+		return {
+			id: u.id,
+			username: u.username,
+			displayName: u.displayName,
+			bio: u.bio,
+			experienceLevel: u.experienceLevel,
+			playStyle: u.playStyle,
+			lookingForParty: u.lookingForParty ?? false,
+			partyStatus: u.partyStatus ?? 'resting',
+			openToAnyGame: u.openToAnyGame ?? false,
+			contactMethod: u.contactMethod,
+			contactValue: u.contactValue,
+			contactVisibleTo: u.contactVisibleTo,
+			lastLogin: u.lastLogin,
+			availability: data.availability,
+			gamePreferences: data.gamePreferences
+		};
+	});
 
 	// Load current user's data for compatibility calculations
 	const currentUserData = await loadPlayerData(locals.user.id);
@@ -96,10 +98,27 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 	const playerIds = result.data.map((p) => p.id);
 	const sharedCounts = await getSharedPlayCounts(locals.user.id, playerIds);
 
-	const dataWithPlayHistory = result.data.map((player) => ({
-		...player,
-		sharedPlayCount: sharedCounts.get(player.id) ?? 0
-	}));
+	const dataWithPlayHistory = result.data.map((player) => {
+		const sharedPlayCount = sharedCounts.get(player.id) ?? 0;
+
+		// Server-side contact privacy enforcement — never leak contact info to the client
+		let contactMethod = player.contactMethod;
+		let contactValue = player.contactValue;
+		if (player.contactVisibleTo === 'none') {
+			contactMethod = null;
+			contactValue = null;
+		} else if (player.contactVisibleTo === 'matches') {
+			if ((player.compatibilityScore ?? 0) < 50) {
+				contactMethod = null;
+				contactValue = null;
+			}
+		}
+		// 'all' → leave as-is
+
+		// Strip contactVisibleTo from response — clients only need to know if contact is present
+		const { contactVisibleTo, ...rest } = player;
+		return { ...rest, contactMethod, contactValue, sharedPlayCount };
+	});
 
 	return json({
 		data: dataWithPlayHistory,

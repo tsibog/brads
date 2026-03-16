@@ -255,7 +255,60 @@ export async function getSharedPlayCounts(
 }
 
 /**
- * Load a player's availability and game preferences.
+ * Batch-load availability and game preferences for multiple users.
+ * Uses 2 queries total instead of 2 per user (N+1 fix).
+ */
+export async function loadAllPlayerData(
+	userIds: string[]
+): Promise<
+	Map<string, { availability: { dayOfWeek: number }[]; gamePreferences: { gameBggId: string; name: string; thumbnail: string | null }[] }>
+> {
+	const result = new Map<
+		string,
+		{ availability: { dayOfWeek: number }[]; gamePreferences: { gameBggId: string; name: string; thumbnail: string | null }[] }
+	>();
+
+	if (userIds.length === 0) return result;
+
+	// Initialize all users with empty arrays
+	for (const id of userIds) {
+		result.set(id, { availability: [], gamePreferences: [] });
+	}
+
+	const [allAvailability, allGamePrefs] = await Promise.all([
+		db
+			.select({ userId: userAvailability.userId, dayOfWeek: userAvailability.dayOfWeek })
+			.from(userAvailability)
+			.where(inArray(userAvailability.userId, userIds)),
+		db
+			.select({
+				userId: userGamePreferences.userId,
+				gameBggId: userGamePreferences.gameBggId,
+				name: boardGames.name,
+				thumbnail: boardGames.thumbnail
+			})
+			.from(userGamePreferences)
+			.leftJoin(boardGames, eq(userGamePreferences.gameBggId, boardGames.bggId))
+			.where(inArray(userGamePreferences.userId, userIds))
+	]);
+
+	for (const row of allAvailability) {
+		result.get(row.userId)!.availability.push({ dayOfWeek: row.dayOfWeek });
+	}
+
+	for (const row of allGamePrefs) {
+		result.get(row.userId)!.gamePreferences.push({
+			gameBggId: row.gameBggId,
+			name: row.name ?? 'Unknown',
+			thumbnail: row.thumbnail
+		});
+	}
+
+	return result;
+}
+
+/**
+ * Load a single player's availability and game preferences.
  */
 export async function loadPlayerData(userId: string) {
 	const [availability, gamePrefs] = await Promise.all([

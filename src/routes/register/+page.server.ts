@@ -7,7 +7,7 @@ import { error, fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { hash } from '@node-rs/argon2';
 import { db } from '$lib/server/db';
-import { users, userGamePreferences, boardGames } from '$lib/server/db/schema';
+import { users, userGamePreferences, userAvailability, boardGames } from '$lib/server/db/schema';
 import { logBook } from '$lib/flags';
 import { inArray } from 'drizzle-orm';
 
@@ -36,6 +36,8 @@ export const actions: Actions = {
 		const contactMethod = formData.get('contact_method');
 		const contactValue = formData.get('contact_value');
 		const selectedGamesStr = formData.get('selected_games');
+		const selectedDaysStr = formData.get('selected_days');
+		const lookingForParty = formData.get('looking_for_party') === 'on';
 
 		if (
 			typeof username !== 'string' ||
@@ -95,6 +97,16 @@ export const actions: Actions = {
 			// Ignore invalid JSON — games are optional
 		}
 
+		// Parse availability days (optional)
+		let selectedDays: number[] = [];
+		try {
+			if (selectedDaysStr && typeof selectedDaysStr === 'string' && selectedDaysStr !== '[]') {
+				selectedDays = JSON.parse(selectedDaysStr);
+			}
+		} catch {
+			// Ignore invalid JSON — days are optional
+		}
+
 		try {
 			// Check if username already exists
 			const existing = await db.query.users.findFirst({
@@ -121,6 +133,8 @@ export const actions: Actions = {
 				play_style: pStyle,
 				contact_method: cMethod,
 				contact_value: cValue || null,
+				looking_for_party: lookingForParty,
+				party_status: lookingForParty ? 'active' : 'resting',
 				last_login: new Date()
 			});
 
@@ -138,6 +152,16 @@ export const actions: Actions = {
 				if (validGames.length > 0) {
 					await db.insert(userGamePreferences).values(
 						validGames.map((bggId) => ({ userId: id, gameBggId: bggId }))
+					);
+				}
+			}
+
+			// Insert availability days if any
+			if (selectedDays.length > 0) {
+				const validDays = selectedDays.filter((d) => [0, 2, 3, 4, 5, 6].includes(d));
+				if (validDays.length > 0) {
+					await db.insert(userAvailability).values(
+						validDays.map((dayOfWeek) => ({ userId: id, dayOfWeek }))
 					);
 				}
 			}

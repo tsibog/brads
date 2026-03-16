@@ -2,13 +2,20 @@
 	import { enhance } from '$app/forms';
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import GameSelector from '$lib/components/GameSelector.svelte';
+	import DaySelector from '$lib/components/DaySelector.svelte';
 
 	let { form } = $props();
 	let isSubmitting = $state(false);
 	let selectedGames = $state<Array<{ bggId: string; name: string; thumbnail: string | null }>>([]);
+	let selectedDays = $state<number[]>([]);
+	let lookingForParty = $state(false);
 
 	const handleSubmit: SubmitFunction = ({ formData }) => {
 		formData.set('selected_games', JSON.stringify(selectedGames.map((g) => g.bggId)));
+		formData.set('selected_days', JSON.stringify(selectedDays));
+		if (lookingForParty) {
+			formData.set('looking_for_party', 'on');
+		}
 		isSubmitting = true;
 		return async ({ update }) => {
 			isSubmitting = false;
@@ -186,6 +193,25 @@
 					Favourite Games <span class="text-brads-green-dark/40">(1-4, optional)</span>
 				</label>
 				<GameSelector bind:selectedGames maxGames={4} />
+			</div>
+
+			<div>
+				<label class="block font-londrina text-base text-brads-green-dark mb-1">
+					Available Days <span class="text-brads-green-dark/40">(optional)</span>
+				</label>
+				<DaySelector bind:selectedDays />
+			</div>
+
+			<div class="flex items-center gap-3 pt-1">
+				<input
+					id="looking_for_party"
+					type="checkbox"
+					bind:checked={lookingForParty}
+					class="w-5 h-5 rounded border-gray-300 text-brads-green-dark focus:ring-brads-green-light"
+				/>
+				<label for="looking_for_party" class="font-londrina text-lg text-brads-green-dark">
+					I want to find a game group!
+				</label>
 			</div>
 
 			{#if form?.message}

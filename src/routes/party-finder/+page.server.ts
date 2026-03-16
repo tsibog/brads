@@ -2,7 +2,7 @@ import { error, fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { db } from '$lib/server/db';
 import { users, userAvailability, userGamePreferences, boardGames } from '$lib/server/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { partyFinder } from '$lib/flags';
 import { loadPlayerData } from '$lib/server/partyFinderUtils';
 
@@ -46,13 +46,16 @@ export const load: PageServerLoad = async ({ locals, url, fetch }) => {
 		paginatedPlayers = { data: [], meta: { totalCount: 0, page: 1, limit: 20, totalPages: 0, averageCompatibility: 0 } };
 	}
 
-	// Collect unique games from player data for filter dropdown
-	const availableGames = new Map<string, string>();
-	paginatedPlayers.data?.forEach((player: any) => {
-		player.gamePreferences?.forEach((g: any) => {
-			availableGames.set(g.gameBggId, g.name);
-		});
-	});
+	// Load all games selected by active party finder users (not just current page)
+	const allActiveGames = await db
+		.selectDistinct({
+			id: userGamePreferences.gameBggId,
+			name: boardGames.name
+		})
+		.from(userGamePreferences)
+		.innerJoin(boardGames, eq(userGamePreferences.gameBggId, boardGames.bggId))
+		.innerJoin(users, eq(userGamePreferences.userId, users.id))
+		.where(and(eq(users.looking_for_party, true), eq(users.party_status, 'active')));
 
 	return {
 		currentUser: {
@@ -61,7 +64,7 @@ export const load: PageServerLoad = async ({ locals, url, fetch }) => {
 			gamePreferences: currentUserData.gamePreferences
 		},
 		paginatedPlayers,
-		availableGames: Array.from(availableGames.entries()).map(([id, name]) => ({ id, name })),
+		availableGames: allActiveGames.map((g) => ({ id: g.id, name: g.name ?? 'Unknown' })),
 		currentFilters: {
 			experience: experienceFilter,
 			playStyle: playStyleFilter,

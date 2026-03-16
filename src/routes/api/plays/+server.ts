@@ -128,7 +128,11 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
 		const playId = newPlay[0].id;
 
-		// Track all participants (logging user + tagged users) in play_participants
+		// Track all participants (logging user + tagged users) in play_participants.
+		// Participants are linked to the logger's play only — this is intentional.
+		// Tagged users get their own gamePlays rows (below) for their personal adventure log,
+		// but play_participants on the original play is what drives shared play count
+		// in the party finder (via getSharedPlayCounts).
 		const allParticipantIds = [locals.user.id, ...taggedUserIds];
 		if (allParticipantIds.length > 0) {
 			await db.insert(playParticipants).values(
@@ -136,7 +140,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			);
 		}
 
-		// Insert plays for tagged users
+		// Insert personal adventure log entries for tagged users
 		for (const userId of taggedUserIds) {
 			await db.insert(gamePlays).values({ ...playData, userId });
 		}
