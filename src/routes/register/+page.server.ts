@@ -7,8 +7,9 @@ import { error, fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { hash } from '@node-rs/argon2';
 import { db } from '$lib/server/db';
-import { users } from '$lib/server/db/schema';
+import { users, userGamePreferences, boardGames } from '$lib/server/db/schema';
 import { logBook } from '$lib/flags';
+import { inArray } from 'drizzle-orm';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	if (!(await logBook())) {
@@ -29,6 +30,12 @@ export const actions: Actions = {
 		const email = formData.get('email');
 		const password = formData.get('password');
 		const confirmPassword = formData.get('confirmPassword');
+		const displayName = formData.get('display_name');
+		const experienceLevel = formData.get('experience_level');
+		const playStyle = formData.get('play_style');
+		const contactMethod = formData.get('contact_method');
+		const contactValue = formData.get('contact_value');
+		const selectedGamesStr = formData.get('selected_games');
 
 		if (
 			typeof username !== 'string' ||
@@ -54,10 +61,38 @@ export const actions: Actions = {
 			return fail(400, { message: 'Passwords do not match' });
 		}
 
+		// Display name is required
+		if (typeof displayName !== 'string' || displayName.trim().length < 1 || displayName.trim().length > 50) {
+			return fail(400, { message: 'Display name must be 1-50 characters' });
+		}
+
 		// Email is optional
 		const emailValue = typeof email === 'string' && email.trim().length > 0 ? email.trim() : null;
 		if (emailValue && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValue)) {
 			return fail(400, { message: 'Invalid email address' });
+		}
+
+		// Optional party finder fields
+		const cleanDisplayName = displayName.trim().replace(/[<>]/g, '').substring(0, 50);
+		const expLevel = typeof experienceLevel === 'string' && ['new', 'some_experience', 'experienced'].includes(experienceLevel)
+			? experienceLevel
+			: null;
+		const pStyle = typeof playStyle === 'string' && ['casual', 'competitive', 'either'].includes(playStyle)
+			? playStyle
+			: null;
+		const cMethod = typeof contactMethod === 'string' && ['email', 'phone', 'whatsapp', 'discord'].includes(contactMethod)
+			? contactMethod
+			: null;
+		const cValue = typeof contactValue === 'string' ? contactValue.trim().replace(/[<>]/g, '').substring(0, 255) : null;
+
+		// Parse game preferences (optional, 1-4 games)
+		let selectedGames: string[] = [];
+		try {
+			if (selectedGamesStr && typeof selectedGamesStr === 'string' && selectedGamesStr !== '[]') {
+				selectedGames = JSON.parse(selectedGamesStr);
+			}
+		} catch {
+			// Ignore invalid JSON — games are optional
 		}
 
 		try {
@@ -72,13 +107,40 @@ export const actions: Actions = {
 			const password_hash = await hash(password);
 			const id = crypto.randomUUID();
 
+			// Determine email for the user record
+			const userEmail = cMethod === 'email' && cValue ? cValue : emailValue;
+
 			await db.insert(users).values({
 				id,
 				username,
-				email: emailValue,
+				email: userEmail,
 				password_hash,
-				is_admin: false
+				is_admin: false,
+				display_name: cleanDisplayName,
+				experience_level: expLevel,
+				play_style: pStyle,
+				contact_method: cMethod,
+				contact_value: cValue || null,
+				last_login: new Date()
 			});
+
+			// Insert game preferences if any
+			if (selectedGames.length > 0 && selectedGames.length <= 4) {
+				// Validate games exist
+				const existingGames = await db
+					.select({ bggId: boardGames.bggId })
+					.from(boardGames)
+					.where(inArray(boardGames.bggId, selectedGames));
+
+				const validBggIds = existingGames.map((g) => g.bggId);
+				const validGames = selectedGames.filter((gId) => validBggIds.includes(gId));
+
+				if (validGames.length > 0) {
+					await db.insert(userGamePreferences).values(
+						validGames.map((bggId) => ({ userId: id, gameBggId: bggId }))
+					);
+				}
+			}
 
 			const token = generateSessionToken();
 			const session = await createSession(token, id);

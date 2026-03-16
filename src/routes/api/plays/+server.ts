@@ -1,6 +1,6 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
-import { gamePlays, boardGames, users } from '$lib/server/db/schema';
+import { gamePlays, boardGames, users, playParticipants } from '$lib/server/db/schema';
 import { desc, eq, sql, and, gte, lte, inArray } from 'drizzle-orm';
 import { logBook } from '$lib/flags';
 
@@ -125,6 +125,16 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			.insert(gamePlays)
 			.values({ ...playData, userId: locals.user.id })
 			.returning();
+
+		const playId = newPlay[0].id;
+
+		// Track all participants (logging user + tagged users) in play_participants
+		const allParticipantIds = [locals.user.id, ...taggedUserIds];
+		if (allParticipantIds.length > 0) {
+			await db.insert(playParticipants).values(
+				allParticipantIds.map((uid) => ({ playId, userId: uid }))
+			);
+		}
 
 		// Insert plays for tagged users
 		for (const userId of taggedUserIds) {

@@ -16,7 +16,11 @@ export const GET: RequestHandler = async ({ locals }) => {
 			email: users.email,
 			is_admin: users.is_admin,
 			must_reset_password: users.must_reset_password,
-			created_at: users.created_at
+			created_at: users.created_at,
+			display_name: users.display_name,
+			looking_for_party: users.looking_for_party,
+			party_status: users.party_status,
+			last_login: users.last_login
 		})
 		.from(users);
 

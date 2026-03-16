@@ -7,3 +7,10 @@ export const logBook = flag<boolean>({
 	options: [{ value: true }, { value: false }],
 	adapter: vercelAdapter()
 });
+
+export const partyFinder = flag<boolean>({
+	key: 'party-finder',
+	description: 'Enable the Party Finder feature (player matching, profiles, availability)',
+	options: [{ value: true }, { value: false }],
+	adapter: vercelAdapter()
+});
