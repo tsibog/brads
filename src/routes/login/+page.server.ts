@@ -3,27 +3,26 @@ import {
 	createSession,
 	setSessionTokenCookie
 } from '$lib/server/auth';
-import { error, fail, redirect } from '@sveltejs/kit';
+import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { verify } from '@node-rs/argon2';
 import { db } from '$lib/server/db';
 import { logBook } from '$lib/flags';
 import { reactivateUserIfAutoRested } from '$lib/server/partyFinderUtils';
 
+async function getPostLoginRedirect(): Promise<string> {
+	if (await logBook()) return '/plays';
+	return '/browse';
+}
+
 export const load: PageServerLoad = async ({ locals }) => {
-	if (!(await logBook())) {
-		error(404, 'Not found');
-	}
 	if (locals.user) {
-		redirect(302, locals.user.must_reset_password ? '/reset-password' : '/plays');
+		redirect(302, locals.user.must_reset_password ? '/reset-password' : await getPostLoginRedirect());
 	}
 };
 
 export const actions: Actions = {
 	default: async (event) => {
-		if (!(await logBook())) {
-			error(404, 'Not found');
-		}
 		const formData = await event.request.formData();
 		const username = formData.get('username');
 		const password = formData.get('password');
@@ -72,6 +71,6 @@ export const actions: Actions = {
 			return fail(500, { message: 'An unexpected error occurred' });
 		}
 
-		redirect(302, '/plays');
+		redirect(302, await getPostLoginRedirect());
 	}
 };
