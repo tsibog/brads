@@ -4,6 +4,12 @@ import { hash } from '@node-rs/argon2';
 import { db } from '$lib/server/db';
 import { users } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
+import { logBook } from '$lib/flags';
+
+async function getPostLoginRedirect(): Promise<string> {
+	if (await logBook()) return '/plays';
+	return '/browse';
+}
 
 export const load: PageServerLoad = async ({ locals }) => {
 	// Must be logged in
@@ -13,7 +19,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 	// Only show this page if they need to reset
 	if (!locals.user.must_reset_password) {
-		redirect(302, '/plays');
+		redirect(302, await getPostLoginRedirect());
 	}
 
 	return { username: locals.user.username };
@@ -57,6 +63,6 @@ export const actions: Actions = {
 			return fail(500, { message: 'An unexpected error occurred' });
 		}
 
-		redirect(302, '/plays');
+		redirect(302, await getPostLoginRedirect());
 	}
 };

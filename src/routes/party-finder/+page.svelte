@@ -36,13 +36,7 @@
 
 <div class="min-h-screen bg-brads-yellow-light">
 	<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-		<!-- Header -->
-		<div class="mb-6">
-			<h1 class="text-4xl font-londrina text-brads-green-dark">Party Finder</h1>
-			<p class="text-lg font-londrina text-brads-green-dark/60 mt-1">
-				Find people to play board games with at the cafe
-			</p>
-		</div>
+		<h1 class="text-3xl font-londrina text-brads-green-dark mb-6">Party Finder</h1>
 
 		<PartyFinderStatusWarnings
 			lookingForParty={data.currentUser.looking_for_party}

@@ -51,6 +51,13 @@
 								Admin
 							</a>
 						{/if}
+						<span class="text-white/40">|</span>
+						<span class="text-white/70">{data.user.username}</span>
+						<form action="/logout" method="POST" class="inline">
+							<button type="submit" class="hover:text-brads-yellow-light transition-colors text-white/70">
+								Log out
+							</button>
+						</form>
 					{:else}
 						<a href="/login" class="hover:text-brads-yellow-light transition-colors">
 							Log in
