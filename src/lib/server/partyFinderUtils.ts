@@ -443,9 +443,14 @@ export async function getPaginatedPlayersWithCompatibility({
 			? Math.round(sortedPlayers.reduce((sum, p) => sum + p.compatibilityScore!, 0) / totalCount)
 			: 0;
 
+	// Include current user in the active count (they were filtered out of the discovery list)
+	const isCurrentUserActive =
+		currentUser.lookingForParty && currentUser.partyStatus === 'active';
+	const activeCount = totalCount + (isCurrentUserActive ? 1 : 0);
+
 	return {
 		data: paginatedPlayers,
-		meta: { totalCount, page, limit, totalPages, averageCompatibility }
+		meta: { totalCount: activeCount, page, limit, totalPages, averageCompatibility }
 	};
 }
 

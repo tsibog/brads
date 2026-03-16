@@ -1,5 +1,4 @@
 import type { PageServerLoad } from './$types';
-import { logBook } from '$lib/flags';
 
 export const load: PageServerLoad = async ({ fetch, url, locals }) => {
 	const page = url.searchParams.get('page') || '1';
@@ -39,7 +38,6 @@ export const load: PageServerLoad = async ({ fetch, url, locals }) => {
 			page: parseInt(page)
 		},
 		allMechanics,
-		user: locals.user,
-		playsEnabled: await logBook()
+		user: locals.user
 	};
 };

@@ -98,30 +98,12 @@
 {/snippet}
 
 <main class="container mx-auto px-2 sm:px-4 py-8">
-	<div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-2">
-		<h1 class="text-3xl font-londrina text-brads-green-dark">Brads Spelcafé Game Catalogue</h1>
-		{#if data.playsEnabled}
-			<div class="flex gap-2">
-				{#if data.user}
-					<a href="/plays" class="px-4 py-2 bg-brads-green-dark text-white rounded-lg font-londrina text-lg hover:bg-brads-green-dark/90 transition-colors text-center">
-						Adventure Log
-					</a>
-				{:else}
-					<span class="px-4 py-2 bg-gray-300 text-gray-500 rounded-lg font-londrina text-lg cursor-not-allowed text-center" title="Log in to access the adventure log">
-						Adventure Log
-					</span>
-					<a href="/login" class="px-4 py-2 bg-brads-green-light text-white rounded-lg font-londrina text-lg hover:bg-brads-green-light/90 transition-colors text-center">
-						Log In
-					</a>
-				{/if}
-			</div>
-		{/if}
-	</div>
+	<h1 class="text-3xl font-londrina text-brads-green-dark mb-6">Game Catalogue</h1>
 
 	<div class="flex flex-col md:flex-row gap-8">
 		<aside class="w-full md:w-1/4">
-			<GameFilter 
-				allMechanics={data.allMechanics} 
+			<GameFilter
+				allMechanics={data.allMechanics}
 				currentCount={data.games.length}
 				totalCount={data.meta.totalCount}
 			/>
