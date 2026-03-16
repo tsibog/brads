@@ -67,11 +67,11 @@ export const actions: Actions = {
 
 		const formData = await request.formData();
 		const displayName = formData.get('display_name');
-		const bio = formData.get('bio');
+		const bio = formData.get('bio') ?? '';
 		const experienceLevel = formData.get('experience_level');
 		const playStyle = formData.get('play_style');
 		const contactMethod = formData.get('contact_method');
-		const contactValue = formData.get('contact_value');
+		const contactValue = formData.get('contact_value') ?? '';
 		const contactVisibleTo = formData.get('contact_visible_to');
 		const lookingForParty = formData.get('looking_for_party') === 'on';
 		const openToAnyGame = formData.get('open_to_any_game') === 'on';
@@ -87,7 +87,15 @@ export const actions: Actions = {
 			typeof contactValue !== 'string' ||
 			typeof contactVisibleTo !== 'string'
 		) {
-			return fail(400, { message: 'Invalid input types' });
+			return fail(400, { message: `Invalid input types: ${[
+				['display_name', displayName],
+				['bio', bio],
+				['experience_level', experienceLevel],
+				['play_style', playStyle],
+				['contact_method', contactMethod],
+				['contact_value', contactValue],
+				['contact_visible_to', contactVisibleTo]
+			].filter(([, v]) => typeof v !== 'string').map(([k]) => k).join(', ')} missing` });
 		}
 
 		const cleanDisplayName = sanitizeInput(displayName);
