@@ -1,8 +1,27 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import type { SubmitFunction } from '@sveltejs/kit';
+	import GameSelector from '$lib/components/GameSelector.svelte';
+	import DaySelector from '$lib/components/DaySelector.svelte';
 
 	let { form } = $props();
 	let isSubmitting = $state(false);
+	let selectedGames = $state<Array<{ bggId: string; name: string; thumbnail: string | null }>>([]);
+	let selectedDays = $state<number[]>([]);
+	let lookingForParty = $state(false);
+
+	const handleSubmit: SubmitFunction = ({ formData }) => {
+		formData.set('selected_games', JSON.stringify(selectedGames.map((g) => g.bggId)));
+		formData.set('selected_days', JSON.stringify(selectedDays));
+		if (lookingForParty) {
+			formData.set('looking_for_party', 'on');
+		}
+		isSubmitting = true;
+		return async ({ update }) => {
+			isSubmitting = false;
+			await update();
+		};
+	};
 </script>
 
 <svelte:head>
@@ -10,25 +29,20 @@
 </svelte:head>
 
 <main class="min-h-screen flex items-center justify-center bg-brads-yellow-light py-12 px-4">
-	<div class="max-w-sm w-full">
+	<div class="max-w-md w-full">
 		<div class="text-center mb-8">
 			<h1 class="text-4xl font-londrina text-brads-green-dark">Brads Spelcafe</h1>
 			<p class="text-lg font-londrina text-brads-green-dark/60 mt-1">
-				Create an account to log your game plays
+				Create an account to log plays and find people to play with
 			</p>
 		</div>
 
 		<form
 			method="POST"
-			use:enhance={() => {
-				isSubmitting = true;
-				return async ({ update }) => {
-					isSubmitting = false;
-					await update();
-				};
-			}}
+			use:enhance={handleSubmit}
 			class="bg-white rounded-xl shadow-md p-6 space-y-4 border border-brads-green-light/20"
 		>
+			<!-- Account basics -->
 			<div>
 				<label for="username" class="block font-londrina text-lg text-brads-green-dark mb-1">
 					Username
@@ -44,6 +58,21 @@
 					class="w-full border border-gray-300 rounded-lg px-4 py-2 font-londrina text-lg focus:outline-none focus:ring-2 focus:ring-brads-green-light"
 				/>
 				<p class="text-sm text-gray-400 font-londrina mt-0.5">Letters, numbers, hyphens, underscores</p>
+			</div>
+
+			<div>
+				<label for="display_name" class="block font-londrina text-lg text-brads-green-dark mb-1">
+					Display Name
+				</label>
+				<input
+					id="display_name"
+					name="display_name"
+					type="text"
+					required
+					maxlength="50"
+					class="w-full border border-gray-300 rounded-lg px-4 py-2 font-londrina text-lg focus:outline-none focus:ring-2 focus:ring-brads-green-light"
+				/>
+				<p class="text-sm text-gray-400 font-londrina mt-0.5">How other players will see you</p>
 			</div>
 
 			<div>
@@ -88,6 +117,101 @@
 					autocomplete="new-password"
 					class="w-full border border-gray-300 rounded-lg px-4 py-2 font-londrina text-lg focus:outline-none focus:ring-2 focus:ring-brads-green-light"
 				/>
+			</div>
+
+			<!-- Party Finder fields (optional) -->
+			<hr class="border-gray-200" />
+			<p class="font-londrina text-brads-green-dark/60">
+				Optional: set up your party finder profile now, or do it later in settings.
+			</p>
+
+			<div class="grid grid-cols-2 gap-3">
+				<div>
+					<label for="experience_level" class="block font-londrina text-base text-brads-green-dark mb-1">
+						Experience
+					</label>
+					<select
+						id="experience_level"
+						name="experience_level"
+						class="w-full border border-gray-300 rounded-lg px-3 py-2 font-londrina text-base focus:outline-none focus:ring-2 focus:ring-brads-green-light"
+					>
+						<option value="">-- Skip --</option>
+						<option value="new">New to board games</option>
+						<option value="some_experience">Some experience</option>
+						<option value="experienced">Experienced</option>
+					</select>
+				</div>
+				<div>
+					<label for="play_style" class="block font-londrina text-base text-brads-green-dark mb-1">
+						Play Style
+					</label>
+					<select
+						id="play_style"
+						name="play_style"
+						class="w-full border border-gray-300 rounded-lg px-3 py-2 font-londrina text-base focus:outline-none focus:ring-2 focus:ring-brads-green-light"
+					>
+						<option value="">-- Skip --</option>
+						<option value="casual">Casual</option>
+						<option value="competitive">Competitive</option>
+						<option value="either">Either</option>
+					</select>
+				</div>
+			</div>
+
+			<div class="grid grid-cols-2 gap-3">
+				<div>
+					<label for="contact_method" class="block font-londrina text-base text-brads-green-dark mb-1">
+						Contact Method
+					</label>
+					<select
+						id="contact_method"
+						name="contact_method"
+						class="w-full border border-gray-300 rounded-lg px-3 py-2 font-londrina text-base focus:outline-none focus:ring-2 focus:ring-brads-green-light"
+					>
+						<option value="">-- Skip --</option>
+						<option value="email">Email</option>
+						<option value="phone">Phone</option>
+						<option value="whatsapp">WhatsApp</option>
+						<option value="discord">Discord</option>
+					</select>
+				</div>
+				<div>
+					<label for="contact_value" class="block font-londrina text-base text-brads-green-dark mb-1">
+						Contact Info
+					</label>
+					<input
+						id="contact_value"
+						name="contact_value"
+						type="text"
+						class="w-full border border-gray-300 rounded-lg px-3 py-2 font-londrina text-base focus:outline-none focus:ring-2 focus:ring-brads-green-light"
+					/>
+				</div>
+			</div>
+
+			<div>
+				<label class="block font-londrina text-base text-brads-green-dark mb-1">
+					Favourite Games <span class="text-brads-green-dark/40">(1-4, optional)</span>
+				</label>
+				<GameSelector bind:selectedGames maxGames={4} />
+			</div>
+
+			<div>
+				<label class="block font-londrina text-base text-brads-green-dark mb-1">
+					Available Days <span class="text-brads-green-dark/40">(optional)</span>
+				</label>
+				<DaySelector bind:selectedDays />
+			</div>
+
+			<div class="flex items-center gap-3 pt-1">
+				<input
+					id="looking_for_party"
+					type="checkbox"
+					bind:checked={lookingForParty}
+					class="w-5 h-5 rounded border-gray-300 text-brads-green-dark focus:ring-brads-green-light"
+				/>
+				<label for="looking_for_party" class="font-londrina text-lg text-brads-green-dark">
+					I want to find a game group!
+				</label>
 			</div>
 
 			{#if form?.message}

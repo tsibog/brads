@@ -90,6 +90,18 @@
 							Manage Users
 						</a>
 					</li>
+					<li>
+						<a
+							href="/admin/party-finder-settings"
+							class="block p-2 rounded hover:bg-brads-green-light {$page.url.pathname.includes(
+								'/party-finder-settings'
+							)
+								? 'bg-brads-green font-bold'
+								: ''}"
+						>
+							Party Finder
+						</a>
+					</li>
 				</ul>
 
 				<h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mt-6 mb-2">Public Pages</h3>
@@ -102,6 +114,11 @@
 					<li>
 						<a href="/plays" class="block p-2 rounded text-sm hover:bg-brads-green-light/50 text-gray-600">
 							Adventure Log
+						</a>
+					</li>
+					<li>
+						<a href="/party-finder" class="block p-2 rounded text-sm hover:bg-brads-green-light/50 text-gray-600">
+							Party Finder
 						</a>
 					</li>
 				</ul>

@@ -8,6 +8,10 @@
 		is_admin: boolean;
 		must_reset_password: boolean;
 		created_at: string;
+		display_name: string | null;
+		looking_for_party: boolean | null;
+		party_status: string | null;
+		last_login: string | null;
 	};
 
 	let userList = $state<UserRecord[]>([]);
@@ -137,6 +141,11 @@
 									{#if user.must_reset_password}
 										<span class="inline-block px-2 py-0.5 text-xs font-medium bg-amber-100 text-amber-700 rounded-full">
 											Password Reset Pending
+										</span>
+									{/if}
+									{#if user.looking_for_party}
+										<span class="inline-block px-2 py-0.5 text-xs font-medium {user.party_status === 'active' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'} rounded-full">
+											{user.party_status === 'active' ? 'Party Active' : 'Party Resting'}
 										</span>
 									{/if}
 								</div>

@@ -8,6 +8,7 @@ import type { Actions, PageServerLoad } from './$types';
 import { verify } from '@node-rs/argon2';
 import { db } from '$lib/server/db';
 import { logBook } from '$lib/flags';
+import { reactivateUserIfAutoRested } from '$lib/server/partyFinderUtils';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	if (!(await logBook())) {
@@ -50,6 +51,11 @@ export const actions: Actions = {
 			const validPassword = await verify(user.password_hash, password);
 			if (!validPassword) {
 				return fail(400, { message: 'Incorrect username or password' });
+			}
+
+			// Update last_login and handle party finder reactivation
+			if (!user.is_admin) {
+				await reactivateUserIfAutoRested(user.id);
 			}
 
 			const token = generateSessionToken();

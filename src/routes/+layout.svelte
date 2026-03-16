@@ -1,22 +1,65 @@
 <script>
 	import '../app.css';
 	import { dev, browser } from '$app/environment';
+	import { page } from '$app/stores';
 	import { injectAnalytics } from '@vercel/analytics/sveltekit';
 	import { mountVercelToolbar } from '@vercel/toolbar';
 	import { onMount } from 'svelte';
 
 	injectAnalytics({ mode: dev ? 'development' : 'production' });
 
-	let { children } = $props();
+	let { children, data } = $props();
 
 	onMount(() => {
 		if (dev || (browser && window.location.hostname.includes('.vercel.app'))) {
 			mountVercelToolbar();
 		}
 	});
+
+	const isAdminPage = $derived($page.url.pathname.startsWith('/admin'));
+	const isAuthPage = $derived(
+		$page.url.pathname === '/login' ||
+		$page.url.pathname === '/register' ||
+		$page.url.pathname === '/reset-password'
+	);
+	const showNav = $derived(!isAdminPage && !isAuthPage);
 </script>
 
 <div class="bg-brads-yellow-light min-h-screen font-londrina">
+	{#if showNav}
+		<nav class="bg-brads-green-dark text-white px-4 py-3">
+			<div class="container mx-auto flex items-center justify-between">
+				<a href="/browse" class="text-xl font-londrina hover:text-brads-yellow-light transition-colors">
+					Brads Spelcafe
+				</a>
+				<div class="flex items-center gap-4 text-sm font-londrina">
+					<a href="/browse" class="hover:text-brads-yellow-light transition-colors {$page.url.pathname === '/browse' ? 'text-brads-yellow-light' : ''}">
+						Games
+					</a>
+					<a href="/plays" class="hover:text-brads-yellow-light transition-colors {$page.url.pathname === '/plays' ? 'text-brads-yellow-light' : ''}">
+						Adventure Log
+					</a>
+					<a href="/party-finder" class="hover:text-brads-yellow-light transition-colors {$page.url.pathname === '/party-finder' ? 'text-brads-yellow-light' : ''}">
+						Party Finder
+					</a>
+					{#if data.user}
+						<a href="/profile" class="hover:text-brads-yellow-light transition-colors {$page.url.pathname === '/profile' ? 'text-brads-yellow-light' : ''}">
+							Profile
+						</a>
+						{#if data.user.is_admin}
+							<a href="/admin/manage" class="hover:text-brads-yellow-light transition-colors">
+								Admin
+							</a>
+						{/if}
+					{:else}
+						<a href="/login" class="hover:text-brads-yellow-light transition-colors">
+							Log in
+						</a>
+					{/if}
+				</div>
+			</div>
+		</nav>
+	{/if}
 	{@render children()}
 
 	<footer class="bg-brads-green-dark text-white text-center py-4">
